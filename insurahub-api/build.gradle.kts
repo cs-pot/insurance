@@ -23,7 +23,7 @@ dependencies {
     implementation(libs.swagger.annotations)
     implementation(libs.swagger.models)
 
-    implementation("org.openapitools:jackson-databind-nullable:0.2.6")
+    implementation(libs.jackson.databind.nullable)
 }
 
 openApiGenerate {
