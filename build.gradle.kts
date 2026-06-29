@@ -1,8 +1,8 @@
 plugins {
     java
-    checkstyle
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependencyManagement)
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependencyManagement) apply false
+    alias(libs.plugins.openapi.generator) apply false
 }
 
 group = "com.cspot"
@@ -15,28 +15,10 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-checkstyle {
-    toolVersion = "10.12.4"
-    configFile = file("config/checkstyle/checkstyle.xml")
-}
-
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("com.h2database:h2")
-    runtimeOnly("org.springframework.boot:spring-boot-h2console")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 }
 
 val stagedJavaFiles = providers.gradleProperty("checkstyleFiles")
