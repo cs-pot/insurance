@@ -1,5 +1,6 @@
 plugins {
     java
+    checkstyle
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependencyManagement) apply false
     alias(libs.plugins.openapi.generator) apply false
@@ -19,6 +20,11 @@ allprojects {
     repositories {
         mavenCentral()
     }
+}
+
+checkstyle {
+    toolVersion = "10.12.4"
+    configFile = file("config/checkstyle/checkstyle.xml")
 }
 
 val stagedJavaFiles = providers.gradleProperty("checkstyleFiles")
