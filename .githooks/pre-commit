@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+echo "Running pre-commit checks..."
+
+if [ -f "./gradlew" ]; then
+    GRADLE_CMD="./gradlew"
+elif [ -f "./gradlew.bat" ]; then
+    GRADLE_CMD="./gradlew.bat"
+else
+    echo "Gradle wrapper not found."
+    exit 1
+fi
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- '*.java')
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "No staged Java files found. Skipping Checkstyle."
+    exit 0
+fi
+
+echo "Running Checkstyle on staged Java files..."
+$GRADLE_CMD checkstyleStaged -PcheckstyleFiles="$STAGED_FILES"
+
+echo "Pre-commit checks passed."
