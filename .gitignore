@@ -1,17 +1,13 @@
-# Compiled class file
-*.class
-.idea
+# ==========================================
+# Project & Build Tools (Gradle / Java)
+# ==========================================
+.gradle
+build/
+bin/
+out/
+HELP.md
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
@@ -20,6 +16,54 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Compiled class file
+*.class
+
+# Log files
+*.log
 hs_err_pid*
 replay_pid*
+
+# Source preservation rules for builds
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# ==========================================
+# IDEs & Text Editors
+# ==========================================
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# BlueJ
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
