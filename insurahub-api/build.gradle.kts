@@ -45,6 +45,7 @@ openApiGenerate {
             "useJakartaEe" to "true",
             "useSpringBoot4" to "true",
             "useTags" to "true",
+            "useResponseEntity" to "false",
             "hideGenerationTimestamp" to "true"
         )
     )
