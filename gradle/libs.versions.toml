@@ -1,7 +1,18 @@
 [versions]
 springBoot = "4.1.0"
 springDependencyManagement = "1.1.7"
+openapiGenerator = "7.23.0"
+swagger = "2.2.49"
+springdoc = "3.0.3"
+jacksonDatabindNullable = "0.2.10"
+
+[libraries]
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swagger" }
+swagger-models = { module = "io.swagger.core.v3:swagger-models", version.ref = "swagger" }
+springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc" }
+jackson-databind-nullable = { module = "org.openapitools:jackson-databind-nullable", version.ref = "jacksonDatabindNullable"}
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependencyManagement = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapiGenerator" }

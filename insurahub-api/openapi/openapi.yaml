@@ -1,0 +1,26 @@
+openapi: 3.0.3
+
+info:
+  title: InsuraHub API
+  version: 1.0.0
+  description: |
+    REST API for InsuraHub.
+
+tags:
+  - name: hello
+    description: The initial Hello World endpoint
+
+paths:
+  /:
+    get:
+      operationId: helloWorld
+      tags:
+        - hello
+      summary: Hello World
+      responses:
+        "200":
+          description: Hello, World
+          content:
+            text/plain:
+              schema:
+                type: string

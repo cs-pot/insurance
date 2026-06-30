@@ -19,6 +19,4 @@ public class TestEntity {
     public TestEntity(String name) {
         this.name = name;
     }
-
-
 }

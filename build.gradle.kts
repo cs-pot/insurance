@@ -1,8 +1,9 @@
 plugins {
     java
     checkstyle
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependencyManagement)
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependencyManagement) apply false
+    alias(libs.plugins.openapi.generator) apply false
 }
 
 group = "com.cspot"
@@ -15,34 +16,15 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 }
 
 checkstyle {
     toolVersion = "10.12.4"
     configFile = file("config/checkstyle/checkstyle.xml")
-}
-
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-    implementation("org.springframework.boot:spring-boot-starter-liquibase")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("com.h2database:h2")
-    runtimeOnly("org.springframework.boot:spring-boot-h2console")
-    runtimeOnly("org.postgresql:postgresql")
-    testImplementation("org.springframework.boot:spring-boot-testcontainers")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.4"))
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
 
 val stagedJavaFiles = providers.gradleProperty("checkstyleFiles")
