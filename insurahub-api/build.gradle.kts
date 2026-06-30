@@ -46,6 +46,7 @@ openApiGenerate {
             "useSpringBoot4" to "true",
             "useTags" to "true",
             "useResponseEntity" to "false",
+            "skipDefaultInterface" to "true",
             "hideGenerationTimestamp" to "true"
         )
     )

@@ -7,6 +7,7 @@ import com.cspot.insurahub.api.HelloApi;
 @RestController
 public class HelloWorldController implements HelloApi {
 
+    @Override
     public String helloWorld() {
         return "Hello, World!";
     }
