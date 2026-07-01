@@ -1,4 +1,5 @@
 databaseChangeLog:
   - include:
-      file: changes/001-init.yaml
+      file: changes/ddl/001-create-test-table.sql
       relativeToChangelogFile: true
+      contextFilter: test
