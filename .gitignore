@@ -24,6 +24,9 @@ HELP.md
 hs_err_pid*
 replay_pid*
 
+# Local environment variables
+.env
+
 # Source preservation rules for builds
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/

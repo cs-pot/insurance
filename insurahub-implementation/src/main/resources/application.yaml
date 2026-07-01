@@ -4,11 +4,25 @@ spring:
 
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
 
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
+    password:
+
+auth0:
+  domain: ${AUTH0_DOMAIN:}
+  audience: ${AUTH0_AUDIENCE:}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  h2:
+    console:
+      enabled: true

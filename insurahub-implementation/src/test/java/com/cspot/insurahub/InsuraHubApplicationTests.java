@@ -10,7 +10,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "auth0.domain=test.auth0.com",
+    "auth0.audience=https://insurahub.test/api"
+})
 @AutoConfigureMockMvc
 class InsuraHubApplicationTests {
     @Autowired
@@ -18,8 +21,14 @@ class InsuraHubApplicationTests {
 
     @Test
     void helloWorld() throws Exception {
-        mockMvc.perform(get("/"))
+        mockMvc.perform(get("/api/public/hello"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Hello, World!"));
+    }
+
+    @Test
+    void privateHelloWorld() throws Exception {
+        mockMvc.perform(get("/api/private/hello"))
+                .andExpect(status().isUnauthorized());
     }
 }
