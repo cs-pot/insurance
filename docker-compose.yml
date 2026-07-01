@@ -3,13 +3,19 @@ services:
     image: postgres:18
     container_name: insurahub-postgres
     environment:
-      POSTGRES_DB: insurahub
-      POSTGRES_USER: insurahub
-      POSTGRES_PASSWORD: insurahub
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+    networks:
+      - insurahub-network
 
 volumes:
   postgres_data:
+
+networks:
+  insurahub-network:
+    driver: bridge
