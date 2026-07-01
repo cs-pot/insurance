@@ -3,10 +3,10 @@ spring:
     name: InsuraHub
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/insurahub
+    url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
-    username: insurahub
-    password: insurahub
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
 
   jpa:
     hibernate:
