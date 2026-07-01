@@ -1,7 +1,7 @@
 package com.cspot.insurahub;
 
-import com.cspot.insurahub.Entity.TestEntity;
-import com.cspot.insurahub.Repository.TestEntityRepository;
+import com.cspot.insurahub.entity.TestEntity;
+import com.cspot.insurahub.repository.TestEntityRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

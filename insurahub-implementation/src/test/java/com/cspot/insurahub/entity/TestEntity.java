@@ -1,4 +1,4 @@
-package com.cspot.insurahub.Entity;
+package com.cspot.insurahub.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
