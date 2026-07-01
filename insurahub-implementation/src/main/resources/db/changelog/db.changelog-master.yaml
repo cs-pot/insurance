@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: changes/ddl/001-create-test-table.sql
+      relativeToChangelogFile: true
+      contextFilter: test
