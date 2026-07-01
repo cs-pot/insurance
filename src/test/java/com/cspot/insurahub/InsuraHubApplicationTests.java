@@ -18,8 +18,14 @@ class InsuraHubApplicationTests {
 
     @Test
     void helloWorld() throws Exception {
-        mockMvc.perform(get("/"))
+        mockMvc.perform(get("/api/public/hello"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Hello, World!"));
+    }
+
+    @Test
+    void privateHelloWorld() throws Exception {
+        mockMvc.perform(get("/api/private/hello"))
+                .andExpect(status().isForbidden());
     }
 }
