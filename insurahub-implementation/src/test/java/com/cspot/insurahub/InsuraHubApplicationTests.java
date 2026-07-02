@@ -23,8 +23,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 @SpringBootTest(properties = {
-    "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
-    "spring.security.oauth2.resourceserver.jwt.audiences=https://insurahub.test/api"
+        "AUTH0_ISSUER_URI=https://test.auth0.com/",
+        "AUTH0_AUDIENCE=https://insurahub.test/api",
+        "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
+        "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://test.auth0.com/.well-known/jwks.json",
+        "spring.security.oauth2.resourceserver.jwt.audiences=https://insurahub.test/api"
 })
 @AutoConfigureMockMvc
 class InsuraHubApplicationTests {
@@ -69,6 +72,9 @@ class InsuraHubApplicationTests {
                 .andExpect(jsonPath("$.user").value("auth0|user-123"))
                 .andExpect(jsonPath("$.scopes[0]").value("SCOPE_read:private"))
                 .andExpect(jsonPath("$.claims").doesNotExist());
+    }
+
+    @Test
     void shouldPersistEntity() {
         TestEntity entity = new TestEntity("John");
 

@@ -37,5 +37,9 @@ dependencies {
 }
 
 tasks.withType<Test> {
+    jvmArgs("-Duser.timezone=UTC")
+}
+
+tasks.withType<Test> {
     useJUnitPlatform()
 }
