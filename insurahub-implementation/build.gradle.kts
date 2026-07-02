@@ -10,10 +10,6 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(project(":insurahub-api"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

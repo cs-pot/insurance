@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,14 +22,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
+
 @Testcontainers
-@SpringBootTest(properties = {
-        "AUTH0_ISSUER_URI=https://test.auth0.com/",
-        "AUTH0_AUDIENCE=https://insurahub.test/api",
-        "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
-        "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://test.auth0.com/.well-known/jwks.json",
-        "spring.security.oauth2.resourceserver.jwt.audiences=https://insurahub.test/api"
-})
+@SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class InsuraHubApplicationTests {
 
