@@ -8,10 +8,18 @@ spring:
       path: /h2-console
 
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
   security:
     oauth2:
@@ -21,12 +29,3 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-  h2:
-    console:
-      enabled: true

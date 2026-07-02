@@ -6,6 +6,7 @@ build/
 bin/
 out/
 HELP.md
+.env
 
 # Package Files
 *.jar

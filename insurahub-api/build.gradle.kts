@@ -4,6 +4,12 @@ plugins {
     alias(libs.plugins.spring.dependencyManagement)
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.springBoot.get()}")
