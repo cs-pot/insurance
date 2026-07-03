@@ -1,17 +1,27 @@
 # Stage 1: Build
 FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
+
+# Copy Gradle wrapper and config first (caching layer)
 COPY gradle gradle
 COPY gradlew .
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
+
+# Copy module build files
 COPY insurahub-api/build.gradle.kts insurahub-api/
 COPY insurahub-implementation/build.gradle.kts insurahub-implementation/
-RUN ./gradlew
+
+# Download dependencies
+RUN ./gradlew dependencies --no-daemon
+
+# Copy OpenAPI and generate sources
 COPY insurahub-api/openapi insurahub-api/openapi/
-RUN ./gradlew :insurahub-api:openApiGenerate
+RUN ./gradlew :insurahub-api:openApiGenerate --no-daemon
+
+# Copy source code and build
 COPY insurahub-implementation/src insurahub-implementation/src/
-RUN ./gradlew :insurahub-implementation:bootJar -x test
+RUN ./gradlew :insurahub-implementation:bootJar -x test --no-daemon
 
 # Stage 2: Run
 FROM eclipse-temurin:21-jre
