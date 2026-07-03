@@ -3,13 +3,13 @@ FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 COPY gradle gradle
 COPY gradlew .
-RUN ./gradlew
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 COPY insurahub-api/build.gradle.kts insurahub-api/
+COPY insurahub-implementation/build.gradle.kts insurahub-implementation/
+RUN ./gradlew
 COPY insurahub-api/openapi insurahub-api/openapi/
 RUN ./gradlew :insurahub-api:openApiGenerate
-COPY insurahub-implementation/build.gradle.kts insurahub-implementation/
 COPY insurahub-implementation/src insurahub-implementation/src/
 RUN ./gradlew :insurahub-implementation:bootJar -x test
 
