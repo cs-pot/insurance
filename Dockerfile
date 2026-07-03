@@ -2,9 +2,12 @@
 FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 
-# Copy Gradle wrapper and config first (caching layer)
+# Copy wrapper and run empty task to cache Gradle distribution early
 COPY gradle gradle
 COPY gradlew .
+RUN ./gradlew --no-daemon
+
+# Copy config files
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 
