@@ -7,20 +7,9 @@ info:
     REST API for InsuraHub.
 
 tags:
-  - name: hello
-    description: The initial Hello World endpoint
+  - name: Users
+    description: Operations related to user management
 
 paths:
-  /:
-    get:
-      operationId: helloWorld
-      tags:
-        - hello
-      summary: Hello World
-      responses:
-        "200":
-          description: Hello, World
-          content:
-            text/plain:
-              schema:
-                type: string
+  /api/users:
+    $ref: './user/paths.yaml#/users'

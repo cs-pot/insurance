@@ -1,0 +1,32 @@
+UserCreateRequest:
+  type: object
+  required:
+    - email
+    - password
+    - firstName
+    - lastName
+    - personalId
+    - dateOfBirth
+    - address
+    - city
+  properties:
+    email:
+      type: string
+    password:
+      type: string
+    firstName:
+      type: string
+      minLength: 1
+    lastName:
+      type: string
+      minLength: 1
+    personalId:
+      type: string
+      format: '[0-9]{11}'
+    dateOfBirth:
+      type: string
+      format: date
+    address:
+      type: string
+    city:
+      type: string
