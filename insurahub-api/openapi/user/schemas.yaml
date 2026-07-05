@@ -30,3 +30,11 @@ UserCreateRequest:
       type: string
     city:
       type: string
+
+UserCreationResponse:
+  type: object
+  required:
+    - id
+  properties:
+    id:
+      type: string

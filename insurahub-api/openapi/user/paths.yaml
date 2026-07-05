@@ -14,6 +14,10 @@ users:
     responses:
       201:
         description: User created
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/UserCreationResponse'
       400:
         description: Bad Request
       401:
