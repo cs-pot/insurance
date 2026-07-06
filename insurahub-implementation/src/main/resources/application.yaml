@@ -29,3 +29,7 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
+auth0:
+  domain: ${AUTH0_DOMAIN}
+  client-id: ${AUTH0_M2M_CLIENT_ID}
+  client-secret: ${AUTH0_M2M_CLIENT_SECRET}

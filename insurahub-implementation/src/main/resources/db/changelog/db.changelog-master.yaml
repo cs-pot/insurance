@@ -1,1 +1,4 @@
-databaseChangeLog: []
+databaseChangeLog:
+  - include:
+      file: changes/ddl/001-create-consumers-table.sql
+      relativeToChangelogFile: true

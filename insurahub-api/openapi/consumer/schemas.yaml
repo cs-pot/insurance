@@ -38,3 +38,4 @@ ConsumerCreationResponse:
   properties:
     id:
       type: string
+      format: uuid
