@@ -9,7 +9,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres/init:/docker-entrypoint-initdb.d
     networks:
       - insurahub-network
     healthcheck:
