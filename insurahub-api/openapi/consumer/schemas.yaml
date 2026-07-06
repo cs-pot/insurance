@@ -1,4 +1,4 @@
-UserCreateRequest:
+ConsumerCreateRequest:
   type: object
   required:
     - email
@@ -31,7 +31,7 @@ UserCreateRequest:
     city:
       type: string
 
-UserCreationResponse:
+ConsumerCreationResponse:
   type: object
   required:
     - id

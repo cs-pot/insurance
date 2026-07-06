@@ -7,9 +7,9 @@ info:
     REST API for InsuraHub.
 
 tags:
-  - name: Users
-    description: Operations related to user management
+  - name: Consumers
+    description: Operations related to consumer management
 
 paths:
-  /api/users:
-    $ref: './user/paths.yaml#/users'
+  /api/consumers:
+    $ref: './consumer/paths.yaml#/consumers'

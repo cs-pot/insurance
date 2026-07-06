@@ -1,0 +1,26 @@
+consumers:
+  post:
+    tags:
+      - Consumers
+    summary: Create a consumer
+    description: Creates a consumer with provided credentials. Only available to administrators.
+    operationId: createConsumer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/ConsumerCreateRequest'
+    responses:
+      201:
+        description: Consumer created
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/ConsumerCreationResponse'
+      400:
+        description: Bad Request
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden
