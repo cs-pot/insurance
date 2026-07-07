@@ -16,7 +16,6 @@ public class Auth0PermissionsConverter implements Converter<Jwt, Collection<Gran
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         List<String> permissions = jwt.getClaimAsStringList("permissions");
-        System.out.println(permissions);
         if (permissions == null) {
             return Collections.emptyList();
         }
