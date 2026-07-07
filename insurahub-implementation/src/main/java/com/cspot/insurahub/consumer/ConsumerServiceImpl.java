@@ -29,11 +29,16 @@ public class ConsumerServiceImpl implements ConsumerService {
         String idpId = null;
         try {
             idpId = registerUserWithIdp(consumerCreateRequest);
+            assignConsumerRoleToUser(idpId);
             return persistConsumerData(consumerCreateRequest, idpId);
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | IdentityProviderRoleAssignmentException e) {
             deleteUserFromIdp(idpId);
             throw new RuntimeException(e);
         }
+    }
+
+    private void assignConsumerRoleToUser(String idpId) {
+        identityProviderClient.addUserRole(idpId, IdpRole.CONSUMER);
     }
 
     private void deleteUserFromIdp(String idpId) {
@@ -43,7 +48,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     }
 
     private ConsumerCreationResponse persistConsumerData(ConsumerCreateRequest consumerCreateRequest,
-                                                                  String idpId) {
+                                                         String idpId) {
         Consumer consumer = consumerMapper.initializeFromCreateRequest(consumerCreateRequest);
         consumer.setIdpId(idpId);
         consumer = consumerRepository.save(consumer);

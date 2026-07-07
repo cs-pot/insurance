@@ -4,8 +4,14 @@ import com.auth0.client.mgmt.ManagementApi;
 import com.auth0.client.mgmt.core.ManagementApiException;
 import com.auth0.client.mgmt.types.CreateUserRequestContent;
 import com.auth0.client.mgmt.types.CreateUserResponseContent;
+import com.auth0.client.mgmt.users.types.AssignUserRolesRequestContent;
 import com.cspot.insurahub.consumer.IdentityProviderClient;
 import com.cspot.insurahub.consumer.IdentityProviderRegistrationException;
+import com.cspot.insurahub.consumer.IdentityProviderRoleAssignmentException;
+import com.cspot.insurahub.consumer.IdpRole;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +19,16 @@ import org.springframework.stereotype.Component;
 public class Auth0Client implements IdentityProviderClient {
 
     private final String connectionName;
+    private final String consumerRole;
+    private final String adminRole;
     private final ManagementApi managementApi;
 
-    public Auth0Client(@Value("${auth0.connection-name}") String connectionName, ManagementApi managementApi) {
+    public Auth0Client(@Value("${auth0.connection-name}") String connectionName,
+                       @Value("${auth0.role.consumer}") String consumerRole,
+                       @Value("${auth0.role.admin}") String adminRole, ManagementApi managementApi) {
         this.connectionName = connectionName;
+        this.consumerRole = consumerRole;
+        this.adminRole = adminRole;
         this.managementApi = managementApi;
     }
 
@@ -43,5 +55,25 @@ public class Auth0Client implements IdentityProviderClient {
         } catch (ManagementApiException e) {
             throw new IdentityProviderRegistrationException("Failed to delete user from Auth0", e);
         }
+    }
+
+    @Override
+    public void addUserRole(String userId, IdpRole role) {
+        try {
+            AssignUserRolesRequestContent request = AssignUserRolesRequestContent.builder()
+                    .addRoles(getRoleId(role))
+                    .build();
+            System.out.println(request.getRoles());
+            managementApi.users().roles().assign(userId, request);
+        } catch (ManagementApiException e) {
+            throw new IdentityProviderRoleAssignmentException("Failed to assign role " + role + " to user", e);
+        }
+    }
+
+    private String getRoleId(IdpRole role) {
+        return switch (role) {
+            case CONSUMER -> consumerRole;
+            case ADMIN -> adminRole;
+        };
     }
 }

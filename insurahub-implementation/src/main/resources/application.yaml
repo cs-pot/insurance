@@ -34,3 +34,7 @@ auth0:
   client-id: ${AUTH0_M2M_CLIENT_ID}
   client-secret: ${AUTH0_M2M_CLIENT_SECRET}
   connection-name: ${AUTH0_CONNECTION_NAME}
+
+  role:
+    consumer: ${AUTH0_CONSUMER_ROLE}
+    admin: ${AUTH0_ADMIN_ROLE}
