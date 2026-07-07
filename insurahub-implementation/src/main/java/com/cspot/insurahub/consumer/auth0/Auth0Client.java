@@ -6,14 +6,17 @@ import com.auth0.client.mgmt.types.CreateUserRequestContent;
 import com.auth0.client.mgmt.types.CreateUserResponseContent;
 import com.cspot.insurahub.consumer.IdentityProviderClient;
 import com.cspot.insurahub.consumer.IdentityProviderRegistrationException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Auth0Client implements IdentityProviderClient {
 
+    private final String connectionName;
     private final ManagementApi managementApi;
 
-    public Auth0Client(ManagementApi managementApi) {
+    public Auth0Client(@Value("${auth0.connection-name}") String connectionName, ManagementApi managementApi) {
+        this.connectionName = connectionName;
         this.managementApi = managementApi;
     }
 
@@ -21,7 +24,7 @@ public class Auth0Client implements IdentityProviderClient {
     public String registerUser(String email, String password) {
         try {
             CreateUserRequestContent request = CreateUserRequestContent.builder()
-                    .connection("Username-Password-Authentication")
+                    .connection(connectionName)
                     .email(email)
                     .password(password)
                     .build();

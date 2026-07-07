@@ -5,6 +5,7 @@ import com.cspot.insurahub.model.ConsumerCreateRequest;
 import com.cspot.insurahub.model.ConsumerCreationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +24,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('create:consumers')")
     public ConsumerCreationResponse createConsumer(ConsumerCreateRequest consumerCreateRequest) {
         String idpId = null;
         try {

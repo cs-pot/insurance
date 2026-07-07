@@ -12,7 +12,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
-    
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -33,3 +33,4 @@ auth0:
   domain: ${AUTH0_DOMAIN}
   client-id: ${AUTH0_M2M_CLIENT_ID}
   client-secret: ${AUTH0_M2M_CLIENT_SECRET}
+  connection-name: ${AUTH0_CONNECTION_NAME}

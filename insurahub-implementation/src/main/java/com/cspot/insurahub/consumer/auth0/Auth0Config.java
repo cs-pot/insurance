@@ -5,6 +5,8 @@ import com.auth0.exception.Auth0Exception;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 @Configuration
 public class Auth0Config {
@@ -32,5 +34,12 @@ public class Auth0Config {
                 .token(token)
 //                .clientCredentials(clientId, clientSecret)
                 .build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter(Auth0PermissionsConverter permissionsConverter) {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(permissionsConverter);
+        return converter;
     }
 }
