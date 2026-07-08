@@ -34,5 +34,6 @@
 
         <!-- Imports -->
         <module name="AvoidStarImport"/>
+        <module name="UnusedImports"/>
     </module>
 </module>
