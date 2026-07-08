@@ -3,13 +3,14 @@ services:
     image: postgres:18
     container_name: insurahub-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: postgres
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+      - ./config/postgres/init:/docker-entrypoint-initdb.d
     networks:
       - insurahub-network
     healthcheck:
