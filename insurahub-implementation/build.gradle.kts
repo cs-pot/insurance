@@ -18,6 +18,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
     implementation (libs.auth0)
     implementation(libs.springdoc.scalar)
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.springframework.boot:spring-boot-h2console")

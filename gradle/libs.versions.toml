@@ -8,6 +8,7 @@ jacksonDatabindNullable = "0.2.10"
 testcontainers = "1.20.4"
 lombok-plugin = "9.5.0"
 auth0 = "3.9.0"
+mapstruct = "1.6.3"
 
 [libraries]
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swagger" }
@@ -16,6 +17,8 @@ springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-sc
 jackson-databind-nullable = { module = "org.openapitools:jackson-databind-nullable", version.ref = "jacksonDatabindNullable" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 auth0 = { module = "com.auth0:auth0", version.ref = "auth0" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
