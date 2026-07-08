@@ -2,20 +2,17 @@ package com.cspot.insurahub.service;
 
 import com.cspot.insurahub.entity.RevokedToken;
 import com.cspot.insurahub.repository.RevokedTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
 @Service
+@RequiredArgsConstructor
 public class TokenBlacklistService {
 
     private final RevokedTokenRepository revokedTokenRepository;
-
-    // Standard constructor injection (no Lombok)
-    public TokenBlacklistService(RevokedTokenRepository revokedTokenRepository) {
-        this.revokedTokenRepository = revokedTokenRepository;
-    }
 
     @Transactional
     public void blacklistToken(String jti, Instant expiresAt) {
