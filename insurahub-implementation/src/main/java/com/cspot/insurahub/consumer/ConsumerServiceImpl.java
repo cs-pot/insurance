@@ -3,25 +3,18 @@ package com.cspot.insurahub.consumer;
 import com.cspot.insurahub.consumer.converter.ConsumerMapper;
 import com.cspot.insurahub.model.ConsumerCreateRequest;
 import com.cspot.insurahub.model.ConsumerCreationResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ConsumerServiceImpl implements ConsumerService {
 
     private final IdentityProviderClient identityProviderClient;
     private final ConsumerRepository consumerRepository;
     private final ConsumerMapper consumerMapper;
-
-    @Autowired
-    public ConsumerServiceImpl(IdentityProviderClient identityProviderClient, ConsumerRepository consumerRepository,
-                               ConsumerMapper consumerMapper) {
-        this.identityProviderClient = identityProviderClient;
-        this.consumerRepository = consumerRepository;
-        this.consumerMapper = consumerMapper;
-    }
 
     @Override
     @PreAuthorize("hasAuthority('create:consumers')")
