@@ -38,11 +38,11 @@ public class ConsumerService {
     private @NonNull ConsumerCreationResponse attemptConsumerCreation(ConsumerCreateRequest consumerCreateRequest) {
         String idpId = null;
         try {
-            log.trace("Attempting to register user in identity provider");
+            log.debug("Attempting to register user in identity provider");
             idpId = registerUserWithIdp(consumerCreateRequest);
-            log.trace("Attempting to assign user role");
+            log.debug("Attempting to assign user role");
             assignConsumerRoleToUser(idpId);
-            log.trace("Attempting to persist user in database");
+            log.debug("Attempting to persist user in database");
             return persistConsumerData(consumerCreateRequest, idpId);
         } catch (DataAccessException | IdentityProviderRoleAssignmentException e) {
             log.error("Exception encountered when creating consumer", e);

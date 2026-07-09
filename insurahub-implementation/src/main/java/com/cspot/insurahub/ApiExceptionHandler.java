@@ -26,7 +26,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorDto handleUserCreationException(UserCreationException e, HttpServletRequest request) {
-        logException(e);
+        logError(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("USER_CREATION_FAILED")
                 .status(500)
@@ -39,7 +39,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.CONFLICT)
     public ErrorDto handleEmailAlreadyInUseException(EmailAlreadyInUseException e, HttpServletRequest request) {
-        logException(e);
+        logWarn(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("EMAIL_ALREADY_IN_USE")
                 .status(409)
@@ -53,7 +53,7 @@ public class ApiExceptionHandler {
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     public ErrorDto handleMethodArgumentNotValidException(MethodArgumentNotValidException e,
                                                           HttpServletRequest request) {
-        logException(e);
+        logWarn(e);
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
@@ -66,7 +66,11 @@ public class ApiExceptionHandler {
         return errorDto;
     }
 
-    private void logException(Exception e) {
-        log.debug("Exception encountered", e);
+    private void logError(Exception e) {
+        log.error("Exception encountered", e);
+    }
+
+    private void logWarn(Exception e) {
+        log.warn("Exception encountered", e);
     }
 }
