@@ -1,4 +1,4 @@
-package com.cspot.insurahub.consumer.auth0;
+package com.cspot.insurahub.config.auth0;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;

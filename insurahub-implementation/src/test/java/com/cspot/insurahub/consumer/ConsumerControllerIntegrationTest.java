@@ -1,7 +1,7 @@
 package com.cspot.insurahub.consumer;
 
 import com.cspot.insurahub.BaseIntegrationTest;
-import com.cspot.insurahub.consumer.auth0.Auth0PermissionsConverter;
+import com.cspot.insurahub.config.auth0.Auth0PermissionsConverter;
 import com.cspot.insurahub.model.ConsumerCreateRequest;
 import com.cspot.insurahub.model.ConsumerCreationResponse;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package com.cspot.insurahub.consumer.auth0;
+package com.cspot.insurahub.config.auth0;
 
 import com.auth0.client.mgmt.ManagementApi;
 import com.auth0.exception.Auth0Exception;
@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 @Configuration
 public class Auth0Config {
