@@ -1,6 +1,7 @@
 package com.cspot.insurahub.consumer;
 
 import com.cspot.insurahub.BaseIntegrationTest;
+import com.cspot.insurahub.consumer.auth0.Auth0PermissionsConverter;
 import com.cspot.insurahub.model.ConsumerCreateRequest;
 import com.cspot.insurahub.model.ConsumerCreationResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,15 +10,15 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +59,9 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
                 .thenReturn("auth0|consumer-123");
 
         String responseJson = mockMvc.perform(post("/api/consumers")
-                        .with(jwt().authorities(new SimpleGrantedAuthority("create:consumers")))
+                        .with(jwt().jwt(jwt -> jwt
+                                .claim("permissions", List.of("create:consumers")))
+                                .authorities(new Auth0PermissionsConverter()))
                         .contentType("application/json")
                         .content(jsonMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
