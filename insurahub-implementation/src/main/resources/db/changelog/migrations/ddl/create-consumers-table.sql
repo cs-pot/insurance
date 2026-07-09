@@ -2,7 +2,6 @@
 
 --changeset cspot:reate-consumers-table
 CREATE TABLE IF NOT EXISTS consumers (
-    deleted BOOLEAN NOT NULL DEFAULT FALSE,
     id UUID PRIMARY KEY,
     idp_id VARCHAR UNIQUE NOT NULL,
     email VARCHAR NOT NULL,
@@ -11,7 +10,9 @@ CREATE TABLE IF NOT EXISTS consumers (
     personal_id VARCHAR NOT NULL,
     date_of_birth DATE NOT NULL,
     address VARCHAR NOT NULL,
-    city VARCHAR NOT NULL
+    city VARCHAR NOT NULL,
+    deleted_at TIMESTAMPTZ,
+    deleted_by VARCHAR
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS consumers_email_unique

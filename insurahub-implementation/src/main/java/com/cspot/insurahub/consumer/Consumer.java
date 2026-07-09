@@ -10,7 +10,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.SoftDelete;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -20,7 +19,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "consumers")
-@SoftDelete(columnName = "deleted")
 public class Consumer {
 
     @Id
