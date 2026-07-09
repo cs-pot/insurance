@@ -2,7 +2,7 @@
 
 --changeset cspot:001-create-consumers-table
 CREATE TABLE IF NOT EXISTS consumers (
-    deleted BOOLEAN NOT NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
     id UUID PRIMARY KEY,
     idp_id VARCHAR UNIQUE NOT NULL,
     email VARCHAR NOT NULL,
