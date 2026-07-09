@@ -26,12 +26,7 @@ public class Auth0Config {
     public ManagementApi managementApi() throws Auth0Exception {
         return ManagementApi.builder()
                 .domain(domain)
-                // In production, clientCredentials will need to be used as it automatically fetches tokens from
-                // Auth0. However, I have temporarily replaced it with a token obtained from an environment variable
-                // to avoid hitting the monthly token limit. This is done only for development purposes and will be
-                // removed later.
-                .token(token)
-//                .clientCredentials(clientId, clientSecret)
+                .clientCredentials(clientId, clientSecret)
                 .build();
     }
 
