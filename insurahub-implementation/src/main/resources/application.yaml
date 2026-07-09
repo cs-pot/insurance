@@ -38,3 +38,8 @@ auth0:
   role:
     consumer: ${AUTH0_CONSUMER_ROLE}
     admin: ${AUTH0_ADMIN_ROLE}
+
+logging:
+  level:
+    com.cspot:
+      DEBUG

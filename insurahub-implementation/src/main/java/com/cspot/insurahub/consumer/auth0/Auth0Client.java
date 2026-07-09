@@ -6,12 +6,10 @@ import com.auth0.client.mgmt.types.CreateUserRequestContent;
 import com.auth0.client.mgmt.types.CreateUserResponseContent;
 import com.auth0.client.mgmt.users.types.AssignUserRolesRequestContent;
 import com.cspot.insurahub.consumer.IdentityProviderClient;
-import com.cspot.insurahub.consumer.IdentityProviderRegistrationException;
-import com.cspot.insurahub.consumer.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.consumer.IdpRole;
-
-import java.util.List;
-
+import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
+import com.cspot.insurahub.consumer.exception.IdentityProviderRegistrationException;
+import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +42,9 @@ public class Auth0Client implements IdentityProviderClient {
             return createUserResponseContent.getUserId()
                     .orElseThrow(() -> new IdentityProviderRegistrationException("Failed to register user with Auth0"));
         } catch (ManagementApiException e) {
+            if (e.statusCode() == 409) {
+                throw new IdentityProviderConflictException("Received status 409 from Auth0", e);
+            }
             throw new IdentityProviderRegistrationException("Failed to register user with Auth0", e);
         }
     }

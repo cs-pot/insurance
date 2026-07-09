@@ -1,6 +1,6 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.exception;
 
-public class IdentityProviderRegistrationException extends RuntimeException {
+public class IdentityProviderRegistrationException extends IdentityProviderException {
 
     public IdentityProviderRegistrationException(String message) {
         super(message);

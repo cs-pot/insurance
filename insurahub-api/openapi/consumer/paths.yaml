@@ -20,7 +20,19 @@ consumers:
               $ref: './schemas.yaml#/ConsumerCreationResponse'
       400:
         description: Bad Request
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
       401:
         description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
       403:
         description: Forbidden
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'

@@ -1,6 +1,6 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.exception;
 
-public class IdentityProviderRoleAssignmentException extends RuntimeException {
+public class IdentityProviderRoleAssignmentException extends IdentityProviderException {
 
     public IdentityProviderRoleAssignmentException(String message) {
         super(message);

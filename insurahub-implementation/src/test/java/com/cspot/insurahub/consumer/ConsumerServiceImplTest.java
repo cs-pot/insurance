@@ -1,6 +1,7 @@
 package com.cspot.insurahub.consumer;
 
 import com.cspot.insurahub.consumer.converter.ConsumerMapper;
+import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.model.ConsumerCreateRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
