@@ -3,6 +3,7 @@ package com.cspot.insurahub.consumer;
 import com.cspot.insurahub.consumer.converter.ConsumerMapper;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.model.ConsumerCreateRequest;
+import com.cspot.insurahub.model.ConsumerCreationResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,13 +55,14 @@ class ConsumerServiceImplTest {
         });
 
         // WHEN
-        consumerService.createConsumer(createRequest);
+        ConsumerCreationResponse response = consumerService.createConsumer(createRequest);
 
         // THEN
         verify(identityProviderClient).registerUser(createRequest.getEmail(), createRequest.getPassword());
         verify(identityProviderClient).addUserRole(consumer.getIdpId(), IdpRole.CONSUMER);
         verify(consumerRepository).save(any(Consumer.class));
         verify(identityProviderClient, never()).deleteUser(consumer.getIdpId());
+        assertEquals(consumer.getId(), response.getId());
     }
 
     @Test
