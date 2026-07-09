@@ -19,9 +19,6 @@ public class Auth0Config {
     @Value("${auth0.client-secret}")
     private String clientSecret;
 
-    @Value("${auth0.token}")
-    private String token;
-
     @Bean
     public ManagementApi managementApi() throws Auth0Exception {
         return ManagementApi.builder()

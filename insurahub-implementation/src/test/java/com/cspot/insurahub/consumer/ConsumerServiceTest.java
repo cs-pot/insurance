@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ConsumerServiceImplTest {
+class ConsumerServiceTest {
 
     @Mock
     private IdentityProviderClient identityProviderClient;
@@ -38,7 +38,7 @@ class ConsumerServiceImplTest {
     private ConsumerMapper consumerMapper;
 
     @InjectMocks
-    private ConsumerServiceImpl consumerService;
+    private ConsumerService consumerService;
 
     @Test
     public void shouldCreateConsumer() {

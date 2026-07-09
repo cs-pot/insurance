@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset cspot:reate-consumers-table
+--changeset cspot:create-consumers-table
 CREATE TABLE IF NOT EXISTS consumers (
     id UUID PRIMARY KEY,
     idp_id VARCHAR UNIQUE NOT NULL,
@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS consumers (
 
 CREATE UNIQUE INDEX IF NOT EXISTS consumers_email_unique
 ON consumers(LOWER(email))
-WHERE deleted = false;
+WHERE deleted_at = NULL;

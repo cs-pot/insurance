@@ -17,7 +17,6 @@ auth0:
   client-id: auth0_client_id
   client-secret: auth0_client_secret
   connection-name: auth0_connection_name
-  token: auth0_token
   role:
     consumer: auth0_consumer_role
     admin: auth0_admin_role
