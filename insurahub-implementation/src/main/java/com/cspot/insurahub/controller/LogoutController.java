@@ -22,14 +22,16 @@ public class LogoutController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
-        if (jwt != null) {
-            String jti = jwt.getId();
-            Instant expiresAt = jwt.getExpiresAt();
-            
-            if (jti != null && expiresAt != null) {
-                tokenBlacklistService.blacklistToken(jti, expiresAt);
-            }
+        if (jwt == null || jwt.getId() == null || jwt.getExpiresAt() == null) {
+            // Return 400 if required token claims are missing
+            return ResponseEntity.badRequest().build();
         }
+
+        String jti = jwt.getId();
+        Instant expiresAt = jwt.getExpiresAt();
+        
+        tokenBlacklistService.blacklistToken(jti, expiresAt);
+        
         return ResponseEntity.noContent().build();
     }
 }
