@@ -63,8 +63,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     }
 
     private String registerUserWithIdp(ConsumerCreateRequest consumerCreateRequest) {
-        String idpId = identityProviderClient.registerUser(consumerCreateRequest.getEmail(),
+        return identityProviderClient.registerUser(consumerCreateRequest.getEmail(),
                 consumerCreateRequest.getPassword());
-        return idpId;
     }
 }
