@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset cspot:001-create-consumers-table
+--changeset cspot:reate-consumers-table
 CREATE TABLE IF NOT EXISTS consumers (
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
     id UUID PRIMARY KEY,

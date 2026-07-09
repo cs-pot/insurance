@@ -1,4 +1,4 @@
 databaseChangeLog:
   - include:
-      file: migrations/ddl/001-create-consumers-table.sql
+      file: migrations/ddl/create-consumers-table.sql
       relativeToChangelogFile: true
