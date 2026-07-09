@@ -13,6 +13,8 @@ import com.cspot.insurahub.consumer.IdpRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -110,26 +112,19 @@ class Auth0ClientTest {
         assertEquals(apiException, exception.getCause());
     }
 
-    @Test
-    void shouldAssignConsumerUserRole() {
-        auth0Client.addUserRole("auth0|user-123", IdpRole.CONSUMER);
+    @ParameterizedTest
+    @CsvSource({
+        "CONSUMER, " + CONSUMER_ROLE_ID,
+        "ADMIN, " + ADMIN_ROLE_ID
+    })
+    void shouldAssignCorrectUserRole(IdpRole role, String expectedRoleId) {
+        auth0Client.addUserRole("auth0|user-123", role);
 
         ArgumentCaptor<AssignUserRolesRequestContent> captor =
                 ArgumentCaptor.forClass(AssignUserRolesRequestContent.class);
         verify(rolesClient).assign(eq("auth0|user-123"), captor.capture());
         assertEquals(1, captor.getValue().getRoles().size());
-        assertEquals(CONSUMER_ROLE_ID, captor.getValue().getRoles().get(0));
-    }
-
-    @Test
-    void shouldAssignAdminUserRole() {
-        auth0Client.addUserRole("auth0|user-123", IdpRole.ADMIN);
-
-        ArgumentCaptor<AssignUserRolesRequestContent> captor =
-                ArgumentCaptor.forClass(AssignUserRolesRequestContent.class);
-        verify(rolesClient).assign(eq("auth0|user-123"), captor.capture());
-        assertEquals(1, captor.getValue().getRoles().size());
-        assertEquals(ADMIN_ROLE_ID, captor.getValue().getRoles().get(0));
+        assertEquals(expectedRoleId, captor.getValue().getRoles().get(0));
     }
 
     @Test
