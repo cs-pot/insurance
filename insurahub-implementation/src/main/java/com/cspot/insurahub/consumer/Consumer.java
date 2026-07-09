@@ -24,32 +24,32 @@ import java.util.UUID;
 public class Consumer {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.PROTECTED)
     private UUID id;
 
-    @Column(name = "idp_id")
+    @Column(name = "idp_id", nullable = false)
     private String idpId;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "first_name")
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "personal_id")
+    @Column(name = "personal_id", nullable = false)
     private String personalId;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
-    @Column(name = "address")
+    @Column(name = "address", nullable = false)
     private String address;
 
-    @Column(name = "city")
+    @Column(name = "city", nullable = false)
     private String city;
 }

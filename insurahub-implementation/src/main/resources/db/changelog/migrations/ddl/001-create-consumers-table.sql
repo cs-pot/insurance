@@ -15,5 +15,5 @@ CREATE TABLE IF NOT EXISTS consumers (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS consumers_email_unique
-ON consumers(email)
+ON consumers(LOWER(email))
 WHERE deleted = false;
