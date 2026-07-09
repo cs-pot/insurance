@@ -36,3 +36,15 @@ consumers:
           application/json:
             schema:
               $ref: '../common/schemas.yaml#/ErrorDto'
+      409:
+        description: Conflict
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      500:
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'

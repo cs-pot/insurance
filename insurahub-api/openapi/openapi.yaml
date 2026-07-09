@@ -13,3 +13,13 @@ tags:
 paths:
   /api/consumers:
     $ref: './consumer/paths.yaml#/consumers'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
