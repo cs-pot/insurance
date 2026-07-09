@@ -24,6 +24,11 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
+  mvc:
+    servlet:
+      path:
+        /api/v1
+
 auth0:
   domain: ${AUTH0_DOMAIN}
   client-id: ${AUTH0_M2M_CLIENT_ID}

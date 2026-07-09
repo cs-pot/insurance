@@ -58,7 +58,7 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
         Mockito.when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword()))
                 .thenReturn("auth0|consumer-123");
 
-        String responseJson = mockMvc.perform(post("/api/consumers")
+        String responseJson = mockMvc.perform(post("/consumers")
                         .with(jwt().jwt(jwt -> jwt
                                 .claim("permissions", List.of("create:consumers")))
                                 .authorities(new Auth0PermissionsConverter()))
@@ -93,7 +93,7 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
     void shouldRejectConsumerCreationWithoutAuthority() throws Exception {
         ConsumerCreateRequest createRequest = getConsumerCreateRequest();
 
-        mockMvc.perform(post("/api/consumers")
+        mockMvc.perform(post("/consumers")
                         .with(jwt())
                         .contentType("application/json")
                         .content(jsonMapper.writeValueAsString(createRequest)))

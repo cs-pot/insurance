@@ -57,8 +57,7 @@ public class SecurityConfig {
                             jsonMapper.writeValue(response.getWriter(), errorDto);
                         }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/public/**").permitAll()
                         .requestMatchers("/scalar/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 ->
