@@ -14,12 +14,14 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "consumers")
-public class Consumer {
+public class Consumer extends SoftDeletableAuditableEntity {
 
     @Id
     @Column(name = "id", nullable = false)

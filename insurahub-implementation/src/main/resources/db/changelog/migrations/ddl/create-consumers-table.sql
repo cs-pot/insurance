@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS consumers (
     date_of_birth DATE NOT NULL,
     address VARCHAR NOT NULL,
     city VARCHAR NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    created_by VARCHAR NOT NUll,
+    updated_at TIMESTAMPTZ,
+    updated_by VARCHAR,
     deleted_at TIMESTAMPTZ,
     deleted_by VARCHAR
 );
