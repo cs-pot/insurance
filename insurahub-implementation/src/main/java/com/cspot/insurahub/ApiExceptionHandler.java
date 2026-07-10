@@ -55,7 +55,7 @@ public class ApiExceptionHandler {
                                                           HttpServletRequest request) {
         logWarn(e);
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .map(fe -> fe.getField() + ": ")
                 .collect(Collectors.joining("; "));
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")
