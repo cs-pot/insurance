@@ -15,7 +15,7 @@ public class ConsumerController implements ConsumersApi {
 
     @Override
     @PreAuthorize("hasAuthority('create:consumers')")
-    public ConsumerCreationResponse createConsumer(ConsumerCreateRequest consumerCreateRequest) {
+    public ConsumerCreationResponse postCreateConsumer(ConsumerCreateRequest consumerCreateRequest) {
         return consumerService.createConsumer(consumerCreateRequest);
     }
 }

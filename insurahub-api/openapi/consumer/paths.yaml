@@ -4,7 +4,7 @@ consumers:
       - Consumers
     summary: Create a consumer
     description: Creates a consumer with provided credentials. Only available to administrators.
-    operationId: createConsumer
+    operationId: postCreateConsumer
     requestBody:
       required: true
       content:
