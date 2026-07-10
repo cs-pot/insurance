@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+
 @Component
 public class BlacklistJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
@@ -21,9 +23,16 @@ public class BlacklistJwtAuthenticationConverter implements Converter<Jwt, Abstr
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        String jti = jwt.getId(); // Extract the JTI (JWT ID) from the token
+        String jti = jwt.getId();
+        Instant expiresAt = jwt.getExpiresAt();
 
-        if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+        // Fail early if required claims are missing
+        if (jti == null || expiresAt == null) {
+            OAuth2Error error = new OAuth2Error("invalid_token", "Token is missing required claims (jti or exp)", null);
+            throw new OAuth2AuthenticationException(error);
+        }
+
+        if (tokenBlacklistService.isBlacklisted(jti)) {
             OAuth2Error error = new OAuth2Error("invalid_token", "Token has been revoked", null);
             throw new OAuth2AuthenticationException(error);
         }

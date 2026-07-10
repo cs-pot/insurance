@@ -17,7 +17,7 @@ public class LogoutController implements AuthenticationApi {
     @Override
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {
-        tokenBlacklistService.blacklistTokenFromAuthentication(
+        tokenBlacklistService.blacklistToken(
                 SecurityContextHolder.getContext().getAuthentication()
         );
     }
