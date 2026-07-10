@@ -27,10 +27,10 @@ class LogoutIntegrationTest extends BaseIntegrationTest {
     void logoutShouldReturnNoContentAndBlacklistToken() throws Exception {
         revokedTokenRepository.deleteAll();
 
-        mockMvc.perform(post("/api/logout")
+        mockMvc.perform(post("/auth/logout")
                         .with(jwt().jwt(jwt -> jwt
                                 .claim("jti", "test-jti-123")
-                                .claim("exp", Instant.now().plusSeconds(300)))))
+                                .expiresAt(Instant.now().plusSeconds(300)))))
                 .andExpect(status().isNoContent());
 
         assertThat(revokedTokenRepository.existsById("test-jti-123")).isTrue();
@@ -38,7 +38,7 @@ class LogoutIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void logoutWithoutTokenShouldReturnUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/logout"))
+        mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isUnauthorized());
     }
 }
