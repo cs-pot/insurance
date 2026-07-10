@@ -1,38 +1,15 @@
 package com.cspot.insurahub.common;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.Instant;
-
-@Getter
+/**
+ * Qudit base
+ *
+ * <p>Entities extending this must have created, updated, deleted columns <b>6 in total</b></p>
+ */
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public abstract class AuditableEntity {
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @CreatedBy
-    @Column(name = "created_by", nullable = false, updatable = false)
-    private String createdBy;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @LastModifiedBy
-    @Column(name = "updated_by")
-    private String updatedBy;
+public abstract class AuditableEntity extends SoftDeletableAuditableEntity {
 }
