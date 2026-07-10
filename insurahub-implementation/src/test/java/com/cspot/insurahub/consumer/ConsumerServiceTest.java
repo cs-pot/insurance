@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,14 +44,9 @@ class ConsumerServiceTest {
         // GIVEN
         ConsumerCreateRequest createRequest = getConsumerCreateRequest();
         Consumer consumer = getConsumer();
+        setUpMocksForRepositoryAndMapper(createRequest, consumer);
         when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword())).thenReturn(
                 "idpId");
-        when(consumerMapper.initializeFromCreateRequest(createRequest)).thenReturn(consumer);
-        when(consumerRepository.save(any(Consumer.class))).thenAnswer(invocation -> {
-            Consumer argument = invocation.getArgument(0);
-            argument.setId(UUID.randomUUID());
-            return argument;
-        });
 
         // WHEN
         ConsumerCreationResponse response = consumerService.createConsumer(createRequest);
@@ -69,6 +63,8 @@ class ConsumerServiceTest {
     public void shouldDeleteUserFromIdpAndThrowWhenRoleAssignmentFails() {
         // GIVEN
         ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        Consumer consumer = getConsumer();
+        setUpMocksForRepositoryAndMapper(createRequest, consumer);
         when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword())).thenReturn(
                 "idpId");
         doThrow(new IdentityProviderRoleAssignmentException("role assignment failed"))
@@ -80,10 +76,10 @@ class ConsumerServiceTest {
 
         // THEN
         assertInstanceOf(IdentityProviderRoleAssignmentException.class, exception.getCause());
+        verify(consumerRepository).save(any(Consumer.class));
         verify(identityProviderClient).registerUser(createRequest.getEmail(), createRequest.getPassword());
         verify(identityProviderClient).addUserRole("idpId", IdpRole.CONSUMER);
         verify(identityProviderClient).deleteUser("idpId");
-        verifyNoInteractions(consumerRepository);
     }
 
     @Test
@@ -91,12 +87,12 @@ class ConsumerServiceTest {
         // GIVEN
         ConsumerCreateRequest createRequest = getConsumerCreateRequest();
         Consumer consumer = getConsumer();
+        setUpMocksForRepositoryAndMapper(createRequest, consumer);
         DataIntegrityViolationException dataAccessException =
                 new DataIntegrityViolationException("database unavailable");
         when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword())).thenReturn(
                 "idpId");
-        when(consumerMapper.initializeFromCreateRequest(createRequest)).thenReturn(consumer);
-        when(consumerRepository.save(any(Consumer.class))).thenThrow(dataAccessException);
+        doThrow(dataAccessException).when(consumerRepository).flush();
 
         // WHEN
         RuntimeException exception = assertThrows(RuntimeException.class,
@@ -108,6 +104,15 @@ class ConsumerServiceTest {
         verify(identityProviderClient).addUserRole("idpId", IdpRole.CONSUMER);
         verify(identityProviderClient).deleteUser("idpId");
         verify(consumerRepository).save(any(Consumer.class));
+    }
+
+    private void setUpMocksForRepositoryAndMapper(ConsumerCreateRequest createRequest, Consumer consumer) {
+        when(consumerMapper.initializeFromCreateRequest(createRequest)).thenReturn(consumer);
+        when(consumerRepository.save(any(Consumer.class))).thenAnswer(invocation -> {
+            Consumer argument = invocation.getArgument(0);
+            argument.setId(UUID.randomUUID());
+            return argument;
+        });
     }
 
     private Consumer getConsumer() {

@@ -37,18 +37,27 @@ public class ConsumerService {
 
     private @NonNull ConsumerCreationResponse attemptConsumerCreation(ConsumerCreateRequest consumerCreateRequest) {
         String idpId = null;
+        Consumer consumer = null;
         try {
+            log.debug("Attempting to persist user in database");
+            consumer = persistConsumerData(consumerCreateRequest);
             log.debug("Attempting to register user in identity provider");
             idpId = registerUserWithIdp(consumerCreateRequest);
             log.debug("Attempting to assign user role");
             assignConsumerRoleToUser(idpId);
-            log.debug("Attempting to persist user in database");
-            return persistConsumerData(consumerCreateRequest, idpId);
+            log.debug("Attempting to assign idpId to consumer in the database");
+            assignIdpIdInDatabase(consumer, idpId);
+            return new ConsumerCreationResponse(consumer.getId());
         } catch (DataAccessException | IdentityProviderRoleAssignmentException e) {
             log.error("Exception encountered when creating consumer", e);
             deleteUserFromIdp(idpId);
             throw e;
         }
+    }
+
+    private void assignIdpIdInDatabase(Consumer consumer, String idpId) {
+        consumer.setIdpId(idpId);
+        consumerRepository.flush();
     }
 
     private void assignConsumerRoleToUser(String idpId) {
@@ -61,12 +70,10 @@ public class ConsumerService {
         }
     }
 
-    private ConsumerCreationResponse persistConsumerData(ConsumerCreateRequest consumerCreateRequest,
-                                                         String idpId) {
+    private Consumer persistConsumerData(ConsumerCreateRequest consumerCreateRequest) {
         Consumer consumer = consumerMapper.initializeFromCreateRequest(consumerCreateRequest);
-        consumer.setIdpId(idpId);
         consumer = consumerRepository.save(consumer);
-        return new ConsumerCreationResponse(consumer.getId());
+        return consumer;
     }
 
     private String registerUserWithIdp(ConsumerCreateRequest consumerCreateRequest) {

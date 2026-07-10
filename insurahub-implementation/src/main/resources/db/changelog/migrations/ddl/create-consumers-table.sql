@@ -3,7 +3,7 @@
 --changeset cspot:create-consumers-table
 CREATE TABLE IF NOT EXISTS consumers (
     id UUID PRIMARY KEY,
-    idp_id VARCHAR UNIQUE NOT NULL,
+    idp_id VARCHAR UNIQUE,
     email VARCHAR NOT NULL,
     first_name VARCHAR NOT NULL,
     last_name VARCHAR NOT NULL,
