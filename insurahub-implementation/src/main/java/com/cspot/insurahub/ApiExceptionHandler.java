@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -61,6 +62,19 @@ public class ApiExceptionHandler {
                 .error("VALIDATION_FAILED")
                 .status(400)
                 .message(message)
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("MALFORMED_REQUEST_BODY")
+                .status(400)
+                .message("Missing or invalid request body")
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;
