@@ -66,6 +66,19 @@ public class ApiExceptionHandler {
         return errorDto;
     }
 
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDto defaultHandler(Exception e, HttpServletRequest request) {
+        logError(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("INTERNAL_SERVER_ERROR")
+                .status(500)
+                .message("Internal server error")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
     private void logError(Exception e) {
         log.error("Exception encountered", e);
     }
