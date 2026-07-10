@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
@@ -81,6 +82,18 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.FORBIDDEN)
+    public ErrorDto handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("ACCESS_DENIED")
+                .status(403)
+                .message("You do not have permissions to perform this operation.")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorDto defaultHandler(Exception e, HttpServletRequest request) {
         logError(e);
