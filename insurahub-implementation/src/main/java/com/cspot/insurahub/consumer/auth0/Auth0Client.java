@@ -64,7 +64,6 @@ public class Auth0Client implements IdentityProviderClient {
             AssignUserRolesRequestContent request = AssignUserRolesRequestContent.builder()
                     .addRoles(getRoleId(role))
                     .build();
-            System.out.println(request.getRoles());
             managementApi.users().roles().assign(userId, request);
         } catch (ManagementApiException e) {
             throw new IdentityProviderRoleAssignmentException("Failed to assign role " + role + " to user", e);
