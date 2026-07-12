@@ -1,7 +1,7 @@
-package com.cspot.insurahub.service;
+package com.cspot.insurahub.auth.service;
 
-import com.cspot.insurahub.entity.RevokedToken;
-import com.cspot.insurahub.repository.RevokedTokenRepository;
+import com.cspot.insurahub.auth.entity.RevokedToken;
+import com.cspot.insurahub.auth.repository.RevokedTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;

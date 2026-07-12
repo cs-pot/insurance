@@ -1,7 +1,7 @@
-package com.cspot.insurahub.controller;
+package com.cspot.insurahub.auth.controller;
 
 import com.cspot.insurahub.BaseIntegrationTest;
-import com.cspot.insurahub.repository.RevokedTokenRepository;
+import com.cspot.insurahub.auth.repository.RevokedTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

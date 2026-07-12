@@ -1,7 +1,7 @@
-package com.cspot.insurahub.controller;
+package com.cspot.insurahub.auth.controller;
 
 import com.cspot.insurahub.api.AuthenticationApi;
-import com.cspot.insurahub.service.TokenBlacklistService;
+import com.cspot.insurahub.auth.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
