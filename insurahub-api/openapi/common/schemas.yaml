@@ -1,0 +1,19 @@
+ErrorDto:
+  type: object
+  required:
+    - error
+    - status
+    - timestamp
+    - path
+  properties:
+    error:
+      type: string
+    status:
+      type: integer
+    timestamp:
+      type: string
+      format: date-time
+    path:
+      type: string
+    message:
+      type: string

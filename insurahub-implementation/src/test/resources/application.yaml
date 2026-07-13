@@ -10,3 +10,13 @@ spring:
           jwk-set-uri: https://test.auth0.com/.well-known/jwks.json
           audiences:
             - https://insurahub.test/api
+
+# There are currently no plans to implement tests with a real Auth0 tenant involved, so fake data is used here.
+auth0:
+  domain: auth0_domain
+  client-id: auth0_client_id
+  client-secret: auth0_client_secret
+  connection-name: auth0_connection_name
+  role:
+    consumer: auth0_consumer_role
+    admin: auth0_admin_role

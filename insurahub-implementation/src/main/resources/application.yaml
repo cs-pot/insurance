@@ -2,17 +2,12 @@ spring:
   application:
     name: InsuraHub
 
-  h2:
-    console:
-      enabled: false
-      path: /h2-console
-
   datasource:
     url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
-    
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -29,3 +24,17 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
+  mvc:
+    servlet:
+      path:
+        /api/v1
+
+auth0:
+  domain: ${AUTH0_DOMAIN}
+  client-id: ${AUTH0_M2M_CLIENT_ID}
+  client-secret: ${AUTH0_M2M_CLIENT_SECRET}
+  connection-name: ${AUTH0_CONNECTION_NAME}
+
+  role:
+    consumer: ${AUTH0_CONSUMER_ROLE}
+    admin: ${AUTH0_ADMIN_ROLE}

@@ -1,0 +1,50 @@
+consumers:
+  post:
+    tags:
+      - Consumers
+    summary: Create a consumer
+    description: Creates a consumer with provided credentials. Only available to administrators.
+    operationId: postCreateConsumer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/ConsumerCreateRequest'
+    responses:
+      201:
+        description: Consumer created
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/ConsumerCreationResponse'
+      400:
+        description: Bad Request
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      401:
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      403:
+        description: Forbidden
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      409:
+        description: Conflict
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      500:
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'

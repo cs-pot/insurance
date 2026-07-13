@@ -6,21 +6,24 @@ info:
   description: |
     REST API for InsuraHub.
 
+servers:
+  - url: localhost:8080/api/v1
+    description: Local development server
+
 tags:
-  - name: hello
-    description: The initial Hello World endpoint
+  - name: Consumers
+    description: Operations related to consumer management
 
 paths:
-  /:
-    get:
-      operationId: helloWorld
-      tags:
-        - hello
-      summary: Hello World
-      responses:
-        "200":
-          description: Hello, World
-          content:
-            text/plain:
-              schema:
-                type: string
+  /consumers:
+    $ref: './consumer/paths.yaml#/consumers'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
