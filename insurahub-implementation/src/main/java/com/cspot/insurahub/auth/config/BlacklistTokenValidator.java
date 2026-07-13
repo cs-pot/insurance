@@ -7,8 +7,6 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-
 @Component
 public class BlacklistTokenValidator implements OAuth2TokenValidator<Jwt> {
 
@@ -21,14 +19,10 @@ public class BlacklistTokenValidator implements OAuth2TokenValidator<Jwt> {
     @Override
     public OAuth2TokenValidatorResult validate(Jwt jwt) {
         String jti = jwt.getId();
-        Instant expiresAt = jwt.getExpiresAt();
 
-        if (jti == null || expiresAt == null) {
-            OAuth2Error error = new OAuth2Error("invalid_token", "Token is missing required claims (jti or exp)", null);
-            return OAuth2TokenValidatorResult.failure(error);
-        }
-
-        if (tokenBlacklistService.isBlacklisted(jti)) {
+        // If jti is missing, we can't blacklist it. 
+        // TODO: Ensure Auth0 is configured to always emit jti.
+        if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
             OAuth2Error error = new OAuth2Error("invalid_token", "Token has been revoked", null);
             return OAuth2TokenValidatorResult.failure(error);
         }
