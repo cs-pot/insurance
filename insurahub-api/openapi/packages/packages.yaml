@@ -1,0 +1,52 @@
+packages:
+  post:
+    tags:
+      - Packages
+    summary: Create a package
+    description: Creates a new insurance package. Only administrators can create packages. The name must not be
+      blank, startDate must be today or later, and endDate must be after or equal to startDate. The inclusive package
+      period must contain at least one full payroll cycle; MONTHLY uses a calendar-month cycle.
+    operationId: createPackage
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schema.yaml#/PackageCreateRequest'
+          examples:
+            validPackage:
+              summary: Valid package creation request
+              value:
+                name: Premium Health Package
+                payroll: MONTHLY
+                startDate: 2030-01-01
+                endDate: 2030-12-31
+    responses:
+      '201':
+        description: Package created
+        content:
+          application/json:
+            schema:
+              $ref: './schema.yaml#/PackageCreationResponse'
+      '400':
+        description: Bad Request
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      '422':
+        description: Unprocessable Entity
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '415':
+        description: Unsupported Media Type
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'

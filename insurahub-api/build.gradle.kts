@@ -58,6 +58,10 @@ openApiGenerate {
     )
 }
 
+tasks.named("openApiGenerate") {
+    inputs.dir(layout.projectDirectory.dir("openapi"))
+}
+
 sourceSets {
     main {
         java.srcDir(layout.buildDirectory.dir("generated/src/main/java"))
