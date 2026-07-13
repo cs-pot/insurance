@@ -2,17 +2,18 @@ package com.cspot.insurahub.config;
 
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,8 +29,8 @@ public class SecurityConfig {
     private static final String PERMISSIONS_CLAIM = "permissions";
 
     @Bean
-    SecurityFilterChain apiSecurity(HttpSecurity http, Clock clock, JsonMapper jsonMapper,
-                                    Converter<Jwt, ? extends AbstractAuthenticationToken> converter) {
+    SecurityFilterChain apiSecurity(HttpSecurity http,Clock clock,JsonMapper jsonMapper,
+        JwtAuthenticationConverter jwtAuthenticationConverter) {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -40,7 +41,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             ErrorDto errorDto = new ErrorDto()
                                     .error("UNAUTHORIZED")
-                                    .status(401)
+                                    .status(HttpServletResponse.SC_UNAUTHORIZED)
                                     .message("Missing or invalid access token")
                                     .timestamp(OffsetDateTime.now(clock))
                                     .path(request.getRequestURI());
@@ -51,7 +52,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             ErrorDto errorDto = new ErrorDto()
                                     .error("ACCESS_DENIED")
-                                    .status(403)
+                                    .status(HttpServletResponse.SC_FORBIDDEN)
                                     .message("You do not have permissions to perform this operation.")
                                     .timestamp(OffsetDateTime.now(clock))
                                     .path(request.getRequestURI());
@@ -64,25 +65,43 @@ public class SecurityConfig {
                         .requestMatchers("/scalar/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)))
+                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .build();
     }
 
     @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authoritiesConverter =
+    JwtAuthenticationConverter jwtAuthConverter() {
+        JwtGrantedAuthoritiesConverter authConverter =
                 new JwtGrantedAuthoritiesConverter();
 
-        authoritiesConverter.setAuthoritiesClaimName(PERMISSIONS_CLAIM);
-        authoritiesConverter.setAuthorityPrefix("");
+        authConverter.setAuthoritiesClaimName(PERMISSIONS_CLAIM);
+        authConverter.setAuthorityPrefix("");
 
-        JwtAuthenticationConverter authenticationConverter =
+        JwtAuthenticationConverter converter =
                 new JwtAuthenticationConverter();
 
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(
-                authoritiesConverter
+        converter.setJwtGrantedAuthoritiesConverter(
+                authConverter
         );
 
-        return authenticationConverter;
+        return converter;
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+            String issuerUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+            String jwkSetUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.audiences[0]}")
+            String audience
+    ) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .validateType(false).build();
+
+        decoder.setJwtValidator(JwtValidators.createAtJwtValidator()
+                .issuer(issuerUri).audience(audience).build());
+
+        return decoder;
     }
 }
