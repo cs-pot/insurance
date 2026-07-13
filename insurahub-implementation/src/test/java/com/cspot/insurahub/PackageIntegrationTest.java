@@ -32,7 +32,6 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
     private static final String PACKAGES_ENDPOINT = "/packages";
     private static final String PACKAGE_NAME = "Premium Health Package";
-    private static final String ROLES_CLAIM = "urn:insurahub:roles";
     private static final String PERMISSIONS_CLAIM = "permissions";
 
     @Autowired
@@ -97,13 +96,13 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectPackageCreationWithoutAdminRole() throws Exception {
+    void shouldRejectPackageCreationWithoutCreatePermission() throws Exception {
         long packagesBeforeRequest = repository.count();
         LocalDate startDate = LocalDate.now(clock).plusDays(1);
         LocalDate endDate = startDate.plusMonths(1);
 
         mockMvc.perform(post(PACKAGES_ENDPOINT)
-                        .with(permissionOnlyJwt())
+                        .with(jwtWithoutPermissions())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createRequestBody(
                                 PACKAGE_NAME,
@@ -234,7 +233,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                         startDate,
                         endDate
                 ),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -251,7 +250,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                         startDate,
                         endDate
                 ),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -269,7 +268,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                   "endDate": "%s"
                 }
                 """.formatted(startDate, endDate),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -302,7 +301,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                   "endDate": "%s"
                 }
                 """.formatted(endDate),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -335,7 +334,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                   "endDate": "next month"
                 }
                 """.formatted(startDate),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -351,7 +350,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                   "endDate": "%s"
                 }
                 """.formatted(endDate),
-                "REQUEST_BODY_INVALID",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -361,7 +360,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         long packagesBeforeRequest = repository.count();
 
         mockMvc.perform(post(PACKAGES_ENDPOINT)
-                        .with(adminJwt())
+                        .with(jwtWithPermissions("create:packages"))
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("name=Premium Health Package"))
                 .andExpect(status().isUnsupportedMediaType());
@@ -373,7 +372,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     void shouldRejectPackageWithoutRequestBody() throws Exception {
         assertPackageRejected(
                 null,
-                "PACKAGE_REQUEST_BODY_REQUIRED",
+                "MALFORMED_REQUEST_BODY",
                 400
         );
     }
@@ -387,7 +386,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         long packagesBeforeRequest = repository.count();
 
         mockMvc.perform(post(PACKAGES_ENDPOINT)
-                        .with(adminJwt())
+                        .with(jwtWithPermissions("create:packages"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createRequestBody(
                                 name,
@@ -409,7 +408,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         long packagesBeforeRequest = repository.count();
 
         var request = post(PACKAGES_ENDPOINT)
-                .with(adminJwt())
+                .with(jwtWithPermissions("create:packages"))
                 .contentType(MediaType.APPLICATION_JSON);
 
         if (requestBody != null) {
@@ -441,22 +440,20 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 """.formatted(name, payroll, startDate, endDate);
     }
 
-    private RequestPostProcessor adminJwt() {
-        return jwt()
-                .jwt(jwt -> jwt
-                        .claim(ROLES_CLAIM, List.of("ADMIN"))
-                        .claim(
-                                PERMISSIONS_CLAIM,
-                                List.of("create:consumers")
-                        ))
-                .authorities(this::convertAuthorities);
-    }
-
-    private RequestPostProcessor permissionOnlyJwt() {
+    private RequestPostProcessor jwtWithPermissions(String... permissions) {
         return jwt()
                 .jwt(jwt -> jwt.claim(
                         PERMISSIONS_CLAIM,
-                        List.of("create:consumers")
+                        List.of(permissions)
+                ))
+                .authorities(this::convertAuthorities);
+    }
+
+    private RequestPostProcessor jwtWithoutPermissions() {
+        return jwt()
+                .jwt(jwt -> jwt.claim(
+                        PERMISSIONS_CLAIM,
+                        List.of()
                 ))
                 .authorities(this::convertAuthorities);
     }

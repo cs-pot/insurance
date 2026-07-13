@@ -20,7 +20,7 @@ paths:
   /consumers:
     $ref: './consumer/paths.yaml#/consumers'
   /packages:
-    $ref: './packages/packages.yaml#/packages'
+    $ref: './package/paths.yaml#/packages'
 
 components:
   securitySchemes:

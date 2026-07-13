@@ -1,7 +1,7 @@
 package com.cspot.insurahub.insurancepackage;
 
 import com.cspot.insurahub.insurancepackage.converter.PackageMapper;
-import com.cspot.insurahub.model.PackageCreateRequest;
+import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,9 +40,9 @@ class PackageServiceTest {
     void shouldCreatePackage() {
         LocalDate startDate = LocalDate.of(2026, 7, 10);
         LocalDate endDate = LocalDate.of(2026, 8, 9);
-        PackageCreateRequest packageCreateRequest = new PackageCreateRequest(
+        PostPackageRequest packageCreateRequest = new PostPackageRequest(
                 "Premium Health Package",
-                PackageCreateRequest.PayrollEnum.MONTHLY,
+                PostPackageRequest.PayrollEnum.MONTHLY,
                 startDate,
                 endDate
         );
@@ -71,9 +71,9 @@ class PackageServiceTest {
 
     @Test
     void shouldRejectStartDateBeforeToday() {
-        PackageCreateRequest packageCreateRequest = new PackageCreateRequest(
+        PostPackageRequest packageCreateRequest = new PostPackageRequest(
                 "Premium Health Package",
-                PackageCreateRequest.PayrollEnum.MONTHLY,
+                PostPackageRequest.PayrollEnum.MONTHLY,
                 LocalDate.of(2026, 7, 8),
                 LocalDate.of(2026, 8, 8)
         );
@@ -89,7 +89,7 @@ class PackageServiceTest {
         );
 
         assertEquals("PACKAGE_START_DATE_IN_PAST", exception.getCode());
-        verify(packageMapper, never()).initializeFromCreateRequest(any(PackageCreateRequest.class));
+        verify(packageMapper, never()).initializeFromCreateRequest(any(PostPackageRequest.class));
         verify(insurancePackageRepository, never()).save(any(InsurancePackage.class));
     }
 }

@@ -2,18 +2,20 @@ package com.cspot.insurahub;
 
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
+import com.cspot.insurahub.insurancepackage.InvalidPackageException;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
-import java.nio.file.AccessDeniedException;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
@@ -94,16 +96,52 @@ public class ApiExceptionHandler {
         return errorDto;
     }
 
-    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorDto defaultHandler(Exception e, HttpServletRequest request) {
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDto defaultHandler(
+            Exception e,
+            HttpServletRequest request
+    ) {
         logError(e);
-        ErrorDto errorDto = new ErrorDto()
+        return new ErrorDto()
                 .error("INTERNAL_SERVER_ERROR")
-                .status(500)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .message("Internal server error")
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
-        return errorDto;
+    }
+
+
+    @ExceptionHandler(InvalidPackageException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleInvalidPackageException(
+            InvalidPackageException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error(e.getCode())
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ErrorDto handleUnsupportedMediaType(
+            HttpMediaTypeNotSupportedException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error("UNSUPPORTED_MEDIA_TYPE")
+                .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
     }
 
     private void logError(Exception e) {

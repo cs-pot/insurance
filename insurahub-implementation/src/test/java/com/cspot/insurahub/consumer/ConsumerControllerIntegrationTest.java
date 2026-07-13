@@ -1,9 +1,8 @@
 package com.cspot.insurahub.consumer;
 
 import com.cspot.insurahub.BaseIntegrationTest;
-import com.cspot.insurahub.config.auth0.Auth0PermissionsConverter;
-import com.cspot.insurahub.model.ConsumerCreateRequest;
-import com.cspot.insurahub.model.ConsumerCreationResponse;
+import com.cspot.insurahub.model.PostConsumerRequest;
+import com.cspot.insurahub.model.PostResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -12,13 +11,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,14 +53,12 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldCreateConsumer() throws Exception {
-        ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        PostConsumerRequest createRequest = getConsumerCreateRequest();
         Mockito.when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword()))
                 .thenReturn("auth0|consumer-123");
 
         String responseJson = mockMvc.perform(post("/consumers")
-                        .with(jwt().jwt(jwt -> jwt
-                                .claim("permissions", List.of("create:consumers")))
-                                .authorities(new Auth0PermissionsConverter()))
+                        .with(jwt().authorities(new SimpleGrantedAuthority("create:consumers")))
                         .contentType("application/json")
                         .content(jsonMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -70,7 +67,7 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UUID consumerId = jsonMapper.readValue(responseJson, ConsumerCreationResponse.class).getId();
+        UUID consumerId = jsonMapper.readValue(responseJson, PostResponse.class).getId();
         Consumer savedConsumer = consumerRepository.findById(consumerId)
                 .orElseThrow(() -> new AssertionError("Consumer must be persisted"));
 
@@ -91,7 +88,7 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldRejectConsumerCreationWithoutAuthority() throws Exception {
-        ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        PostConsumerRequest createRequest = getConsumerCreateRequest();
 
         mockMvc.perform(post("/consumers")
                         .with(jwt())
@@ -103,8 +100,8 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
         verifyNoInteractions(identityProviderClient);
     }
 
-    private ConsumerCreateRequest getConsumerCreateRequest() {
-        return new ConsumerCreateRequest()
+    private PostConsumerRequest getConsumerCreateRequest() {
+        return new PostConsumerRequest()
                 .email("email@email.org")
                 .password("SecurePassword123")
                 .firstName("First Name")

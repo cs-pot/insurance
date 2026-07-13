@@ -1,0 +1,55 @@
+Created:
+  description: Resource created successfully
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/PostResponse'
+
+BadRequest:
+  description: Bad Request
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+Unauthorized:
+  description: Unauthorized
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+Forbidden:
+  description: Forbidden
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+Conflict:
+  description: Conflict
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+UnprocessableEntity:
+  description: Unprocessable Entity
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+UnsupportedMediaType:
+  description: Unsupported Media Type
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
+InternalServerError:
+  description: Internal Server Error
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'

@@ -1,8 +1,7 @@
 package com.cspot.insurahub.insurancepackage.converter;
 
 import com.cspot.insurahub.insurancepackage.InsurancePackage;
-import com.cspot.insurahub.insurancepackage.dto.PackageCreateDto;
-import com.cspot.insurahub.model.PackageCreateRequest;
+import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
@@ -14,11 +13,9 @@ import org.mapstruct.ReportingPolicy;
 )
 public interface PackageMapper {
 
-    InsurancePackage initializeFromCreateRequest(PackageCreateRequest request);
+    InsurancePackage initializeFromCreateRequest(PostPackageRequest request);
 
-    InsurancePackage initializeFromCreateDto(PackageCreateDto dto);
-
-    Payroll map(PackageCreateRequest.PayrollEnum payroll);
+    Payroll map(PostPackageRequest.PayrollEnum payroll);
 
     default Payroll map(String payroll) {
         return payroll == null
