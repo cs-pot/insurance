@@ -21,6 +21,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH0_ISSUER_URI}
+          jwk-set-uri: ${AUTH0_JWK_SET_URI}
           audiences:
             - ${AUTH0_AUDIENCE}
 

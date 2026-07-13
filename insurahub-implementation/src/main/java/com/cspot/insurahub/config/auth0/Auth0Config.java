@@ -5,7 +5,6 @@ import com.auth0.exception.Auth0Exception;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -19,12 +18,5 @@ public class Auth0Config {
                 .domain(configurationProperties.getDomain())
                 .clientCredentials(configurationProperties.getClientId(), configurationProperties.getClientSecret())
                 .build();
-    }
-
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter(Auth0PermissionsConverter permissionsConverter) {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(permissionsConverter);
-        return converter;
     }
 }
