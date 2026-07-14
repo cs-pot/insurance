@@ -2,6 +2,7 @@ package com.cspot.insurahub.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,8 @@ public abstract class ModifiableAuditableEntity extends ImmutableAuditableEntity
     @LastModifiedBy
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 }

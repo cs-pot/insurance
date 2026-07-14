@@ -3,5 +3,8 @@ databaseChangeLog:
       file: migrations/ddl/create-consumers-table.sql
       relativeToChangelogFile: true
   - include:
+      file: migrations/ddl/add-consumer-version-column.sql
+      relativeToChangelogFile: true
+  - include:
       file: migrations/ddl/create-packages-table.sql
       relativeToChangelogFile: true

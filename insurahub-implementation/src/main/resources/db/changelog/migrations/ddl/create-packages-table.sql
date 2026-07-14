@@ -3,6 +3,7 @@
 --changeset cspot:create-packages-table
 CREATE TABLE IF NOT EXISTS packages (
     id UUID PRIMARY KEY,
+    version BIGINT NOT NULL DEFAULT 0,
     name VARCHAR(255) NOT NULL,
     payroll VARCHAR(50) NOT NULL,
     start_date DATE NOT NULL,
