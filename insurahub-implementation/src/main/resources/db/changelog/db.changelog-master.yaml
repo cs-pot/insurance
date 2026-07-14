@@ -3,5 +3,5 @@ databaseChangeLog:
       file: migrations/ddl/create-consumers-table.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/ddl/create-packages-table.sql
+      file: migrations/ddl/create-packages-table.sql
       relativeToChangelogFile: true

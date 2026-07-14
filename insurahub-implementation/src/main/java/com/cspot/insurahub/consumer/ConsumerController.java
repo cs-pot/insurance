@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ConsumerController implements ConsumersApi {
 
-    private final ConsumerService service;
+    private final ConsumerService consumerService;
 
     @Override
     @PreAuthorize("hasAuthority('create:consumers')")
     public PostResponse postConsumer(PostConsumerRequest request) {
-        return service.createConsumer(request);
+        return consumerService.createConsumer(request);
     }
 }

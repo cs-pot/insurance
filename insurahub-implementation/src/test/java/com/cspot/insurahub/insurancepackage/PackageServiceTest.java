@@ -3,6 +3,7 @@ package com.cspot.insurahub.insurancepackage;
 import com.cspot.insurahub.insurancepackage.converter.PackageMapper;
 import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,7 +16,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -36,60 +37,90 @@ class PackageServiceTest {
     @Mock
     private PackageMapper packageMapper;
 
+    private PackageService packageService;
+
+    @BeforeEach
+    void setUp() {
+        packageService = new PackageService(
+                insurancePackageRepository,
+                packageMapper,
+                CLOCK
+        );
+    }
+
     @Test
     void shouldCreatePackage() {
         LocalDate startDate = LocalDate.of(2026, 7, 10);
         LocalDate endDate = LocalDate.of(2026, 8, 9);
-        PostPackageRequest packageCreateRequest = new PostPackageRequest(
+
+        PostPackageRequest request = new PostPackageRequest(
                 "Premium Health Package",
                 PostPackageRequest.PayrollEnum.MONTHLY,
                 startDate,
                 endDate
         );
+
         InsurancePackage insurancePackage = new InsurancePackage(
                 "Premium Health Package",
                 Payroll.MONTHLY,
                 startDate,
                 endDate
         );
+
         UUID packageId = UUID.randomUUID();
-        ReflectionTestUtils.setField(insurancePackage, "id", packageId);
-        PackageService packageService = new PackageService(
-                insurancePackageRepository,
-                packageMapper,
-                CLOCK
+
+        ReflectionTestUtils.setField(
+                insurancePackage,
+                "id",
+                packageId
         );
-        when(packageMapper.initializeFromCreateRequest(packageCreateRequest)).thenReturn(insurancePackage);
-        when(insurancePackageRepository.save(insurancePackage)).thenReturn(insurancePackage);
 
-        UUID createdPackageId = packageService.createPackage(packageCreateRequest);
-
-        assertEquals(packageId, createdPackageId);
-        verify(packageMapper).initializeFromCreateRequest(packageCreateRequest);
-        verify(insurancePackageRepository).save(insurancePackage);
+        when(packageMapper.initializeFromCreateRequest(request))
+                .thenReturn(insurancePackage);
+        when(insurancePackageRepository.save(insurancePackage))
+                .thenReturn(insurancePackage);
+        assertThat(packageService.createPackage(request).getId())
+                .isEqualTo(packageId);
+        verify(packageMapper)
+                .initializeFromCreateRequest(request);
+        verify(insurancePackageRepository)
+                .save(insurancePackage);
     }
 
     @Test
     void shouldRejectStartDateBeforeToday() {
-        PostPackageRequest packageCreateRequest = new PostPackageRequest(
+        LocalDate startDate = LocalDate.of(2026, 7, 8);
+        LocalDate endDate = LocalDate.of(2026, 8, 8);
+
+        PostPackageRequest request = new PostPackageRequest(
                 "Premium Health Package",
                 PostPackageRequest.PayrollEnum.MONTHLY,
-                LocalDate.of(2026, 7, 8),
-                LocalDate.of(2026, 8, 8)
+                startDate,
+                endDate
         );
-        PackageService packageService = new PackageService(
-                insurancePackageRepository,
-                packageMapper,
-                CLOCK
+
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                startDate,
+                endDate
         );
+
+        when(packageMapper.initializeFromCreateRequest(request))
+                .thenReturn(insurancePackage);
 
         InvalidPackageException exception = assertThrows(
                 InvalidPackageException.class,
-                () -> packageService.createPackage(packageCreateRequest)
+                () -> packageService.createPackage(request)
         );
 
-        assertEquals("PACKAGE_START_DATE_IN_PAST", exception.getCode());
-        verify(packageMapper, never()).initializeFromCreateRequest(any(PostPackageRequest.class));
-        verify(insurancePackageRepository, never()).save(any(InsurancePackage.class));
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_START_DATE_IN_PAST");
+
+        verify(packageMapper)
+                .initializeFromCreateRequest(request);
+
+        verify(insurancePackageRepository, never())
+                .save(any(InsurancePackage.class));
     }
 }

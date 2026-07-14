@@ -2,14 +2,15 @@ package com.cspot.insurahub.insurancepackage;
 
 import com.cspot.insurahub.insurancepackage.converter.PackageMapper;
 import com.cspot.insurahub.model.PostPackageRequest;
+import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.LocalDate;
-import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PackageService {
@@ -19,22 +20,25 @@ public class PackageService {
     private final Clock clock;
 
     @Transactional
-    public UUID createPackage(PostPackageRequest request) {
-        validateStartDateNotInPast(request.getStartDate());
+    public PostResponse createPackage(PostPackageRequest request) {
+        InsurancePackage insurancePackage =
+                mapper.initializeFromCreateRequest(request);
+        PackageValidator packageValidator = new PackageValidator(clock);
+        packageValidator.validate(insurancePackage);
 
-        InsurancePackage insurancePackage = mapper.initializeFromCreateRequest(request);
+        log.debug(
+                "Creating package: name={}, payroll={}, startDate={}, endDate={}",
+                request.getName(),
+                request.getPayroll(),
+                request.getStartDate(),
+                request.getEndDate()
+        );
 
-        return repository.save(insurancePackage).getId();
+        InsurancePackage savedPackage = repository.save(insurancePackage);
+        log.info("Package created: Id={}", savedPackage.getId());
+
+
+        return new PostResponse(savedPackage.getId());
     }
 
-    private void validateStartDateNotInPast(LocalDate startDate) {
-        LocalDate today = LocalDate.now(clock);
-
-        if (startDate.isBefore(today)) {
-            throw new InvalidPackageException(
-                    "PACKAGE_START_DATE_IN_PAST",
-                    "Start date must not be before today"
-            );
-        }
-    }
 }

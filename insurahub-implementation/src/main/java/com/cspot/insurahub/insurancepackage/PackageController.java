@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PackageController implements PackagesApi {
 
-    private final PackageService service;
+    private final PackageService packageService;
 
     @Override
     @PreAuthorize("hasAuthority('create:packages')")
     public PostResponse postPackage(PostPackageRequest request) {
-        return new PostResponse(service.createPackage(request));
+        return packageService.createPackage(request);
     }
 }
