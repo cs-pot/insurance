@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "auth0")
 public class Auth0ConfigurationProperties {
-
     private String domain;
     private String clientId;
     private String clientSecret;

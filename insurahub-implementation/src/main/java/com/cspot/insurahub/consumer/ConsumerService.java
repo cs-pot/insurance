@@ -5,8 +5,8 @@ import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
-import com.cspot.insurahub.model.ConsumerCreateRequest;
-import com.cspot.insurahub.model.ConsumerCreationResponse;
+import com.cspot.insurahub.model.PostConsumerRequest;
+import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -25,9 +25,9 @@ public class ConsumerService {
     private final ConsumerMapper consumerMapper;
 
     @Transactional
-    public ConsumerCreationResponse createConsumer(ConsumerCreateRequest consumerCreateRequest) {
+    public PostResponse createConsumer(PostConsumerRequest request) {
         try {
-            return attemptConsumerCreation(consumerCreateRequest);
+            return attemptConsumerCreation(request);
         } catch (DataIntegrityViolationException | IdentityProviderConflictException e) {
             throw new EmailAlreadyInUseException(e);
         } catch (Exception e) {
@@ -35,7 +35,7 @@ public class ConsumerService {
         }
     }
 
-    private @NonNull ConsumerCreationResponse attemptConsumerCreation(ConsumerCreateRequest consumerCreateRequest) {
+    private @NonNull PostResponse attemptConsumerCreation(PostConsumerRequest consumerCreateRequest) {
         String idpId = null;
         Consumer consumer = null;
         try {
@@ -47,7 +47,7 @@ public class ConsumerService {
             assignConsumerRoleToUser(idpId);
             log.debug("Attempting to assign idpId to consumer in the database");
             assignIdpIdInDatabase(consumer, idpId);
-            return new ConsumerCreationResponse(consumer.getId());
+            return new PostResponse(consumer.getId());
         } catch (DataAccessException | IdentityProviderRoleAssignmentException e) {
             log.error("Exception encountered when creating consumer", e);
             deleteUserFromIdp(idpId);
@@ -70,13 +70,13 @@ public class ConsumerService {
         }
     }
 
-    private Consumer persistConsumerData(ConsumerCreateRequest consumerCreateRequest) {
-        Consumer consumer = consumerMapper.initializeFromCreateRequest(consumerCreateRequest);
+    private Consumer persistConsumerData(PostConsumerRequest request) {
+        Consumer consumer = consumerMapper.initializeFromCreateRequest(request);
         consumer = consumerRepository.save(consumer);
         return consumer;
     }
 
-    private String registerUserWithIdp(ConsumerCreateRequest consumerCreateRequest) {
+    private String registerUserWithIdp(PostConsumerRequest consumerCreateRequest) {
         return identityProviderClient.registerUser(consumerCreateRequest.getEmail(),
                 consumerCreateRequest.getPassword());
     }

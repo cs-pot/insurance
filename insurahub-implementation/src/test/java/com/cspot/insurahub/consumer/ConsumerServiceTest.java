@@ -2,8 +2,8 @@ package com.cspot.insurahub.consumer;
 
 import com.cspot.insurahub.consumer.converter.ConsumerMapper;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
-import com.cspot.insurahub.model.ConsumerCreateRequest;
-import com.cspot.insurahub.model.ConsumerCreationResponse;
+import com.cspot.insurahub.model.PostConsumerRequest;
+import com.cspot.insurahub.model.PostResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -42,14 +42,14 @@ class ConsumerServiceTest {
     @Test
     public void shouldCreateConsumer() {
         // GIVEN
-        ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        PostConsumerRequest createRequest = getPostConsumerRequest();
         Consumer consumer = getConsumer();
         setUpMocksForRepositoryAndMapper(createRequest, consumer);
         when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword())).thenReturn(
                 "idpId");
 
         // WHEN
-        ConsumerCreationResponse response = consumerService.createConsumer(createRequest);
+        PostResponse response = consumerService.createConsumer(createRequest);
 
         // THEN
         verify(identityProviderClient).registerUser(createRequest.getEmail(), createRequest.getPassword());
@@ -62,7 +62,7 @@ class ConsumerServiceTest {
     @Test
     public void shouldDeleteUserFromIdpAndThrowWhenRoleAssignmentFails() {
         // GIVEN
-        ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        PostConsumerRequest createRequest = getPostConsumerRequest();
         Consumer consumer = getConsumer();
         setUpMocksForRepositoryAndMapper(createRequest, consumer);
         when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword())).thenReturn(
@@ -85,7 +85,7 @@ class ConsumerServiceTest {
     @Test
     public void shouldDeleteUserFromIdpAndThrowWhenDbTransactionFails() {
         // GIVEN
-        ConsumerCreateRequest createRequest = getConsumerCreateRequest();
+        PostConsumerRequest createRequest = getPostConsumerRequest();
         Consumer consumer = getConsumer();
         setUpMocksForRepositoryAndMapper(createRequest, consumer);
         DataIntegrityViolationException dataAccessException =
@@ -106,7 +106,7 @@ class ConsumerServiceTest {
         verify(consumerRepository).save(any(Consumer.class));
     }
 
-    private void setUpMocksForRepositoryAndMapper(ConsumerCreateRequest createRequest, Consumer consumer) {
+    private void setUpMocksForRepositoryAndMapper(PostConsumerRequest createRequest, Consumer consumer) {
         when(consumerMapper.initializeFromCreateRequest(createRequest)).thenReturn(consumer);
         when(consumerRepository.save(any(Consumer.class))).thenAnswer(invocation -> {
             Consumer argument = invocation.getArgument(0);
@@ -128,8 +128,8 @@ class ConsumerServiceTest {
         return consumer;
     }
 
-    private ConsumerCreateRequest getConsumerCreateRequest() {
-        ConsumerCreateRequest createRequest = new ConsumerCreateRequest()
+    private PostConsumerRequest getPostConsumerRequest() {
+        PostConsumerRequest createRequest = new PostConsumerRequest()
                 .email("email@email.org")
                 .password("SecurePassword123")
                 .firstName("First Name")

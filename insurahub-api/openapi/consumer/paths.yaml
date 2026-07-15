@@ -3,48 +3,40 @@ consumers:
     tags:
       - Consumers
     summary: Create a consumer
-    description: Creates a consumer with provided credentials. Only available to administrators.
-    operationId: postCreateConsumer
+    description: >
+      Creates a new consumer account. Only administrators can perform this operation.
+      The email address must be unique, the personal ID must contain exactly 11 digits,
+      and all required consumer details must be provided.
+    operationId: postConsumer
     requestBody:
       required: true
+      description: Consumer details required to create a new account.
       content:
         application/json:
           schema:
-            $ref: './schemas.yaml#/ConsumerCreateRequest'
+            $ref: './schemas.yaml#/PostConsumerRequest'
+          examples:
+            validConsumer:
+              summary: Valid consumer creation request
+              value:
+                email: john.doe@example.com
+                password: SecurePassword123!
+                firstName: John
+                lastName: Doe
+                personalId: "12345678901"
+                dateOfBirth: "1995-06-15"
+                address: 25 Main Street
+                city: Vilnius
     responses:
-      201:
-        description: Consumer created
-        content:
-          application/json:
-            schema:
-              $ref: './schemas.yaml#/ConsumerCreationResponse'
-      400:
-        description: Bad Request
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      401:
-        description: Unauthorized
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      403:
-        description: Forbidden
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      409:
-        description: Conflict
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      500:
-        description: Internal Server Error
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
+      '201':
+        $ref: '../common/responses.yaml#/Created'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '409':
+        $ref: '../common/responses.yaml#/Conflict'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'

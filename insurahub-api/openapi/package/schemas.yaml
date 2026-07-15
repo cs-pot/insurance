@@ -1,0 +1,38 @@
+PostPackageRequest:
+  type: object
+  description: Request payload for creating a new insurance package.
+  required:
+    - name
+    - payroll
+    - startDate
+    - endDate
+  properties:
+    name:
+      type: string
+      minLength: 1
+      pattern: '.*\S.*'
+      description: Name of the insurance package. Must not be blank.
+      example: Premium Health Package
+
+    payroll:
+      type: string
+      description: Frequency used to calculate payroll contributions.
+      enum:
+        - WEEKLY
+        - BI_WEEKLY
+        - MONTHLY
+      example: MONTHLY
+
+    startDate:
+      type: string
+      format: date
+      description: Date when the package becomes active. Must be today or later.
+      example: "2030-01-01"
+
+    endDate:
+      type: string
+      format: date
+      description: >
+        Date when the package expires. Must be equal to or later than startDate.
+        The inclusive package period must contain at least one complete payroll cycle.
+      example: "2030-12-31"

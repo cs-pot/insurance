@@ -1,3 +1,13 @@
+PostResponse:
+  type: object
+  required:
+    - id
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12
+
 ErrorDto:
   type: object
   required:
@@ -8,12 +18,18 @@ ErrorDto:
   properties:
     error:
       type: string
+      example: PACKAGE_START_DATE_IN_PAST
     status:
       type: integer
+      format: int32
+      example: 400
     timestamp:
       type: string
       format: date-time
+      example: "2030-01-01T10:00:00Z"
     path:
       type: string
+      example: /api/v1/packages
     message:
       type: string
+      example: Start date must not be before today

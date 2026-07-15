@@ -13,10 +13,14 @@ servers:
 tags:
   - name: Consumers
     description: Operations related to consumer management
+  - name: Packages
+    description: Operations related to insurance package management
 
 paths:
   /consumers:
     $ref: './consumer/paths.yaml#/consumers'
+  /packages:
+    $ref: './package/paths.yaml#/packages'
 
 components:
   securitySchemes:
