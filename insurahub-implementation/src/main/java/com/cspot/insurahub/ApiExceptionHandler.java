@@ -1,20 +1,22 @@
 package com.cspot.insurahub;
 
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
+import com.cspot.insurahub.consumer.exception.InvalidConsumerPageRequestException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
 import com.cspot.insurahub.insurancepackage.InvalidPackageException;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -72,6 +74,55 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleConstraintViolationException(ConstraintViolationException e,
+                                                       HttpServletRequest request) {
+        logWarn(e);
+        String message = e.getConstraintViolations().stream()
+                .map(violation -> {
+                    String propertyPath = violation.getPropertyPath().toString();
+                    String constraintName = violation.getConstraintDescriptor()
+                            .getAnnotation()
+                            .annotationType()
+                            .getSimpleName();
+                    Object value = violation.getConstraintDescriptor().getAttributes().get("value");
+
+                    if (propertyPath.endsWith("arg0") && "Min".equals(constraintName)) {
+                        return "page must be greater than or equal to " + value;
+                    }
+                    if (propertyPath.endsWith("arg1") && "Min".equals(constraintName)) {
+                        return "size must be greater than or equal to " + value;
+                    }
+                    if (propertyPath.endsWith("arg1") && "Max".equals(constraintName)) {
+                        return "size must be less than or equal to " + value;
+                    }
+                    return propertyPath + ": " + violation.getMessage();
+                })
+                .collect(Collectors.joining("; "));
+        ErrorDto errorDto = new ErrorDto()
+                .error("VALIDATION_FAILED")
+                .status(400)
+                .message(message)
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleInvalidConsumerPageRequestException(InvalidConsumerPageRequestException e,
+                                                              HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("VALIDATION_FAILED")
+                .status(400)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     public ErrorDto handleMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
         logWarn(e);
         ErrorDto errorDto = new ErrorDto()
@@ -85,7 +136,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    public ErrorDto handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
+    public ErrorDto handleAccessDeniedException(AuthorizationDeniedException e, HttpServletRequest request) {
         logWarn(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("ACCESS_DENIED")
@@ -96,12 +147,9 @@ public class ApiExceptionHandler {
         return errorDto;
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorDto defaultHandler(
-            Exception e,
-            HttpServletRequest request
-    ) {
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDto defaultHandler(Exception e, HttpServletRequest request) {
         logError(e);
         return new ErrorDto()
                 .error("INTERNAL_SERVER_ERROR")

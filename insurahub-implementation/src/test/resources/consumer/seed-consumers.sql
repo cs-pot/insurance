@@ -1,0 +1,77 @@
+DELETE FROM consumers;
+
+INSERT INTO consumers (
+    id,
+    idp_id,
+    email,
+    first_name,
+    last_name,
+    personal_id,
+    date_of_birth,
+    address,
+    city,
+    created_at,
+    created_by,
+    deleted_at,
+    deleted_by
+) VALUES
+    (
+        '11111111-1111-1111-1111-111111111111',
+        'auth0|consumer-1',
+        'consumer1@email.org',
+        'First',
+        'Consumer',
+        '12345678910',
+        '2026-07-07',
+        'Address 1',
+        'City',
+        '2026-07-07T10:00:00Z',
+        'system',
+        NULL,
+        NULL
+    ),
+    (
+        '22222222-2222-2222-2222-222222222222',
+        'auth0|consumer-2',
+        'consumer2@email.org',
+        'Second',
+        'Consumer',
+        '12345678911',
+        '2026-07-08',
+        'Address 2',
+        'City',
+        '2026-07-07T11:00:00Z',
+        'system',
+        NULL,
+        NULL
+    ),
+    (
+        '33333333-3333-3333-3333-333333333333',
+        'auth0|consumer-3',
+        'consumer3@email.org',
+        'Third',
+        'Consumer',
+        '12345678912',
+        '2026-07-09',
+        'Address 3',
+        'City',
+        '2026-07-07T12:00:00Z',
+        'system',
+        NULL,
+        NULL
+    ),
+    (
+        '44444444-4444-4444-4444-444444444444',
+        'auth0|deleted-consumer',
+        'deleted@email.org',
+        'Deleted',
+        'Consumer',
+        '12345678913',
+        '2026-07-10',
+        'Address 4',
+        'City',
+        '2026-07-07T13:00:00Z',
+        'system',
+        '2026-07-08T10:00:00Z',
+        'admin@email.org'
+    );

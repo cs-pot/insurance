@@ -1,4 +1,6 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.identity;
+
+import com.cspot.insurahub.consumer.enumeration.IdpRole;
 
 public interface IdentityProviderClient {
 

@@ -9,7 +9,7 @@ import com.auth0.client.mgmt.users.RolesClient;
 import com.auth0.client.mgmt.users.types.AssignUserRolesRequestContent;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRegistrationException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
-import com.cspot.insurahub.consumer.IdpRole;
+import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

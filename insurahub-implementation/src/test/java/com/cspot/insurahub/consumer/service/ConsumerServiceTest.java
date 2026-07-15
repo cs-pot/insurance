@@ -1,19 +1,33 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.service;
 
-import com.cspot.insurahub.consumer.converter.ConsumerMapper;
+import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
+import com.cspot.insurahub.consumer.identity.IdentityProviderClient;
+import com.cspot.insurahub.consumer.mapper.ConsumerMapper;
+import com.cspot.insurahub.consumer.repository.ConsumerRepository;
+import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -22,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +53,38 @@ class ConsumerServiceTest {
 
     @InjectMocks
     private ConsumerService consumerService;
+
+    @Test
+    public void shouldGetConsumers() {
+        // GIVEN
+        Consumer consumer = getConsumer();
+        ConsumerResponse listItem = new ConsumerResponse()
+                .id(UUID.randomUUID())
+                .firstName("First Name")
+                .lastName("Last Name")
+                .fullName("First Name Last Name")
+                .personalId("12345678910")
+                .dateOfBirth(LocalDate.of(2026, 7, 7));
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        when(consumerRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(consumer), PageRequest.of(0, 20), 1));
+        when(consumerMapper.toListItemResponse(consumer)).thenReturn(listItem);
+
+        // WHEN
+        Page<ConsumerResponse> consumers = consumerService.getConsumers(pageable);
+
+        // THEN
+        assertThat(consumers.getContent()).containsExactly(listItem);
+        assertThat(consumers.getNumber()).isZero();
+        assertThat(consumers.getSize()).isEqualTo(20);
+        assertThat(consumers.getTotalElements()).isEqualTo(1);
+        assertThat(consumers.getTotalPages()).isEqualTo(1);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(consumerRepository).findAll(pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue()).isEqualTo(pageable);
+        verify(consumerMapper).toListItemResponse(consumer);
+        verifyNoInteractions(identityProviderClient);
+    }
 
     @Test
     public void shouldCreateConsumer() {
@@ -110,7 +157,7 @@ class ConsumerServiceTest {
         when(consumerMapper.initializeFromCreateRequest(createRequest)).thenReturn(consumer);
         when(consumerRepository.save(any(Consumer.class))).thenAnswer(invocation -> {
             Consumer argument = invocation.getArgument(0);
-            argument.setId(UUID.randomUUID());
+            ReflectionTestUtils.setField(argument, "id", UUID.randomUUID());
             return argument;
         });
     }

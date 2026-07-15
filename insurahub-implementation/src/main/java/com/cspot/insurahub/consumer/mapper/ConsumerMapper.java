@@ -1,10 +1,12 @@
-package com.cspot.insurahub.consumer.converter;
+package com.cspot.insurahub.consumer.mapper;
 
-import com.cspot.insurahub.consumer.Consumer;
+import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
-import org.mapstruct.Mapper;
-import org.mapstruct.ReportingPolicy;
 import org.jspecify.annotations.NonNull;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.Objects;
 
@@ -16,6 +18,9 @@ public abstract class ConsumerMapper {
         Objects.requireNonNull(request, "consumerCreateRequest must not be null");
         return toConsumer(request);
     }
+
+    @Mapping(target = "fullName", expression = "java(consumer.getFirstName() + \" \" + consumer.getLastName())")
+    public abstract ConsumerResponse toListItemResponse(Consumer consumer);
 
     protected abstract Consumer toConsumer(PostConsumerRequest request);
 }

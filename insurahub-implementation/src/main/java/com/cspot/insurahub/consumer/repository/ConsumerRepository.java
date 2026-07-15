@@ -1,4 +1,6 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.repository;
+
+import com.cspot.insurahub.consumer.entity.Consumer;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
