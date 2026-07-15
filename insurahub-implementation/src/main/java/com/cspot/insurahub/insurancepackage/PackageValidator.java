@@ -1,32 +1,51 @@
 package com.cspot.insurahub.insurancepackage;
 
+import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDate;
 
 @Component
+@RequiredArgsConstructor
 public class PackageValidator {
 
     private final Clock clock;
 
-    public PackageValidator(Clock clock) {
-        this.clock = clock;
+    public void validate(PostPackageRequest request) {
+        Payroll payroll = request.getPayroll() == null
+                ? null
+                : Payroll.valueOf(request.getPayroll().name());
+
+        validate(
+                request.getName(),
+                payroll,
+                request.getStartDate(),
+                request.getEndDate()
+        );
     }
 
     public void validate(InsurancePackage insurancePackage) {
-        validateName(insurancePackage.getName());
-        validateStartDateNotInPast(insurancePackage.getStartDate());
-        validateEndDate(
-                insurancePackage.getStartDate(),
-                insurancePackage.getEndDate()
-        );
-        validatePayrollPeriod(
+        validate(
+                insurancePackage.getName(),
                 insurancePackage.getPayroll(),
                 insurancePackage.getStartDate(),
                 insurancePackage.getEndDate()
         );
+    }
+
+    private void validate(
+            String name,
+            Payroll payroll,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        validateName(name);
+        validateStartDateNotInPast(startDate);
+        validateEndDate(startDate, endDate);
+        validatePayrollPeriod(payroll, startDate, endDate);
     }
 
     private void validateName(String name) {
@@ -63,7 +82,12 @@ public class PackageValidator {
             LocalDate startDate,
             LocalDate endDate
     ) {
-        LocalDate minimumEndDate = payroll.minimumInclusiveEndDate(startDate);
+        if (payroll == null || startDate == null || endDate == null) {
+            return;
+        }
+
+        LocalDate minimumEndDate =
+                payroll.minimumInclusiveEndDate(startDate);
 
         if (endDate.isBefore(minimumEndDate)) {
             throw new InvalidPackageException(

@@ -39,12 +39,16 @@ class PackageServiceTest {
 
     private PackageService packageService;
 
+    private PackageValidator packageValidator;
+
     @BeforeEach
     void setUp() {
+        packageValidator = new PackageValidator(CLOCK);
+
         packageService = new PackageService(
                 insurancePackageRepository,
                 packageMapper,
-                CLOCK
+                packageValidator
         );
     }
 
@@ -99,16 +103,6 @@ class PackageServiceTest {
                 endDate
         );
 
-        InsurancePackage insurancePackage = new InsurancePackage(
-                "Premium Health Package",
-                Payroll.MONTHLY,
-                startDate,
-                endDate
-        );
-
-        when(packageMapper.initializeFromCreateRequest(request))
-                .thenReturn(insurancePackage);
-
         InvalidPackageException exception = assertThrows(
                 InvalidPackageException.class,
                 () -> packageService.createPackage(request)
@@ -117,8 +111,8 @@ class PackageServiceTest {
         assertThat(exception.getCode())
                 .isEqualTo("PACKAGE_START_DATE_IN_PAST");
 
-        verify(packageMapper)
-                .initializeFromCreateRequest(request);
+        verify(packageMapper, never())
+                .initializeFromCreateRequest(any(PostPackageRequest.class));
 
         verify(insurancePackageRepository, never())
                 .save(any(InsurancePackage.class));

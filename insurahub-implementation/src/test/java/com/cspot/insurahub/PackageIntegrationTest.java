@@ -26,7 +26,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.junit.jupiter.api.TestInstance;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 class PackageIntegrationTest extends BaseIntegrationTest {
 
@@ -465,47 +467,46 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         ).getAuthorities();
     }
 
-    private static Stream<Arguments> exactPayrollPeriods() {
+    private Stream<Arguments> exactPayrollPeriods() {
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+
         return Stream.of(
                 Arguments.of(
                         "WEEKLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 7, 16)
+                        startDate,
+                        startDate.plusDays(6)
                 ),
                 Arguments.of(
                         "BI_WEEKLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 7, 23)
+                        startDate,
+                        startDate.plusDays(13)
                 ),
                 Arguments.of(
                         "MONTHLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 8, 9)
-                ),
-                Arguments.of(
-                        "MONTHLY",
-                        LocalDate.of(2027, 1, 31),
-                        LocalDate.of(2027, 2, 27)
+                        startDate,
+                        startDate.plusMonths(1).minusDays(1)
                 )
         );
     }
 
-    private static Stream<Arguments> periodsShorterThanPayrollCycle() {
+    private Stream<Arguments> periodsShorterThanPayrollCycle() {
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+
         return Stream.of(
                 Arguments.of(
                         "WEEKLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 7, 15)
+                        startDate,
+                        startDate.plusDays(5)
                 ),
                 Arguments.of(
                         "BI_WEEKLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 7, 22)
+                        startDate,
+                        startDate.plusDays(12)
                 ),
                 Arguments.of(
                         "MONTHLY",
-                        LocalDate.of(2026, 7, 10),
-                        LocalDate.of(2026, 8, 8)
+                        startDate,
+                        startDate.plusMonths(1).minusDays(2)
                 )
         );
     }

@@ -17,14 +17,14 @@ public class PackageService {
 
     private final InsurancePackageRepository repository;
     private final PackageMapper mapper;
-    private final Clock clock;
+    private final PackageValidator packageValidator;
 
     @Transactional
     public PostResponse createPackage(PostPackageRequest request) {
+        packageValidator.validate(request);
+
         InsurancePackage insurancePackage =
                 mapper.initializeFromCreateRequest(request);
-        PackageValidator packageValidator = new PackageValidator(clock);
-        packageValidator.validate(insurancePackage);
 
         log.debug(
                 "Creating package: name={}, payroll={}, startDate={}, endDate={}",
