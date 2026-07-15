@@ -13,6 +13,9 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE TRIGGER IF NOT EXISTS blacklisted_jwt_cleanup_trigger AFTER INSERT
+CREATE OR REPLACE TRIGGER blacklisted_jwt_cleanup_trigger AFTER INSERT
 ON revoked_tokens
 EXECUTE FUNCTION cleanup_blacklisted_tokens();
+
+CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires_at
+ON revoked_tokens(expires_at);
