@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset cspot:create-jwt-cleanup-trigger splitStatements:false
-CREATE FUNCTION cleanup_blacklisted_tokens()
+CREATE OR REPLACE FUNCTION cleanup_blacklisted_tokens()
 RETURNS trigger
 AS $$
 BEGIN
@@ -13,6 +13,6 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE TRIGGER blacklisted_jwt_cleanup_trigger AFTER INSERT
+CREATE TRIGGER IF NOT EXISTS blacklisted_jwt_cleanup_trigger AFTER INSERT
 ON revoked_tokens
 EXECUTE FUNCTION cleanup_blacklisted_tokens();
