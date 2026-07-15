@@ -1,5 +1,6 @@
 package com.cspot.insurahub.config;
 
+import com.cspot.insurahub.auth.config.BlacklistTokenValidator;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -29,8 +33,8 @@ public class SecurityConfig {
     private static final String PERMISSIONS_CLAIM = "permissions";
 
     @Bean
-    SecurityFilterChain apiSecurity(HttpSecurity http,Clock clock,JsonMapper jsonMapper,
-        JwtAuthenticationConverter jwtAuthenticationConverter) {
+    SecurityFilterChain apiSecurity(HttpSecurity http, Clock clock, JsonMapper jsonMapper,
+                                    JwtAuthenticationConverter jwtAuthenticationConverter) {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -71,36 +75,33 @@ public class SecurityConfig {
 
     @Bean
     JwtAuthenticationConverter jwtAuthConverter() {
-        JwtGrantedAuthoritiesConverter authConverter =
-                new JwtGrantedAuthoritiesConverter();
-
+        JwtGrantedAuthoritiesConverter authConverter = new JwtGrantedAuthoritiesConverter();
         authConverter.setAuthoritiesClaimName(PERMISSIONS_CLAIM);
         authConverter.setAuthorityPrefix("");
 
-        JwtAuthenticationConverter converter =
-                new JwtAuthenticationConverter();
-
-        converter.setJwtGrantedAuthoritiesConverter(
-                authConverter
-        );
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authConverter);
 
         return converter;
     }
 
     @Bean
     JwtDecoder jwtDecoder(
-            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-            String issuerUri,
-            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
-            String jwkSetUri,
-            @Value("${spring.security.oauth2.resourceserver.jwt.audiences[0]}")
-            String audience
-    ) {
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwkSetUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.audiences[0]}") String audience,
+            BlacklistTokenValidator blacklistTokenValidator) {
+
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
                 .validateType(false).build();
 
-        decoder.setJwtValidator(JwtValidators.createAtJwtValidator()
-                .issuer(issuerUri).audience(audience).build());
+        OAuth2TokenValidator<Jwt> atJwtValidator = JwtValidators.createAtJwtValidator()
+                .issuer(issuerUri).audience(audience).build();
+
+        OAuth2TokenValidator<Jwt> delegatingValidator = 
+                new DelegatingOAuth2TokenValidator<>(atJwtValidator, blacklistTokenValidator);
+
+        decoder.setJwtValidator(delegatingValidator);
 
         return decoder;
     }
