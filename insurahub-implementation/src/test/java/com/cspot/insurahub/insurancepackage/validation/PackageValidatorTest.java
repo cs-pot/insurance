@@ -41,7 +41,7 @@ class PackageValidatorTest {
     void shouldValidateCreateRequestWhenAllFieldsAreValid() {
         PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY,
                 TODAY.plusMonths(1).minusDays(1)
         );
@@ -65,7 +65,7 @@ class PackageValidatorTest {
     void shouldRejectBlankNameForCreateRequest() {
         PackageRequest request = new PackageRequest(
                 "   ",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY,
                 TODAY.plusMonths(1).minusDays(1)
         );
@@ -83,7 +83,7 @@ class PackageValidatorTest {
     void shouldRejectPastStartDateForCreateRequest() {
         PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY.minusDays(1),
                 TODAY.plusMonths(1).minusDays(1)
         );
@@ -101,7 +101,7 @@ class PackageValidatorTest {
     void shouldRejectEndDateBeforeStartDateForCreateRequest() {
         PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY,
                 TODAY.minusDays(1)
         );
@@ -119,7 +119,7 @@ class PackageValidatorTest {
     void shouldRejectTooShortPayrollPeriodForCreateRequest() {
         PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY,
                 TODAY.plusDays(10)
         );
@@ -139,7 +139,7 @@ class PackageValidatorTest {
     void shouldAllowMinimumMonthlyPayrollPeriodForCreateRequest() {
         PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PackageRequest.PayrollEnum.MONTHLY,
+                Payroll.MONTHLY,
                 TODAY,
                 TODAY.plusMonths(1).minusDays(1)
         );

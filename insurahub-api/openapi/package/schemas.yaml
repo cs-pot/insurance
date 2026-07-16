@@ -15,13 +15,7 @@ PackageRequest:
       example: Premium Health Package
 
     payroll:
-      type: string
-      description: Frequency used to calculate payroll contributions.
-      enum:
-        - WEEKLY
-        - BI_WEEKLY
-        - MONTHLY
-      example: MONTHLY
+      $ref: '#/Payroll'
 
     startDate:
       type: string
@@ -36,3 +30,58 @@ PackageRequest:
         Date when the package expires. Must be equal to or later than startDate.
         The inclusive package period must contain at least one complete payroll cycle.
       example: "2030-12-31"
+
+Payroll:
+  type: string
+  description: Payroll frequency.
+  enum:
+    - WEEKLY
+    - BI_WEEKLY
+    - MONTHLY
+    - ANNUALLY
+  example: MONTHLY
+
+PackageResponse:
+  allOf:
+    - $ref: '../common/schemas.yaml#/BaseListItemResponse'
+    - type: object
+      required:
+        - name
+        - payroll
+        - startDate
+        - endDate
+      properties:
+        name:
+          type: string
+          description: Package name.
+          example: Premium Health Package
+
+        payroll:
+          $ref: '#/Payroll'
+
+        startDate:
+          type: string
+          format: date
+          description: Date when the package becomes active.
+          example: "2026-07-01"
+
+        endDate:
+          type: string
+          format: date
+          description: Date when the package expires.
+          example: "2027-06-30"
+
+GetPackagesResponse:
+  type: object
+  required:
+    - content
+    - page
+  properties:
+    content:
+      type: array
+      description: Packages contained in the current page.
+      items:
+        $ref: '#/PackageResponse'
+
+    page:
+      $ref: '../common/schemas.yaml#/PageResponse'

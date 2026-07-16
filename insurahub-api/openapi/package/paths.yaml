@@ -34,6 +34,31 @@ packages:
         $ref: '../common/responses.yaml#/UnsupportedMediaType'
       '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
+  get:
+    tags:
+      - Packages
+    summary: Get insurance packages
+    description: Retrieves insurance packages using pagination and optional filters.
+    operationId: getPackages
+    x-spring-paginated: true
+    responses:
+      '200':
+        description: Insurance packages retrieved successfully.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/GetPackagesResponse'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
 
 initializePackage:
   post:
@@ -87,19 +112,19 @@ packagesWithId:
           schema:
             $ref: './schemas.yaml#/PackageRequest'
     responses:
-      204:
+      '204':
         description: Successful update
-      400:
+      '400':
         $ref: '../common/responses.yaml#/BadRequest'
-      401:
+      '401':
         $ref: '../common/responses.yaml#/Unauthorized'
-      403:
+      '403':
         $ref: '../common/responses.yaml#/Forbidden'
-      404:
+      '404':
         $ref: '../common/responses.yaml#/NotFound'
-      409:
+      '409':
         $ref: '../common/responses.yaml#/Conflict'
-      415:
+      '415':
         $ref: '../common/responses.yaml#/UnsupportedMediaType'
-      422:
+      '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'

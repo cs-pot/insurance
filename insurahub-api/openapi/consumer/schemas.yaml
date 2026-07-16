@@ -104,59 +104,42 @@ PutConsumerRequest:
       example: Vilnius
 
 ConsumerResponse:
-  type: object
-  required:
-    - id
-    - firstName
-    - lastName
-    - fullName
-    - personalId
-    - dateOfBirth
-  properties:
-    id:
-      type: string
-      format: uuid
-    firstName:
-      type: string
-    lastName:
-      type: string
-    fullName:
-      type: string
-    personalId:
-      type: string
-    dateOfBirth:
-      type: string
-      format: date
-
-PagedModelConsumerResponse:
   allOf:
-    - $ref: './schemas.yaml#/ConsumerPageMetadata'
+    - $ref: '../common/schemas.yaml#/BaseListItemResponse'
     - type: object
       required:
-        - content
+        - firstName
+        - lastName
+        - fullName
+        - personalId
+        - dateOfBirth
       properties:
-        content:
-          type: array
-          items:
-            $ref: './schemas.yaml#/ConsumerResponse'
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        fullName:
+          type: string
+          example: John Doe
+        personalId:
+          type: string
+          example: "12345678901"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1995-06-15"
 
-ConsumerPageMetadata:
+GetConsumersResponse:
   type: object
   required:
-    - size
-    - number
-    - totalElements
-    - totalPages
+    - content
+    - page
   properties:
-    size:
-      type: integer
-      format: int32
-    number:
-      type: integer
-      format: int32
-    totalElements:
-      type: integer
-      format: int64
-    totalPages:
-      type: integer
-      format: int32
+    content:
+      type: array
+      items:
+        $ref: './schemas.yaml#/ConsumerResponse'
+    page:
+      $ref: '../common/schemas.yaml#/PageResponse'

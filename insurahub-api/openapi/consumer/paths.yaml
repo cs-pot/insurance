@@ -42,30 +42,20 @@ consumers:
           type: string
           default: createdAt,asc
     responses:
-      200:
-        description: Consumers found
+      '200':
+        description: Consumers retrieved successfully.
         content:
           application/json:
             schema:
-              $ref: './schemas.yaml#/PagedModelConsumerResponse'
-      401:
-        description: Unauthorized
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      403:
-        description: Forbidden
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
-      500:
-        description: Internal Server Error
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
+              $ref: './schemas.yaml#/GetConsumersResponse'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
 
   post:
     tags:
