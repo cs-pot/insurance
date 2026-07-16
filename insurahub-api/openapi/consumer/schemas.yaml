@@ -58,3 +58,61 @@ PostConsumerRequest:
       minLength: 1
       description: City where the consumer resides.
       example: Vilnius
+
+ConsumerResponse:
+  type: object
+  required:
+    - id
+    - firstName
+    - lastName
+    - fullName
+    - personalId
+    - dateOfBirth
+  properties:
+    id:
+      type: string
+      format: uuid
+    firstName:
+      type: string
+    lastName:
+      type: string
+    fullName:
+      type: string
+    personalId:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+
+PagedModelConsumerResponse:
+  allOf:
+    - $ref: './schemas.yaml#/ConsumerPageMetadata'
+    - type: object
+      required:
+        - content
+      properties:
+        content:
+          type: array
+          items:
+            $ref: './schemas.yaml#/ConsumerResponse'
+
+ConsumerPageMetadata:
+  type: object
+  required:
+    - size
+    - number
+    - totalElements
+    - totalPages
+  properties:
+    size:
+      type: integer
+      format: int32
+    number:
+      type: integer
+      format: int32
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32

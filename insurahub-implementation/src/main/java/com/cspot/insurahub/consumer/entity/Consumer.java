@@ -1,4 +1,4 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 @NoArgsConstructor
 @Entity
 @Table(name = "consumers")
+@SQLRestriction("deleted_at IS NULL")
 public class Consumer extends SoftDeletableAuditableEntity {
 
     @Id

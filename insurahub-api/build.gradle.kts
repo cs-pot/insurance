@@ -22,10 +22,12 @@ dependencies {
 
     implementation("org.springframework:spring-web")
     implementation("org.springframework:spring-context")
+    implementation("org.springframework.data:spring-data-commons")
 
     implementation("jakarta.servlet:jakarta.servlet-api")
     implementation("jakarta.validation:jakarta.validation-api")
 
+    implementation(libs.springdoc.scalar)
     implementation(libs.swagger.annotations)
     implementation(libs.swagger.models)
 
@@ -53,7 +55,15 @@ openApiGenerate {
             "useTags" to "true",
             "useResponseEntity" to "false",
             "skipDefaultInterface" to "true",
-            "hideGenerationTimestamp" to "true"
+            "hideGenerationTimestamp" to "true",
+            "substituteGenericPagedModel" to "true",
+            "generatePageableConstraintValidation" to "true"
+        )
+    )
+
+    importMappings.set(
+        mapOf(
+            "PagedModel" to "org.springframework.data.domain.Page"
         )
     )
 }

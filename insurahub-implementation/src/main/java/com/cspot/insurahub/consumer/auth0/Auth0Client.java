@@ -5,11 +5,11 @@ import com.auth0.client.mgmt.core.ManagementApiException;
 import com.auth0.client.mgmt.types.CreateUserRequestContent;
 import com.auth0.client.mgmt.types.CreateUserResponseContent;
 import com.auth0.client.mgmt.users.types.AssignUserRolesRequestContent;
-import com.cspot.insurahub.consumer.IdentityProviderClient;
-import com.cspot.insurahub.consumer.IdpRole;
+import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRegistrationException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
+import com.cspot.insurahub.consumer.identity.IdentityProviderClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

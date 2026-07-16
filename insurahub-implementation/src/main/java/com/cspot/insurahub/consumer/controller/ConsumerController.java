@@ -1,9 +1,13 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.controller;
 
 import com.cspot.insurahub.api.ConsumersApi;
+import com.cspot.insurahub.consumer.service.ConsumerService;
+import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,6 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConsumerController implements ConsumersApi {
 
     private final ConsumerService consumerService;
+
+    @Override
+    @PreAuthorize("hasAuthority('view:consumers')")
+    public Page<ConsumerResponse> getConsumers(Pageable pageable) {
+        return consumerService.getConsumers(pageable);
+    }
 
     @Override
     @PreAuthorize("hasAuthority('create:consumers')")

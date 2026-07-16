@@ -1,10 +1,15 @@
-package com.cspot.insurahub.consumer;
+package com.cspot.insurahub.consumer.service;
 
-import com.cspot.insurahub.consumer.converter.ConsumerMapper;
+import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
+import com.cspot.insurahub.consumer.identity.IdentityProviderClient;
+import com.cspot.insurahub.consumer.mapper.ConsumerMapper;
+import com.cspot.insurahub.consumer.repository.ConsumerRepository;
+import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +30,12 @@ public class ConsumerService {
     private final IdentityProviderClient identityProviderClient;
     private final ConsumerRepository consumerRepository;
     private final ConsumerMapper consumerMapper;
+
+    @Transactional(readOnly = true)
+    public Page<ConsumerResponse> getConsumers(Pageable pageable) {
+        return consumerRepository.findAll(pageable)
+                .map(consumerMapper::toListItemResponse);
+    }
 
     @Transactional
     public PostResponse createConsumer(PostConsumerRequest request) {
