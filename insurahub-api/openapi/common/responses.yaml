@@ -33,6 +33,13 @@ Conflict:
       schema:
         $ref: './schemas.yaml#/ErrorDto'
 
+NotFound:
+  description: Not Found
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yaml#/ErrorDto'
+
 UnprocessableEntity:
   description: Unprocessable Entity
   content:

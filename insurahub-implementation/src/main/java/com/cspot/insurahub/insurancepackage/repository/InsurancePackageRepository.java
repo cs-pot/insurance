@@ -1,5 +1,6 @@
-package com.cspot.insurahub.insurancepackage;
+package com.cspot.insurahub.insurancepackage.repository;
 
+import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

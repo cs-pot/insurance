@@ -1,6 +1,9 @@
 package com.cspot.insurahub;
 
-import com.cspot.insurahub.insurancepackage.InsurancePackageRepository;
+import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
+import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -379,6 +383,71 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         );
     }
 
+    @Test
+    void shouldInitializePackage() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/initialize")
+                        .with(jwtWithPermissions("update:packages")))
+                .andExpect(status().isNoContent());
+
+        InsurancePackage updatedPackage = repository.findById(insurancePackage.getId()).orElseThrow();
+        assertEquals(InsurancePackageStatus.INITIALIZED, updatedPackage.getStatus());
+    }
+
+    @Test
+    void shouldRejectPackageInitializationWithoutAuthentication() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/initialize"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.status").value(401));
+
+        InsurancePackage updatedPackage = repository.findById(insurancePackage.getId()).orElseThrow();
+        assertEquals(InsurancePackageStatus.NOT_STARTED, updatedPackage.getStatus());
+    }
+
+    @Test
+    void shouldRejectPackageInitializationWithoutUpdatePermission() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/initialize")
+                        .with(jwtWithoutPermissions()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.status").value(403));
+
+        InsurancePackage updatedPackage = repository.findById(insurancePackage.getId()).orElseThrow();
+        assertEquals(InsurancePackageStatus.NOT_STARTED, updatedPackage.getStatus());
+    }
+
+    @Test
+    void shouldRejectPackageInitializationWhenPackageDoesNotExist() throws Exception {
+        UUID packageId = UUID.randomUUID();
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + packageId + "/initialize")
+                        .with(jwtWithPermissions("update:packages")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("PACKAGE_NOT_FOUND"))
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void shouldRejectAlreadyInitializedPackage() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/initialize")
+                        .with(jwtWithPermissions("update:packages")))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/initialize")
+                        .with(jwtWithPermissions("update:packages")))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("PACKAGE_ALREADY_INITIALIZED"))
+                .andExpect(jsonPath("$.status").value(422));
+    }
+
     private void assertPackageCreated(
             String name,
             String payroll,
@@ -440,6 +509,17 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                   "endDate": "%s"
                 }
                 """.formatted(name, payroll, startDate, endDate);
+    }
+
+    private InsurancePackage savePackage() {
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+
+        return repository.save(new InsurancePackage(
+                PACKAGE_NAME,
+                Payroll.MONTHLY,
+                startDate,
+                startDate.plusMonths(1)
+        ));
     }
 
     private RequestPostProcessor jwtWithPermissions(String... permissions) {

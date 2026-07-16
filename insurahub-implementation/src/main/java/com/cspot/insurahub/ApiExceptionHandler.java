@@ -3,7 +3,8 @@ package com.cspot.insurahub;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.InvalidConsumerPageRequestException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
-import com.cspot.insurahub.insurancepackage.InvalidPackageException;
+import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
+import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -171,6 +172,22 @@ public class ApiExceptionHandler {
         return new ErrorDto()
                 .error(e.getCode())
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(PackageNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDto handlePackageNotFoundException(
+            PackageNotFoundException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error("PACKAGE_NOT_FOUND")
+                .status(HttpStatus.NOT_FOUND.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
