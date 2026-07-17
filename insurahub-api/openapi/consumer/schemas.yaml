@@ -59,6 +59,50 @@ PostConsumerRequest:
       description: City where the consumer resides.
       example: Vilnius
 
+PutConsumerRequest:
+  type: object
+  required:
+    - firstName
+    - lastName
+    - personalId
+    - dateOfBirth
+    - address
+    - city
+  properties:
+    firstName:
+      type: string
+      minLength: 1
+      description: Consumer's first name.
+      example: John
+
+    lastName:
+      type: string
+      minLength: 1
+      description: Consumer's last name.
+      example: Doe
+
+    personalId:
+      type: string
+      pattern: "^[0-9]{11}$"
+      description: Consumer's personal identification number containing exactly 11 digits.
+      example: "12345678901"
+
+    dateOfBirth:
+      type: string
+      format: date
+      description: Consumer's date of birth.
+      example: "1995-06-15"
+
+    address:
+      type: string
+      description: Consumer's residential address.
+      example: 25 Main Street
+
+    city:
+      type: string
+      description: City where the consumer resides.
+      example: Vilnius
+
 ConsumerResponse:
   type: object
   required:
