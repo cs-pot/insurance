@@ -235,4 +235,24 @@ class ConsumerServiceTest {
                 .city("City");
         return createRequest;
     }
+    @Test
+    public void shouldDeleteConsumer() {
+        UUID id = UUID.randomUUID();
+        Consumer consumer = getConsumer();
+        when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
+
+        consumerService.deleteConsumer(id);
+
+        verify(consumerRepository).save(consumer);
+        verify(identityProviderClient).deactivateUser(consumer.getIdpId());
+    }
+
+    @Test
+    public void shouldThrowWhenDeletingNonExistentConsumer() {
+        UUID id = UUID.randomUUID();
+        when(consumerRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(ConsumerNotFoundException.class, () -> consumerService.deleteConsumer(id));
+        verify(consumerRepository, never()).save(any(Consumer.class));
+    }
 }

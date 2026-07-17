@@ -23,6 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.UUID;
 
@@ -105,5 +107,27 @@ public class ConsumerService {
         
         consumerMapper.applyUpdateRequest(consumer, updateRequest);
         consumerRepository.save(consumer);
+    }
+
+    @Transactional
+    public void deleteConsumer(UUID id) {
+        log.info("Deleting consumer with ID = {}", id);
+        Consumer consumer = consumerRepository.findById(id)
+                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
+
+        if (consumer.isDeleted()) {
+            throw new ConsumerNotFoundException("Consumer not found with id: " + id);
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String deletedBy = (authentication != null) ? authentication.getName() : "system";
+        consumer.markDeleted(deletedBy);
+        consumerRepository.save(consumer);
+
+        try {
+            identityProviderClient.deactivateUser(consumer.getIdpId());
+        } catch (Exception e) {
+            log.error("Failed to deactivate user in identity provider", e);
+        }
     }
 }

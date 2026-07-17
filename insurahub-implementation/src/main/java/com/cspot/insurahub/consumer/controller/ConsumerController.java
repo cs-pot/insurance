@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.UUID;
 
@@ -36,5 +38,12 @@ public class ConsumerController implements ConsumersApi {
     @PreAuthorize("hasAuthority('update:consumers')")
     public void putConsumer(UUID id, PutConsumerRequest request) {
         consumerService.updateConsumer(id, request);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('delete:consumers')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteConsumer(UUID id) {
+        consumerService.deleteConsumer(id);
     }
 }
