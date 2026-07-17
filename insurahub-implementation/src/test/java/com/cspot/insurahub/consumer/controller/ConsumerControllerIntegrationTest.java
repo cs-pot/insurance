@@ -224,6 +224,70 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnConsumersSearchedByFirstName() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "First")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.content[0].firstName").value("First"))
+                .andExpect(jsonPath("$.content[0].fullName").value("First Consumer"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
+    @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnConsumersSearchedByLastName() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "Consumer")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.page.totalElements").value(3));
+    }
+
+    @Test
+    @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnConsumersSearchedByPersonalId() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "345678")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.content[0].id").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.content[1].id").value("22222222-2222-2222-2222-222222222222"))
+                .andExpect(jsonPath("$.content[2].id").value("33333333-3333-3333-3333-333333333333"))
+                .andExpect(jsonPath("$.content[0].personalId").value("12345678910"))
+                .andExpect(jsonPath("$.content[1].personalId").value("12345678911"))
+                .andExpect(jsonPath("$.content[2].personalId").value("12345678912"));
+    }
+
+    @Test
+    @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnEmptyResultWhenNoConsumersMatchSearch() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "NonExistent")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page.totalElements").value(0))
+                .andExpect(jsonPath("$.page.totalPages").value(0));
+    }
+
+    @Test
+    @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnConsumersSearchedCaseInsensitively() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "first")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].firstName").value("First"));
+    }
+
+    @Test
     void shouldRejectConsumerListWithoutAuthority() throws Exception {
         mockMvc.perform(get("/consumers")
                         .with(jwt()))
