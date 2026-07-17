@@ -4,7 +4,9 @@ import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import org.jspecify.annotations.NonNull;
+import com.cspot.insurahub.model.PutConsumerRequest;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
@@ -23,4 +25,11 @@ public abstract class ConsumerMapper {
     public abstract ConsumerResponse toListItemResponse(Consumer consumer);
 
     protected abstract Consumer toConsumer(PostConsumerRequest request);
+
+    public void applyUpdateRequest(@MappingTarget Consumer consumer, PutConsumerRequest request) {
+        Objects.requireNonNull(request, "PutConsumerRequest must not be null");
+        applyUpdateRequestFields(consumer, request);
+    }
+
+    protected abstract void applyUpdateRequestFields(@MappingTarget Consumer consumer, PutConsumerRequest request);
 }
