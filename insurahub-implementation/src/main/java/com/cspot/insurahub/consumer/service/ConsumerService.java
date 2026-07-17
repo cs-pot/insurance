@@ -104,6 +104,6 @@ public class ConsumerService {
                 .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
         
         consumerMapper.applyUpdateRequest(consumer, updateRequest);
-        consumerRepository.saveAndFlush(consumer);
+        consumerRepository.save(consumer);
     }
 }
