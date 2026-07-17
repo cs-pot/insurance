@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
+import com.cspot.insurahub.model.PutConsumerRequest;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
@@ -35,6 +36,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -228,6 +230,86 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(identityProviderClient);
+    }
+
+    @Test
+    void shouldUpdateConsumer() throws Exception {
+        PostConsumerRequest createRequest = getConsumerCreateRequest();
+        Mockito.when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword()))
+                .thenReturn("auth0|consumer-123");
+
+        String responseJson = mockMvc.perform(post("/consumers")
+                        .with(jwtWithPermission("create:consumers"))
+                        .contentType("application/json")
+                        .content(jsonMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID consumerId = jsonMapper.readValue(responseJson, PostResponse.class).getId();
+
+        PutConsumerRequest updateRequest = new PutConsumerRequest()
+                .firstName("Updated First Name")
+                .lastName("Updated Last Name")
+                .personalId("12345678910")
+                .dateOfBirth(LocalDate.of(2026, 7, 7))
+                .address("Updated Address")
+                .city("Updated City");
+
+        mockMvc.perform(put("/consumers/{id}", consumerId)
+                        .with(jwtWithPermission("update:consumers"))
+                        .contentType("application/json")
+                        .content(jsonMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNoContent())
+                .andExpect(result -> assertThat(result.getResponse().getContentAsString()).isEmpty());
+
+        Consumer updatedConsumer = consumerRepository.findById(consumerId)
+                .orElseThrow(() -> new AssertionError("Consumer must exist"));
+        assertThat(updatedConsumer.getFirstName()).isEqualTo(updateRequest.getFirstName());
+        assertThat(updatedConsumer.getLastName()).isEqualTo(updateRequest.getLastName());
+        assertThat(updatedConsumer.getPersonalId()).isEqualTo(updateRequest.getPersonalId());
+        assertThat(updatedConsumer.getDateOfBirth()).isEqualTo(updateRequest.getDateOfBirth());
+        assertThat(updatedConsumer.getAddress()).isEqualTo(updateRequest.getAddress());
+        assertThat(updatedConsumer.getCity()).isEqualTo(updateRequest.getCity());
+        assertThat(updatedConsumer.getEmail()).isEqualTo(createRequest.getEmail());
+        assertThat(updatedConsumer.getIdpId()).isEqualTo("auth0|consumer-123");
+
+        verify(identityProviderClient).registerUser(createRequest.getEmail(), createRequest.getPassword());
+        verify(identityProviderClient).addUserRole("auth0|consumer-123", IdpRole.CONSUMER);
+        verifyNoMoreInteractions(identityProviderClient);
+    }
+
+    @Test
+    void shouldRejectConsumerUpdateWhenConsumerNotFound() throws Exception {
+        PutConsumerRequest updateRequest = getConsumerUpdateRequest();
+
+        mockMvc.perform(put("/consumers/{id}", UUID.randomUUID())
+                        .with(jwtWithPermission("update:consumers"))
+                        .contentType("application/json")
+                        .content(jsonMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("CONSUMER_NOT_FOUND"));
+    }
+
+    @Test
+    void shouldRejectConsumerUpdateWithoutAuthority() throws Exception {
+        PutConsumerRequest updateRequest = getConsumerUpdateRequest();
+
+        mockMvc.perform(put("/consumers/{id}", UUID.randomUUID())
+                        .with(jwt())
+                        .contentType("application/json")
+                        .content(jsonMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    private PutConsumerRequest getConsumerUpdateRequest() {
+        return new PutConsumerRequest()
+                .firstName("First Name")
+                .lastName("Last Name")
+                .personalId("12345678910")
+                .dateOfBirth(LocalDate.of(2026, 7, 7))
+                .address("Address")
+                .city("City");
     }
 
     private PostConsumerRequest getConsumerCreateRequest() {

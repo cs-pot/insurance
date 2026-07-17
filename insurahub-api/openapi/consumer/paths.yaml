@@ -100,3 +100,49 @@ consumers:
         $ref: '../common/responses.yaml#/Conflict'
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
+
+consumerById:
+  put:
+    tags:
+      - Consumers
+    summary: Update a consumer
+    description: Updates an existing consumer's profile information.
+    operationId: putConsumer
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/PutConsumerRequest'
+          examples:
+            validConsumer:
+              summary: Valid consumer update request
+              value:
+                firstName: Jane
+                lastName: Doe
+                personalId: "10987654321"
+                dateOfBirth: "2005-01-12"
+                address: 67 Main Street
+                city: Kaunas
+    responses:
+      '204':
+        description: Updated consumer
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '409':
+        $ref: '../common/responses.yaml#/Conflict'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'

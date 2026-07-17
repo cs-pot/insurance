@@ -21,6 +21,8 @@ paths:
     $ref: './authentication/paths.yaml#/logout'
   /consumers:
     $ref: './consumer/paths.yaml#/consumers'
+  /consumers/{id}:
+    $ref: './consumer/paths.yaml#/consumerById'
   /packages:
     $ref: './package/paths.yaml#/packages'
   /packages/{packageId}/initialize:
