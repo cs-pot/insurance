@@ -1,6 +1,7 @@
-package com.cspot.insurahub.insurancepackage;
+package com.cspot.insurahub.insurancepackage.entity;
 
 import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.payroll.Payroll;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -41,6 +43,11 @@ public class InsurancePackage extends SoftDeletableAuditableEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Setter
+    private InsurancePackageStatus status;
+
     public InsurancePackage(
             String name,
             Payroll payroll,
@@ -51,5 +58,7 @@ public class InsurancePackage extends SoftDeletableAuditableEntity {
         this.payroll = payroll;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.status = InsurancePackageStatus.NOT_STARTED;
     }
+
 }

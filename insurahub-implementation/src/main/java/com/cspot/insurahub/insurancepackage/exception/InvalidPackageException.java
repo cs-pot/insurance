@@ -1,4 +1,4 @@
-package com.cspot.insurahub.insurancepackage;
+package com.cspot.insurahub.insurancepackage.exception;
 
 public class InvalidPackageException extends RuntimeException {
 

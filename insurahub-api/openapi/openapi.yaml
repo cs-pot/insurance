@@ -23,6 +23,8 @@ paths:
     $ref: './consumer/paths.yaml#/consumers'
   /packages:
     $ref: './package/paths.yaml#/packages'
+  /packages/{packageId}/initialize:
+    $ref: './package/paths.yaml#/initializePackage'
 
 components:
   securitySchemes:

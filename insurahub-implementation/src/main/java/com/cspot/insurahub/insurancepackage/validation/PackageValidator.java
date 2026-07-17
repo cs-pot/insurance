@@ -1,5 +1,8 @@
-package com.cspot.insurahub.insurancepackage;
+package com.cspot.insurahub.insurancepackage.validation;
 
+import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,15 @@ public class PackageValidator {
                 insurancePackage.getStartDate(),
                 insurancePackage.getEndDate()
         );
+    }
+
+    public void validateReadyForInitialization(InsurancePackage insurancePackage) {
+        if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
+            throw new InvalidPackageException(
+                    "PACKAGE_ALREADY_INITIALIZED",
+                    "Package is already initialized"
+            );
+        }
     }
 
     private void validate(

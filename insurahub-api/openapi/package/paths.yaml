@@ -34,3 +34,31 @@ packages:
         $ref: '../common/responses.yaml#/UnsupportedMediaType'
       '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'
+
+initializePackage:
+  post:
+    tags:
+      - Packages
+    summary: Initialize a package
+    description: Initializes a package that has not been started.
+    operationId: initializePackage
+    parameters:
+      - name: packageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Package initialized successfully
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'

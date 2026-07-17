@@ -1,6 +1,12 @@
-package com.cspot.insurahub.insurancepackage;
+package com.cspot.insurahub.insurancepackage.service;
 
-import com.cspot.insurahub.insurancepackage.converter.PackageMapper;
+import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
+import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
+import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
+import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
+import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PostPackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +20,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -116,5 +123,64 @@ class PackageServiceTest {
 
         verify(insurancePackageRepository, never())
                 .save(any(InsurancePackage.class));
+    }
+
+    @Test
+    void shouldInitializePackage() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        when(insurancePackageRepository.findById(packageId)).thenReturn(Optional.of(insurancePackage));
+
+        packageService.initializePackage(packageId);
+
+        assertThat(insurancePackage.getStatus())
+                .isEqualTo(InsurancePackageStatus.INITIALIZED);
+        verify(insurancePackageRepository).findById(packageId);
+    }
+
+    @Test
+    void shouldRejectAlreadyInitializedPackage() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        ReflectionTestUtils.setField(
+                insurancePackage,
+                "status",
+                InsurancePackageStatus.INITIALIZED
+        );
+        when(insurancePackageRepository.findById(packageId)).thenReturn(Optional.of(insurancePackage));
+
+        InvalidPackageException exception = assertThrows(
+                InvalidPackageException.class,
+                () -> packageService.initializePackage(packageId)
+        );
+
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_ALREADY_INITIALIZED");
+        assertThat(insurancePackage.getStatus())
+                .isEqualTo(InsurancePackageStatus.INITIALIZED);
+        verify(insurancePackageRepository).findById(packageId);
+    }
+
+    @Test
+    void shouldRejectInitializePackageWhenPackageDoesNotExist() {
+        UUID packageId = UUID.randomUUID();
+        when(insurancePackageRepository.findById(packageId)).thenReturn(Optional.empty());
+
+        assertThrows(
+                PackageNotFoundException.class,
+                () -> packageService.initializePackage(packageId)
+        );
+
+        verify(insurancePackageRepository).findById(packageId);
     }
 }
