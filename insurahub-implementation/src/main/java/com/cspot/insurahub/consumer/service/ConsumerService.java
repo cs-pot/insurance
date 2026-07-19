@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.util.UUID;
 
 @Slf4j
@@ -120,7 +119,11 @@ public class ConsumerService {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String deletedBy = (authentication != null) ? authentication.getName() : "system";
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Authentication is required to delete a consumer");
+        }
+        String deletedBy = authentication.getName();
+
         consumer.markDeleted(deletedBy);
         consumerRepository.save(consumer);
 
