@@ -266,6 +266,18 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @Sql("/consumer/seed-consumers.sql")
+    void shouldReturnConsumersSearchedByFullName() throws Exception {
+        mockMvc.perform(get("/consumers")
+                        .param("search", "First Consumer")
+                        .with(jwtWithPermission("view:consumers")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.content[0].fullName").value("First Consumer"));
+    }
+
+    @Test
+    @Sql("/consumer/seed-consumers.sql")
     void shouldReturnEmptyResultWhenNoConsumersMatchSearch() throws Exception {
         mockMvc.perform(get("/consumers")
                         .param("search", "NonExistent")

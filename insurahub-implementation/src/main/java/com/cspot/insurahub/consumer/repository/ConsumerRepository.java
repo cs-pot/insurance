@@ -13,6 +13,7 @@ public interface ConsumerRepository extends JpaRepository<Consumer, UUID> {
     @Query("SELECT c FROM Consumer c WHERE "
             + "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
             + "OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :search, '%')) "
+            + "OR LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) "
             + "OR c.personalId LIKE CONCAT('%', :search, '%')")
     Page<Consumer> findBySearch(@Param("search") String search, Pageable pageable);
 }
