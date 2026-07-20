@@ -19,6 +19,8 @@ dependencyManagement {
 }
 
 dependencies {
+    implementation(project(":insurahub-domain"))
+
     compileOnly("jakarta.servlet:jakarta.servlet-api")
 
     implementation("com.fasterxml.jackson.core:jackson-annotations")
@@ -66,7 +68,14 @@ openApiGenerate {
 
     importMappings.set(
         mapOf(
-            "PagedModel" to "org.springframework.data.domain.Page"
+            "PagedModel" to "org.springframework.data.domain.Page",
+            "Payroll" to "com.cspot.insurahub.payroll.Payroll"
+        )
+    )
+
+    schemaMappings.set(
+        mapOf(
+            "Payroll" to "Payroll"
         )
     )
 }
