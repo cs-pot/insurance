@@ -2,6 +2,7 @@ package com.cspot.insurahub.consumer.service;
 
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.consumer.identity.IdentityProviderClient;
 import com.cspot.insurahub.consumer.mapper.ConsumerMapper;
@@ -9,22 +10,24 @@ import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
+import com.cspot.insurahub.model.PutConsumerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +40,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -151,6 +155,50 @@ class ConsumerServiceTest {
         verify(identityProviderClient).addUserRole("idpId", IdpRole.CONSUMER);
         verify(identityProviderClient).deleteUser("idpId");
         verify(consumerRepository).save(any(Consumer.class));
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenUpdatingUnknownConsumer() {
+        // GIVEN
+        UUID consumerId = UUID.randomUUID();
+        PutConsumerRequest updateRequest = getConsumerUpdateRequest();
+        when(consumerRepository.findById(consumerId)).thenReturn(Optional.empty());
+
+        // WHEN
+        assertThrows(ConsumerNotFoundException.class,
+                () -> consumerService.updateConsumer(consumerId, updateRequest));
+
+        // THEN
+        verify(consumerRepository).findById(consumerId);
+        verifyNoMoreInteractions(consumerRepository);
+        verifyNoInteractions(consumerMapper, identityProviderClient);
+    }
+
+    @Test
+    void shouldUpdateConsumer() {
+        // GIVEN
+        UUID consumerId = UUID.randomUUID();
+        Consumer consumer = getConsumer();
+        PutConsumerRequest updateRequest = getConsumerUpdateRequest();
+        when(consumerRepository.findById(consumerId)).thenReturn(Optional.of(consumer));
+
+        // WHEN
+        consumerService.updateConsumer(consumerId, updateRequest);
+
+        // THEN
+        verify(consumerMapper).applyUpdateRequest(consumer, updateRequest);
+        verify(consumerRepository).save(consumer);
+        verifyNoInteractions(identityProviderClient);
+    }
+
+    private PutConsumerRequest getConsumerUpdateRequest() {
+        return new PutConsumerRequest()
+                .firstName("First Name")
+                .lastName("Last Name")
+                .personalId("12345678910")
+                .dateOfBirth(LocalDate.of(2026, 7, 7))
+                .address("Address")
+                .city("City");
     }
 
     private void setUpMocksForRepositoryAndMapper(PostConsumerRequest createRequest, Consumer consumer) {

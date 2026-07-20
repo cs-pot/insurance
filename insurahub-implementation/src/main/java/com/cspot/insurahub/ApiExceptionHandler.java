@@ -2,6 +2,7 @@ package com.cspot.insurahub;
 
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.InvalidConsumerPageRequestException;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
@@ -54,6 +55,18 @@ public class ApiExceptionHandler {
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public ErrorDto handleConsumerNotFoundException(ConsumerNotFoundException e, HttpServletRequest request) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("CONSUMER_NOT_FOUND")
+                .status(404)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
     }
 
     @ExceptionHandler

@@ -2,6 +2,7 @@ package com.cspot.insurahub.consumer.service;
 
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
@@ -11,6 +12,7 @@ import com.cspot.insurahub.consumer.mapper.ConsumerMapper;
 import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import com.cspot.insurahub.model.ConsumerResponse;
 import com.cspot.insurahub.model.PostConsumerRequest;
+import com.cspot.insurahub.model.PutConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -92,5 +96,14 @@ public class ConsumerService {
     private String registerUserWithIdp(PostConsumerRequest consumerCreateRequest) {
         return identityProviderClient.registerUser(consumerCreateRequest.getEmail(),
                 consumerCreateRequest.getPassword());
+    }
+
+    @Transactional
+    public void updateConsumer(UUID id, PutConsumerRequest updateRequest) {
+        Consumer consumer = consumerRepository.findById(id)
+                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
+        
+        consumerMapper.applyUpdateRequest(consumer, updateRequest);
+        consumerRepository.save(consumer);
     }
 }
