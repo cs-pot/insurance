@@ -21,10 +21,11 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 @Slf4j
@@ -73,6 +74,45 @@ public class ConsumerService {
         }
     }
 
+    @Transactional
+    public void updateConsumer(UUID id, PutConsumerRequest updateRequest) {
+        Consumer consumer = consumerRepository.findById(id)
+                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
+        
+        consumerMapper.applyUpdateRequest(consumer, updateRequest);
+        consumerRepository.save(consumer);
+    }
+
+    @Transactional
+    public void deleteConsumer(UUID id) {
+        log.info("Deleting consumer with ID = {}", id);
+        Consumer consumer = consumerRepository.findById(id)
+                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
+
+        String deletedBy = getDeletedBy();
+        
+        consumer.markDeleted(deletedBy);
+        consumerRepository.save(consumer);
+
+        deactivateUserInIdp(consumer.getIdpId());
+    }
+
+    private String getDeletedBy() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Authentication is required to delete a consumer");
+        }
+        return authentication.getName();
+    }
+
+    private void deactivateUserInIdp(String idpId) {
+        try {
+            identityProviderClient.deactivateUser(idpId);
+        } catch (Exception e) {
+            log.error("Failed to deactivate user in identity provider", e);
+        }
+    }
+
     private void assignIdpIdInDatabase(Consumer consumer, String idpId) {
         consumer.setIdpId(idpId);
         consumerRepository.flush();
@@ -97,40 +137,5 @@ public class ConsumerService {
     private String registerUserWithIdp(PostConsumerRequest consumerCreateRequest) {
         return identityProviderClient.registerUser(consumerCreateRequest.getEmail(),
                 consumerCreateRequest.getPassword());
-    }
-
-    @Transactional
-    public void updateConsumer(UUID id, PutConsumerRequest updateRequest) {
-        Consumer consumer = consumerRepository.findById(id)
-                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
-        
-        consumerMapper.applyUpdateRequest(consumer, updateRequest);
-        consumerRepository.save(consumer);
-    }
-
-    @Transactional
-    public void deleteConsumer(UUID id) {
-        log.info("Deleting consumer with ID = {}", id);
-        Consumer consumer = consumerRepository.findById(id)
-                .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("Authentication is required to delete a consumer");
-        }
-        String deletedBy = authentication.getName();
-
-        consumer.markDeleted(deletedBy);
-        consumerRepository.save(consumer);
-
-        deactivateUserInIdp(consumer.getIdpId());
-    }
-
-    private void deactivateUserInIdp(String idpId) {
-        try {
-            identityProviderClient.deactivateUser(idpId);
-        } catch (Exception e) {
-            log.error("Failed to deactivate user in identity provider", e);
-        }
     }
 }
