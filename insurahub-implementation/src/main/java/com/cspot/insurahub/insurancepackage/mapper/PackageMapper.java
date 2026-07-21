@@ -6,6 +6,7 @@ import com.cspot.insurahub.payroll.Payroll;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
@@ -16,6 +17,10 @@ public interface PackageMapper {
 
     @Mapping(target = "status", ignore = true)
     InsurancePackage initializeFromCreateRequest(PackageRequest request);
+
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    void updateFromUpdateRequest(@MappingTarget InsurancePackage insurancePackage, PackageRequest request);
 
     Payroll map(PackageRequest.PayrollEnum payroll);
 

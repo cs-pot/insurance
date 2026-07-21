@@ -25,6 +25,8 @@ paths:
     $ref: './consumer/paths.yaml#/consumerById'
   /packages:
     $ref: './package/paths.yaml#/packages'
+  /packages/{id}:
+    $ref: './package/paths.yaml#/packagesWithId'
   /packages/{packageId}/initialize:
     $ref: './package/paths.yaml#/initializePackage'
 

@@ -26,15 +26,15 @@ Forbidden:
       schema:
         $ref: './schemas.yaml#/ErrorDto'
 
-Conflict:
-  description: Conflict
+NotFound:
+  description: Not Found
   content:
     application/json:
       schema:
         $ref: './schemas.yaml#/ErrorDto'
 
-NotFound:
-  description: Not Found
+Conflict:
+  description: Conflict
   content:
     application/json:
       schema:
