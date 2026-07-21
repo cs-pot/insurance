@@ -3,6 +3,7 @@ package com.cspot.insurahub.insurancepackage.service;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
+import com.cspot.insurahub.insurancepackage.exception.PackageAlreadyInitializedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
@@ -152,10 +153,29 @@ class PackageServiceTest {
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 9)
         );
-        ReflectionTestUtils.setField(
-                insurancePackage,
-                "status",
-                InsurancePackageStatus.INITIALIZED
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        when(insurancePackageRepository.findById(packageId)).thenReturn(Optional.of(insurancePackage));
+
+        PackageAlreadyInitializedException exception = assertThrows(
+                PackageAlreadyInitializedException.class,
+                () -> packageService.initializePackage(packageId)
+        );
+
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_ALREADY_INITIALIZED");
+        assertThat(insurancePackage.getStatus())
+                .isEqualTo(InsurancePackageStatus.INITIALIZED);
+        verify(insurancePackageRepository).findById(packageId);
+    }
+
+    @Test
+    void shouldRejectInitializePackageWhenEndDateIsInPast() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 6, 8),
+                LocalDate.of(2026, 7, 8)
         );
         when(insurancePackageRepository.findById(packageId)).thenReturn(Optional.of(insurancePackage));
 
@@ -165,9 +185,9 @@ class PackageServiceTest {
         );
 
         assertThat(exception.getCode())
-                .isEqualTo("PACKAGE_ALREADY_INITIALIZED");
+                .isEqualTo("PACKAGE_END_DATE_IN_PAST");
         assertThat(insurancePackage.getStatus())
-                .isEqualTo(InsurancePackageStatus.INITIALIZED);
+                .isEqualTo(InsurancePackageStatus.NOT_STARTED);
         verify(insurancePackageRepository).findById(packageId);
     }
 
