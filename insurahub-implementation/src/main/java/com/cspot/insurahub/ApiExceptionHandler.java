@@ -1,7 +1,7 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.common.exception.InvalidPageRequestException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
-import com.cspot.insurahub.consumer.exception.InvalidConsumerPageRequestException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
@@ -92,25 +92,7 @@ public class ApiExceptionHandler {
                                                        HttpServletRequest request) {
         logWarn(e);
         String message = e.getConstraintViolations().stream()
-                .map(violation -> {
-                    String propertyPath = violation.getPropertyPath().toString();
-                    String constraintName = violation.getConstraintDescriptor()
-                            .getAnnotation()
-                            .annotationType()
-                            .getSimpleName();
-                    Object value = violation.getConstraintDescriptor().getAttributes().get("value");
-
-                    if (propertyPath.endsWith("arg0") && "Min".equals(constraintName)) {
-                        return "page must be greater than or equal to " + value;
-                    }
-                    if (propertyPath.endsWith("arg1") && "Min".equals(constraintName)) {
-                        return "size must be greater than or equal to " + value;
-                    }
-                    if (propertyPath.endsWith("arg1") && "Max".equals(constraintName)) {
-                        return "size must be less than or equal to " + value;
-                    }
-                    return propertyPath + ": " + violation.getMessage();
-                })
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining("; "));
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")
@@ -123,8 +105,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    public ErrorDto handleInvalidConsumerPageRequestException(InvalidConsumerPageRequestException e,
-                                                              HttpServletRequest request) {
+    public ErrorDto handleInvalidPageRequestException(InvalidPageRequestException e, HttpServletRequest request) {
         logWarn(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")

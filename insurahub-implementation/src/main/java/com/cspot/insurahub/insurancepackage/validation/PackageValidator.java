@@ -3,6 +3,7 @@ package com.cspot.insurahub.insurancepackage.validation;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
+import com.cspot.insurahub.insurancepackage.exception.PackageAlreadyInitializedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import lombok.RequiredArgsConstructor;
@@ -40,12 +41,15 @@ public class PackageValidator {
     }
 
     public void validateReadyForInitialization(InsurancePackage insurancePackage) {
-        if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
-            throw new InvalidPackageException(
-                    "PACKAGE_ALREADY_INITIALIZED",
-                    "Package is already initialized"
-            );
+        if (isInitialized(insurancePackage)) {
+            throw new PackageAlreadyInitializedException();
         }
+
+        validateEndDateNotInPast(insurancePackage.getEndDate());
+    }
+
+    private boolean isInitialized(InsurancePackage insurancePackage) {
+        return insurancePackage.getStatus() == InsurancePackageStatus.INITIALIZED;
     }
 
     private void validate(
@@ -85,6 +89,17 @@ public class PackageValidator {
             throw new InvalidPackageException(
                     "PACKAGE_END_DATE_BEFORE_START_DATE",
                     "End date must be after or equal to start date"
+            );
+        }
+    }
+
+    private void validateEndDateNotInPast(LocalDate endDate) {
+        LocalDate today = LocalDate.now(clock);
+
+        if (endDate.isBefore(today)) {
+            throw new InvalidPackageException(
+                    "PACKAGE_END_DATE_IN_PAST",
+                    "End date must not be before today"
             );
         }
     }

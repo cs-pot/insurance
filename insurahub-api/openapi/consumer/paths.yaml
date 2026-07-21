@@ -18,12 +18,20 @@ consumers:
       - name: size
         in: query
         required: false
+        description: Page size. Values above 100 are capped to 100 by the application.
         schema:
           type: integer
           format: int32
           minimum: 1
-          maximum: 100
           default: 20
+      - name: search
+        in: query
+        required: false
+        description: >
+          Optional search term to filter consumers by name (first or last) or personal ID.
+        schema:
+          type: string
+          minLength: 1
       - name: sort
         in: query
         required: false
