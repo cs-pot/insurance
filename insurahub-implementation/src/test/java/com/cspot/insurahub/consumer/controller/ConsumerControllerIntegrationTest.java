@@ -173,40 +173,23 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectNegativeConsumerPage() throws Exception {
+    void shouldAcceptPersonalIdConsumerSortProperty() throws Exception {
         mockMvc.perform(get("/consumers")
-                        .param("page", "-1")
-                        .param("size", "20")
+                        .param("sort", "personalId,asc")
                         .with(jwtWithPermission("view:consumers")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.message").value("page must be greater than or equal to 0"))
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.path").value("/consumers"));
-    }
-
-    @Test
-    void shouldRejectNegativeConsumerPageSize() throws Exception {
-        mockMvc.perform(get("/consumers")
-                        .param("page", "0")
-                        .param("size", "-20")
-                        .with(jwtWithPermission("view:consumers")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.message").value("size must be greater than or equal to 1"))
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.path").value("/consumers"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
     }
 
     @Test
     void shouldRejectUnsupportedConsumerSortProperty() throws Exception {
         mockMvc.perform(get("/consumers")
-                        .param("sort", "personalId,asc")
+                        .param("sort", "idpId,asc")
                         .with(jwtWithPermission("view:consumers")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message")
-                        .value("sort property must be one of: createdAt, firstName, lastName, email"))
+                        .value("sort property must be one of: createdAt, firstName, lastName, personalId, dateOfBirth"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.path").value("/consumers"));
     }

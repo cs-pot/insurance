@@ -16,6 +16,11 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+
   security:
     oauth2:
       resourceserver:
