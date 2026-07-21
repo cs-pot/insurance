@@ -3,7 +3,7 @@ package com.cspot.insurahub.insurancepackage.validation;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
-import com.cspot.insurahub.model.PostPackageRequest;
+import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ public class PackageValidator {
 
     private final Clock clock;
 
-    public void validate(PostPackageRequest request) {
+    public void validate(PackageRequest request) {
         Payroll payroll = request.getPayroll() == null
                 ? null
                 : Payroll.valueOf(request.getPayroll().name());

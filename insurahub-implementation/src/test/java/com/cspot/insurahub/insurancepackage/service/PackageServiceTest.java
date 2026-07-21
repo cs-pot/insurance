@@ -7,7 +7,7 @@ import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
-import com.cspot.insurahub.model.PostPackageRequest;
+import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,9 +64,9 @@ class PackageServiceTest {
         LocalDate startDate = LocalDate.of(2026, 7, 10);
         LocalDate endDate = LocalDate.of(2026, 8, 9);
 
-        PostPackageRequest request = new PostPackageRequest(
+        PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PostPackageRequest.PayrollEnum.MONTHLY,
+                PackageRequest.PayrollEnum.MONTHLY,
                 startDate,
                 endDate
         );
@@ -103,9 +103,9 @@ class PackageServiceTest {
         LocalDate startDate = LocalDate.of(2026, 7, 8);
         LocalDate endDate = LocalDate.of(2026, 8, 8);
 
-        PostPackageRequest request = new PostPackageRequest(
+        PackageRequest request = new PackageRequest(
                 "Premium Health Package",
-                PostPackageRequest.PayrollEnum.MONTHLY,
+                PackageRequest.PayrollEnum.MONTHLY,
                 startDate,
                 endDate
         );
@@ -119,7 +119,7 @@ class PackageServiceTest {
                 .isEqualTo("PACKAGE_START_DATE_IN_PAST");
 
         verify(packageMapper, never())
-                .initializeFromCreateRequest(any(PostPackageRequest.class));
+                .initializeFromCreateRequest(any(PackageRequest.class));
 
         verify(insurancePackageRepository, never())
                 .save(any(InsurancePackage.class));

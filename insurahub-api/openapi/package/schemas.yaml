@@ -1,4 +1,4 @@
-PostPackageRequest:
+PackageRequest:
   type: object
   description: Request payload for creating a new insurance package.
   required:

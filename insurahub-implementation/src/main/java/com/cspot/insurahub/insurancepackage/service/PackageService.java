@@ -6,7 +6,7 @@ import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
-import com.cspot.insurahub.model.PostPackageRequest;
+import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class PackageService {
     private final PackageValidator packageValidator;
 
     @Transactional
-    public PostResponse createPackage(PostPackageRequest request) {
+    public PostResponse createPackage(PackageRequest request) {
         packageValidator.validate(request);
 
         InsurancePackage insurancePackage =
