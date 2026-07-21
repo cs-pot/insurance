@@ -11,6 +11,11 @@ spring:
           audiences:
             - https://insurahub.test/api
 
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+
 # There are currently no plans to implement tests with a real Auth0 tenant involved, so fake data is used here.
 auth0:
   domain: auth0_domain

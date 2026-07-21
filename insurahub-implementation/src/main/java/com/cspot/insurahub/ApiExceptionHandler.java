@@ -1,16 +1,18 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.common.exception.InvalidPageRequestException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
-import com.cspot.insurahub.consumer.exception.InvalidConsumerPageRequestException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
+import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -70,6 +72,20 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorDto handleOptimisticLockingFailureException(OptimisticLockingFailureException e,
+                                                            HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("CONCURRENT_MODIFICATION")
+                .status(409)
+                .message("The resource was modified by another user before your changes could be saved.")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     public ErrorDto handleMethodArgumentNotValidException(MethodArgumentNotValidException e,
                                                           HttpServletRequest request) {
@@ -92,25 +108,7 @@ public class ApiExceptionHandler {
                                                        HttpServletRequest request) {
         logWarn(e);
         String message = e.getConstraintViolations().stream()
-                .map(violation -> {
-                    String propertyPath = violation.getPropertyPath().toString();
-                    String constraintName = violation.getConstraintDescriptor()
-                            .getAnnotation()
-                            .annotationType()
-                            .getSimpleName();
-                    Object value = violation.getConstraintDescriptor().getAttributes().get("value");
-
-                    if (propertyPath.endsWith("arg0") && "Min".equals(constraintName)) {
-                        return "page must be greater than or equal to " + value;
-                    }
-                    if (propertyPath.endsWith("arg1") && "Min".equals(constraintName)) {
-                        return "size must be greater than or equal to " + value;
-                    }
-                    if (propertyPath.endsWith("arg1") && "Max".equals(constraintName)) {
-                        return "size must be less than or equal to " + value;
-                    }
-                    return propertyPath + ": " + violation.getMessage();
-                })
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining("; "));
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")
@@ -123,8 +121,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    public ErrorDto handleInvalidConsumerPageRequestException(InvalidConsumerPageRequestException e,
-                                                              HttpServletRequest request) {
+    public ErrorDto handleInvalidPageRequestException(InvalidPageRequestException e, HttpServletRequest request) {
         logWarn(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")
@@ -143,6 +140,20 @@ public class ApiExceptionHandler {
                 .error("MALFORMED_REQUEST_BODY")
                 .status(400)
                 .message("Missing or invalid request body")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handlePackageUpdateNotAllowedException(PackageUpdateNotAllowedException e,
+                                                           HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("PACKAGE_UPDATE_NOT_ALLOWED")
+                .status(400)
+                .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;

@@ -79,7 +79,7 @@ class ConsumerServiceTest {
         when(consumerMapper.toListItemResponse(consumer)).thenReturn(listItem);
 
         // WHEN
-        Page<ConsumerResponse> consumers = consumerService.getConsumers(pageable);
+        Page<ConsumerResponse> consumers = consumerService.getConsumers(null, pageable);
 
         // THEN
         assertThat(consumers.getContent()).containsExactly(listItem);
@@ -90,6 +90,33 @@ class ConsumerServiceTest {
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(consumerRepository).findAll(pageableCaptor.capture());
         assertThat(pageableCaptor.getValue()).isEqualTo(pageable);
+        verify(consumerMapper).toListItemResponse(consumer);
+        verifyNoInteractions(identityProviderClient);
+    }
+
+    @Test
+    public void shouldGetConsumersBySearch() {
+        // GIVEN
+        Consumer consumer = getConsumer();
+        ConsumerResponse listItem = new ConsumerResponse()
+                .id(UUID.randomUUID())
+                .firstName("First Name")
+                .lastName("Last Name")
+                .fullName("First Name Last Name")
+                .personalId("12345678910")
+                .dateOfBirth(LocalDate.of(2026, 7, 7));
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        when(consumerRepository.findBySearch("First", pageable))
+                .thenReturn(new PageImpl<>(List.of(consumer), PageRequest.of(0, 20), 1));
+        when(consumerMapper.toListItemResponse(consumer)).thenReturn(listItem);
+
+        // WHEN
+        Page<ConsumerResponse> consumers = consumerService.getConsumers("First", pageable);
+
+        // THEN
+        assertThat(consumers.getContent()).containsExactly(listItem);
+        verify(consumerRepository).findBySearch("First", pageable);
+        verify(consumerRepository, never()).findAll(any(Pageable.class));
         verify(consumerMapper).toListItemResponse(consumer);
         verifyNoInteractions(identityProviderClient);
     }

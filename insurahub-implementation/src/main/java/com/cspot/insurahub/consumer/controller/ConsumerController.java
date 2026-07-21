@@ -24,8 +24,8 @@ public class ConsumerController implements ConsumersApi {
 
     @Override
     @PreAuthorize("hasAuthority('view:consumers')")
-    public Page<ConsumerResponse> getConsumers(Pageable pageable) {
-        return consumerService.getConsumers(pageable);
+    public Page<ConsumerResponse> getConsumers(String search, Pageable pageable) {
+        return consumerService.getConsumers(search, pageable);
     }
 
     @Override

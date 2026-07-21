@@ -20,12 +20,14 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
+@Setter
 @Entity
 @Table(name = "packages")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InsurancePackage extends SoftDeletableAuditableEntity {
 
     @Id
+    @Setter(AccessLevel.NONE)
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
     private UUID id;
@@ -45,7 +47,6 @@ public class InsurancePackage extends SoftDeletableAuditableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    @Setter
     private InsurancePackageStatus status;
 
     public InsurancePackage(
@@ -60,5 +61,4 @@ public class InsurancePackage extends SoftDeletableAuditableEntity {
         this.endDate = endDate;
         this.status = InsurancePackageStatus.NOT_STARTED;
     }
-
 }

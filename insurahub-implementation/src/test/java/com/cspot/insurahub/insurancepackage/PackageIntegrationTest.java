@@ -1,5 +1,6 @@
-package com.cspot.insurahub;
+package com.cspot.insurahub.insurancepackage;
 
+import com.cspot.insurahub.BaseIntegrationTest;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
@@ -28,8 +29,10 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.TestInstance;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -124,37 +127,108 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectPackageWithStartDateBeforeToday() throws Exception {
-        LocalDate startDate = LocalDate.now(clock).minusDays(1);
-        LocalDate endDate = startDate.plusMonths(1);
+    void shouldUpdatePackage() throws Exception {
+        UUID packageId = repository.save(new InsurancePackage(
+                "Original Package",
+                Payroll.WEEKLY,
+                LocalDate.now(clock).plusDays(1),
+                LocalDate.now(clock).plusDays(7)
+        )).getId();
 
-        assertPackageRejected(
-                createRequestBody(
-                        PACKAGE_NAME,
-                        "MONTHLY",
-                        startDate,
-                        endDate
-                ),
-                "PACKAGE_START_DATE_IN_PAST",
-                422
-        );
+        LocalDate updatedStartDate = LocalDate.now(clock).plusDays(2);
+        LocalDate updatedEndDate = updatedStartDate.plusMonths(1);
+
+        mockMvc.perform(put(PACKAGES_ENDPOINT + "/" + packageId)
+                        .with(jwtWithPermissions("update:packages"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(
+                                "Updated Package",
+                                "MONTHLY",
+                                updatedStartDate,
+                                updatedEndDate
+                        )))
+                .andExpect(status().isNoContent());
+
+        var updatedPackage = repository.findById(packageId)
+                .orElseThrow(() -> new AssertionError("Package must exist after update"));
+        assertEquals("Updated Package", updatedPackage.getName());
+        assertEquals(Payroll.MONTHLY, updatedPackage.getPayroll());
+        assertEquals(updatedStartDate, updatedPackage.getStartDate());
+        assertEquals(updatedEndDate, updatedPackage.getEndDate());
     }
 
     @Test
-    void shouldRejectPackageWithEndDateBeforeStartDate() throws Exception {
+    void shouldRejectPackageUpdateWithoutUpdatePermission() throws Exception {
+        UUID packageId = repository.save(new InsurancePackage(
+                "Original Package",
+                Payroll.WEEKLY,
+                LocalDate.now(clock).plusDays(1),
+                LocalDate.now(clock).plusDays(7)
+        )).getId();
+
+        long packagesBeforeRequest = repository.count();
+
+        mockMvc.perform(put(PACKAGES_ENDPOINT + "/" + packageId)
+                        .with(jwtWithoutPermissions())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(
+                                "Updated Package",
+                                "MONTHLY",
+                                LocalDate.now(clock).plusDays(2),
+                                LocalDate.now(clock).plusDays(32)
+                        )))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.status").value(403));
+
+        assertEquals(packagesBeforeRequest, repository.count());
+    }
+
+    @Test
+    void shouldRejectUpdateForMissingPackage() throws Exception {
+        UUID missingPackageId = UUID.randomUUID();
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+        LocalDate endDate = startDate.plusMonths(1);
+
+        mockMvc.perform(put(PACKAGES_ENDPOINT + "/" + missingPackageId)
+                        .with(jwtWithPermissions("update:packages"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(
+                                "Updated Package",
+                                "MONTHLY",
+                                startDate,
+                                endDate
+                        )))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("PACKAGE_NOT_FOUND"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void shouldRejectPackageUpdateWithInvalidDates() throws Exception {
+        UUID packageId = repository.save(new InsurancePackage(
+                "Original Package",
+                Payroll.WEEKLY,
+                LocalDate.now(clock).plusDays(1),
+                LocalDate.now(clock).plusDays(7)
+        )).getId();
+
         LocalDate startDate = LocalDate.now(clock).plusDays(2);
         LocalDate endDate = startDate.minusDays(1);
 
-        assertPackageRejected(
-                createRequestBody(
-                        PACKAGE_NAME,
-                        "MONTHLY",
-                        startDate,
-                        endDate
-                ),
-                "PACKAGE_END_DATE_BEFORE_START_DATE",
-                422
-        );
+        mockMvc.perform(put(PACKAGES_ENDPOINT + "/" + packageId)
+                        .with(jwtWithPermissions("update:packages"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(
+                                "Updated Package",
+                                "MONTHLY",
+                                startDate,
+                                endDate
+                        )))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("PACKAGE_END_DATE_BEFORE_START_DATE"))
+                .andExpect(jsonPath("$.status").value(422));
     }
 
     @ParameterizedTest

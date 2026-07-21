@@ -38,9 +38,11 @@ public class ConsumerService {
     private final ConsumerMapper consumerMapper;
 
     @Transactional(readOnly = true)
-    public Page<ConsumerResponse> getConsumers(Pageable pageable) {
-        return consumerRepository.findAll(pageable)
-                .map(consumerMapper::toListItemResponse);
+    public Page<ConsumerResponse> getConsumers(String search, Pageable pageable) {
+        Page<Consumer> consumers = (search != null && !search.isBlank())
+                ? consumerRepository.findBySearch(search.trim(), pageable)
+                : consumerRepository.findAll(pageable);
+        return consumers.map(consumerMapper::toListItemResponse);
     }
 
     @Transactional

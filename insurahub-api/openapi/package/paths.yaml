@@ -12,7 +12,7 @@ packages:
       content:
         application/json:
           schema:
-            $ref: './schemas.yaml#/PostPackageRequest'
+            $ref: './schemas.yaml#/PackageRequest'
           examples:
             validPackage:
               summary: Valid package creation request
@@ -60,5 +60,46 @@ initializePackage:
         $ref: '../common/responses.yaml#/Forbidden'
       '404':
         $ref: '../common/responses.yaml#/NotFound'
+      '415':
+        $ref: '../common/responses.yaml#/UnsupportedMediaType'
       '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+
+packagesWithId:
+  put:
+    tags:
+      - Packages
+    summary: Update a package
+    description: Updates a package. Only available to administrators.
+    operationId: putPackage
+    parameters:
+      - in: path
+        name: id
+        description: ID of the package to update.
+        schema:
+          type: string
+          format: uuid
+        required: true
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/PackageRequest'
+    responses:
+      204:
+        description: Successful update
+      400:
+        $ref: '../common/responses.yaml#/BadRequest'
+      401:
+        $ref: '../common/responses.yaml#/Unauthorized'
+      403:
+        $ref: '../common/responses.yaml#/Forbidden'
+      404:
+        $ref: '../common/responses.yaml#/NotFound'
+      409:
+        $ref: '../common/responses.yaml#/Conflict'
+      415:
+        $ref: '../common/responses.yaml#/UnsupportedMediaType'
+      422:
         $ref: '../common/responses.yaml#/UnprocessableEntity'
