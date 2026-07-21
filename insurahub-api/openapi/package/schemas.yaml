@@ -41,6 +41,48 @@ Payroll:
     - ANNUALLY
   example: MONTHLY
 
+PlanType:
+  type: string
+  description: Plan type.
+  enum:
+    - HEALTH_INSURANCE
+    - DENTAL_INSURANCE
+    - VISION_INSURANCE
+  example: HEALTH_INSURANCE
+
+PlanRequest:
+  type: object
+  description: Request payload for adding a plan to a package.
+  required:
+    - name
+    - type
+    - contribution
+    - election
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+      pattern: '^(?=.*[A-Za-z])[A-Za-z ]+$'
+      description: Plan name. English letters and spaces only, up to 50 characters.
+      example: Standard Health
+    type:
+      $ref: '#/PlanType'
+    contribution:
+      type: integer
+      format: int32
+      minimum: 10
+      maximum: 1000
+      description: Contribution amount in whole euros.
+      example: 250
+    election:
+      type: integer
+      format: int32
+      minimum: 10
+      maximum: 1000
+      description: Election amount in whole euros.
+      example: 500
+
 PackageResponse:
   allOf:
     - $ref: '../common/schemas.yaml#/BaseListItemResponse'

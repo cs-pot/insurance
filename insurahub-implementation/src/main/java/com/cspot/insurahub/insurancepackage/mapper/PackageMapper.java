@@ -18,9 +18,11 @@ public interface PackageMapper {
     PackageResponse toListItemResponse(InsurancePackage insurancePackage);
 
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "plans", ignore = true)
     InsurancePackage initializeFromCreateRequest(PackageRequest request);
 
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "plans", ignore = true)
     @Mapping(target = "id", ignore = true)
     void updateFromUpdateRequest(@MappingTarget InsurancePackage insurancePackage, PackageRequest request);
 }

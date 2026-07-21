@@ -29,6 +29,8 @@ paths:
     $ref: './package/paths.yaml#/packagesWithId'
   /packages/{packageId}/initialize:
     $ref: './package/paths.yaml#/initializePackage'
+  /packages/{packageId}/plans:
+    $ref: './package/paths.yaml#/packagePlans'
 
 components:
   securitySchemes:
