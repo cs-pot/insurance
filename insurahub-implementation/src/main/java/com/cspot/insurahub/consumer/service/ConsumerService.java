@@ -114,10 +114,6 @@ public class ConsumerService {
         Consumer consumer = consumerRepository.findById(id)
                 .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
 
-        if (consumer.isDeleted()) {
-            throw new ConsumerNotFoundException("Consumer not found with id: " + id);
-        }
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("Authentication is required to delete a consumer");
@@ -127,8 +123,12 @@ public class ConsumerService {
         consumer.markDeleted(deletedBy);
         consumerRepository.save(consumer);
 
+        deactivateUserInIdp(consumer.getIdpId());
+    }
+
+    private void deactivateUserInIdp(String idpId) {
         try {
-            identityProviderClient.deactivateUser(consumer.getIdpId());
+            identityProviderClient.deactivateUser(idpId);
         } catch (Exception e) {
             log.error("Failed to deactivate user in identity provider", e);
         }

@@ -377,6 +377,13 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
                                 .authorities(jwt -> Objects.requireNonNull(
                                 jwtAuthenticationConverter.convert(jwt)).getAuthorities())))
                 .andExpect(status().isNoContent());
+
+        // Verify soft delete fields are populated in DB
+        Consumer deletedConsumer = consumerRepository.findById(consumerId)
+                .orElseThrow(() -> new AssertionError("Consumer should still exist for soft delete"));
+        assertThat(deletedConsumer.isDeleted()).isTrue();
+        assertThat(deletedConsumer.getDeletedAt()).isNotNull();
+        assertThat(deletedConsumer.getDeletedBy()).isNotNull();
     }
 
     @Test
