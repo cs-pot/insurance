@@ -26,8 +26,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -66,6 +68,33 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 startDate,
                 endDate
         );
+    }
+
+    @Test
+    void shouldGetCreatedPackage() throws Exception {
+        String packageName = "Package For Get Test";
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+        LocalDate endDate = startDate.plusMonths(1);
+
+        assertPackageCreated(
+                packageName,
+                "MONTHLY",
+                startDate,
+                endDate
+        );
+
+        mockMvc.perform(get(PACKAGES_ENDPOINT)
+                        .with(jwtWithPermissions("view:packages"))
+                        .param("page", "0")
+                        .param("size", "100")
+                        .param("sort", "createdAt,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].name").value(hasItem(packageName)))
+                .andExpect(jsonPath("$.content[*].payroll").value(hasItem("MONTHLY")))
+                .andExpect(jsonPath("$.content[*].startDate").value(hasItem(startDate.toString())))
+                .andExpect(jsonPath("$.content[*].endDate").value(hasItem(endDate.toString())))
+                .andExpect(jsonPath("$.page.number").value(0))
+                .andExpect(jsonPath("$.page.size").value(100));
     }
 
     @ParameterizedTest

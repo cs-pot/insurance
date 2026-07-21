@@ -8,9 +8,12 @@ import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PackageRequest;
+import com.cspot.insurahub.model.PackageResponse;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +24,22 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PackageService {
 
-    private final InsurancePackageRepository repository;
-    private final PackageMapper mapper;
+    private final InsurancePackageRepository packageRepository;
+    private final PackageMapper packageMapper;
     private final PackageValidator packageValidator;
+
+    @Transactional(readOnly = true)
+    public Page<PackageResponse> getPackages(Pageable pageable) {
+        return packageRepository.findAll(pageable)
+                .map(packageMapper::toListItemResponse);
+    }
 
     @Transactional
     public PostResponse createPackage(PackageRequest request) {
         packageValidator.validate(request);
 
         InsurancePackage insurancePackage =
-                mapper.initializeFromCreateRequest(request);
+                packageMapper.initializeFromCreateRequest(request);
 
         log.debug(
                 "Creating package: name={}, payroll={}, startDate={}, endDate={}",
@@ -40,16 +49,15 @@ public class PackageService {
                 request.getEndDate()
         );
 
-        InsurancePackage savedPackage = repository.save(insurancePackage);
-        log.info("Package created: Id={}", savedPackage.getId());
-
+        InsurancePackage savedPackage = packageRepository.save(insurancePackage);
+        log.info("Package created: id={}", savedPackage.getId());
 
         return new PostResponse(savedPackage.getId());
     }
 
     @Transactional
     public void initializePackage(UUID packageId) {
-        InsurancePackage insurancePackage = repository.findById(packageId)
+        InsurancePackage insurancePackage = packageRepository.findById(packageId)
                 .orElseThrow(() -> new PackageNotFoundException(packageId));
 
         packageValidator.validateReadyForInitialization(insurancePackage);
@@ -60,24 +68,30 @@ public class PackageService {
     @Transactional
     public void updatePackage(UUID id, PackageRequest packageRequest) {
         logPackageUpdate(id, packageRequest);
-        InsurancePackage insurancePackage = repository.findById(id).orElseThrow(() -> new PackageNotFoundException(id));
+        InsurancePackage insurancePackage = packageRepository.findById(id)
+                .orElseThrow(() -> new PackageNotFoundException(id));
+
         checkPackageStatusBeforeUpdate(insurancePackage);
-        mapper.updateFromUpdateRequest(insurancePackage, packageRequest);
+        packageMapper.updateFromUpdateRequest(insurancePackage, packageRequest);
         packageValidator.validate(insurancePackage);
     }
 
     private void checkPackageStatusBeforeUpdate(InsurancePackage insurancePackage) {
         if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
-            throw new PackageUpdateNotAllowedException("Package updates are only allowed when the status is " +
-                    "NOT_STARTED");
+            throw new PackageUpdateNotAllowedException(
+                    "Package updates are only allowed when the status is NOT_STARTED"
+            );
         }
     }
 
     private void logPackageUpdate(UUID id, PackageRequest packageRequest) {
-        log.debug("Updating package: id={}, name={}, payroll={}, startDate={}, endDate={}", id,
+        log.debug(
+                "Updating package: id={}, name={}, payroll={}, startDate={}, endDate={}",
+                id,
                 packageRequest.getName(),
                 packageRequest.getPayroll(),
                 packageRequest.getStartDate(),
-                packageRequest.getEndDate());
+                packageRequest.getEndDate()
+        );
     }
 }

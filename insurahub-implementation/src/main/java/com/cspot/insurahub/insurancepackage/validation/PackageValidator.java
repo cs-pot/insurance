@@ -19,13 +19,9 @@ public class PackageValidator {
     private final Clock clock;
 
     public void validate(PackageRequest request) {
-        Payroll payroll = request.getPayroll() == null
-                ? null
-                : Payroll.valueOf(request.getPayroll().name());
-
         validate(
                 request.getName(),
-                payroll,
+                request.getPayroll(),
                 request.getStartDate(),
                 request.getEndDate()
         );

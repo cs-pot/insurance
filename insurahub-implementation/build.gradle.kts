@@ -12,6 +12,7 @@ java {
 }
 
 dependencies {
+    implementation(project(":insurahub-domain"))
     implementation(project(":insurahub-api"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")

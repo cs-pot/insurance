@@ -12,36 +12,42 @@ java {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.springBoot.get()}")
+        mavenBom(
+            "org.springframework.boot:spring-boot-dependencies:${libs.versions.springBoot.get()}"
+        )
     }
 }
 
 dependencies {
+    implementation(project(":insurahub-domain"))
+
+    compileOnly("jakarta.servlet:jakarta.servlet-api")
+
     implementation("com.fasterxml.jackson.core:jackson-annotations")
     implementation("jakarta.annotation:jakarta.annotation-api")
+    implementation("jakarta.validation:jakarta.validation-api")
 
     implementation("org.springframework:spring-web")
     implementation("org.springframework:spring-context")
     implementation("org.springframework.data:spring-data-commons")
 
-    implementation("jakarta.servlet:jakarta.servlet-api")
-    implementation("jakarta.validation:jakarta.validation-api")
-
+    implementation(libs.springdoc.common)
     implementation(libs.springdoc.scalar)
-    implementation(libs.swagger.annotations)
-    implementation(libs.swagger.models)
 
     implementation(libs.jackson.databind.nullable)
 }
 
 openApiGenerate {
     generatorName.set("spring")
+    inputSpec.set("$projectDir/openapi/openapi.yaml")
 
-    inputSpec.set(
-        "$projectDir/openapi/openapi.yaml"
+    outputDir.set(
+        layout.buildDirectory
+            .dir("generated")
+            .get()
+            .asFile
+            .absolutePath
     )
-
-    outputDir.set(layout.buildDirectory.dir("generated").get().asFile.absolutePath)
 
     apiPackage.set("com.cspot.insurahub.api")
     modelPackage.set("com.cspot.insurahub.model")
@@ -56,14 +62,20 @@ openApiGenerate {
             "useResponseEntity" to "false",
             "skipDefaultInterface" to "true",
             "hideGenerationTimestamp" to "true",
-            "substituteGenericPagedModel" to "true",
-            "generatePageableConstraintValidation" to "true"
+            "substituteGenericPagedModel" to "true"
         )
     )
 
     importMappings.set(
         mapOf(
-            "PagedModel" to "org.springframework.data.domain.Page"
+            "PagedModel" to "org.springframework.data.domain.Page",
+            "Payroll" to "com.cspot.insurahub.payroll.Payroll"
+        )
+    )
+
+    schemaMappings.set(
+        mapOf(
+            "Payroll" to "Payroll"
         )
     )
 }
