@@ -23,7 +23,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class ImmutableAuditableEntity {
     @Id
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
