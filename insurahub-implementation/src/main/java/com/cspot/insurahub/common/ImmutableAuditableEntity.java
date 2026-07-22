@@ -25,7 +25,7 @@ public abstract class ImmutableAuditableEntity {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Setter(AccessLevel.PROTECTED)
+    @Setter(AccessLevel.NONE)
     private UUID id;
 
     @CreatedDate
