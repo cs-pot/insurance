@@ -1,0 +1,22 @@
+EnrollmentResponse:
+  type: object
+  required:
+    - id
+    - packageName
+    - packageType
+    - electionAmount
+    - contributionAmount
+  properties:
+    id:
+      type: string
+      format: uuid
+    packageName:
+      type: string
+    packageType:
+      type: string
+    electionAmount:
+      type: number
+      format: double
+    contributionAmount:
+      type: number
+      format: double
