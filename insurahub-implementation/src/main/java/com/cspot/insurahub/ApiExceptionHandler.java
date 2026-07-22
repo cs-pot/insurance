@@ -234,12 +234,12 @@ public class ApiExceptionHandler {
     }
 
     private void logError(Exception e) {
-        log.error("Exception encountered: ", e.getClass().getSimpleName());
+        log.error("Exception encountered: {}", e.getClass().getSimpleName());
         log.debug("", e);
     }
 
     private void logWarn(Exception e) {
-        log.warn("Exception encountered: ", e.getClass().getSimpleName());
+        log.warn("Exception encountered: {}", e.getClass().getSimpleName());
         log.debug("", e);
     }
 }
