@@ -7,8 +7,10 @@ import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedExc
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PlanRequest;
+import com.cspot.insurahub.model.PlanResponse;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
+import com.cspot.insurahub.plan.enumeration.PlanType;
 import com.cspot.insurahub.plan.exception.InvalidPlanException;
 import com.cspot.insurahub.plan.mapper.PlanMapper;
 import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
@@ -26,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -83,11 +87,7 @@ class PlanServiceTest {
                 500
         );
         InsurancePlan plan = createPlan(
-                insurancePackage,
-                "Standard Health",
-                com.cspot.insurahub.plan.enumeration.PlanType.HEALTH_INSURANCE,
-                250,
-                500
+                insurancePackage
         );
         ReflectionTestUtils.setField(plan, "id", planId);
 
@@ -191,6 +191,50 @@ class PlanServiceTest {
         verify(insurancePlanRepository, never()).save(any(InsurancePlan.class));
     }
 
+    @Test
+    void shouldReturnPlansOfPackage() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+        insurancePackage.getPlans().add(plan);
+        List<PlanResponse> expectedResponses = List.of(
+                new PlanResponse(
+                        UUID.randomUUID(),
+                        "Standard Health",
+                        com.cspot.insurahub.model.PlanType.HEALTH_INSURANCE,
+                        250,
+                        500
+                )
+        );
+
+        when(insurancePackageRepository.findById(packageId))
+                .thenReturn(Optional.of(insurancePackage));
+        when(planMapper.toPlanResponses(insurancePackage.getPlans()))
+                .thenReturn(expectedResponses);
+
+        assertThat(planService.getPackagePlans(packageId))
+                .isSameAs(expectedResponses);
+
+        verify(insurancePackageRepository).findById(packageId);
+        verify(planMapper).toPlanResponses(insurancePackage.getPlans());
+    }
+
+    @Test
+    void shouldThrowWhenGettingPlansForMissingPackage() {
+        UUID packageId = UUID.randomUUID();
+
+        when(insurancePackageRepository.findById(packageId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                PackageNotFoundException.class,
+                () -> planService.getPackagePlans(packageId)
+        );
+
+        verify(insurancePackageRepository).findById(packageId);
+        verifyNoInteractions(planMapper);
+    }
+
     private InsurancePackage createPackage() {
         return new InsurancePackage(
                 "Premium Health Package",
@@ -215,18 +259,14 @@ class PlanServiceTest {
     }
 
     private InsurancePlan createPlan(
-            InsurancePackage insurancePackage,
-            String name,
-            com.cspot.insurahub.plan.enumeration.PlanType type,
-            int contribution,
-            int election
+            InsurancePackage insurancePackage
     ) {
         return new InsurancePlan(
                 insurancePackage,
-                name,
-                type,
-                BigDecimal.valueOf(contribution),
-                BigDecimal.valueOf(election)
+                "Plan",
+                PlanType.HEALTH_INSURANCE,
+                BigDecimal.valueOf(250),
+                BigDecimal.valueOf(500)
         );
     }
 }

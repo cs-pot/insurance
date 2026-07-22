@@ -28,8 +28,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -217,6 +219,36 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
         assertEquals(plansBeforeRequest, planRepository.count());
+    }
+
+    @Test
+    void shouldGetPlansOfPackage() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        planRepository.saveAll(List.of(
+                new com.cspot.insurahub.plan.entity.InsurancePlan(
+                        insurancePackage,
+                        "Standard Health",
+                        com.cspot.insurahub.plan.enumeration.PlanType.HEALTH_INSURANCE,
+                        java.math.BigDecimal.valueOf(250),
+                        java.math.BigDecimal.valueOf(500)
+                ),
+                new com.cspot.insurahub.plan.entity.InsurancePlan(
+                        insurancePackage,
+                        "Dental Basic",
+                        com.cspot.insurahub.plan.enumeration.PlanType.DENTAL_INSURANCE,
+                        java.math.BigDecimal.valueOf(100),
+                        java.math.BigDecimal.valueOf(300)
+                )
+        ));
+
+        mockMvc.perform(get(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/plans")
+                        .with(jwtWithPermissions("view:packages")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].name").value(hasItems("Standard Health", "Dental Basic")))
+                .andExpect(jsonPath("$[*].type").value(hasItems("HEALTH_INSURANCE", "DENTAL_INSURANCE")))
+                .andExpect(jsonPath("$[*].contribution").value(hasItems(250, 100)))
+                .andExpect(jsonPath("$[*].election").value(hasItems(500, 300)));
     }
 
     private String createPlanRequestBody(
