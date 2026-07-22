@@ -10,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
-    List<Enrollment> findByConsumerIdAndStatus(UUID consumerId, EnrollmentStatus status);
+    List<Enrollment> findByConsumerIdAndStatusOrderByCreatedAtDesc(UUID consumerId, EnrollmentStatus status);
 }

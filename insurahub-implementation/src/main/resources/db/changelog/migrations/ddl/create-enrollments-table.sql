@@ -15,5 +15,10 @@ CREATE TABLE IF NOT EXISTS enrollments (
     deleted_at TIMESTAMPTZ,
     deleted_by VARCHAR,
     CONSTRAINT fk_enrollments_consumer FOREIGN KEY (consumer_id) REFERENCES consumers(id),
-    CONSTRAINT fk_enrollments_package FOREIGN KEY (package_id) REFERENCES packages(id)
+    CONSTRAINT fk_enrollments_package FOREIGN KEY (package_id) REFERENCES packages(id),
+    CONSTRAINT chk_enrollments_election_non_negative CHECK (election_amount >= 0),
+    CONSTRAINT chk_enrollments_contribution_non_negative CHECK (contribution_amount >= 0)
 );
+
+CREATE INDEX IF NOT EXISTS idx_enrollments_consumer_status
+ON enrollments(consumer_id, status);
