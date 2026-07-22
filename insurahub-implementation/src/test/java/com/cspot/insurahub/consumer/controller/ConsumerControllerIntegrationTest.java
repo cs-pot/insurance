@@ -23,6 +23,7 @@ import com.cspot.insurahub.model.PostConsumerRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.model.PutConsumerRequest;
 import tools.jackson.databind.json.JsonMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -410,4 +411,54 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
             return Mockito.mock(IdentityProviderClient.class);
         }
     }
+
+    @Test
+    void shouldDeleteConsumer() throws Exception {
+        // 1. Create a consumer first
+        PostConsumerRequest createRequest = getConsumerCreateRequest();
+        Mockito.when(identityProviderClient.registerUser(createRequest.getEmail(), createRequest.getPassword()))
+                .thenReturn("auth0|consumer-123");
+
+        String responseJson = mockMvc.perform(post("/consumers")
+                        .with(jwt().jwt(jwt -> jwt.claim("permissions", List.of("create:consumers")))
+                                .authorities(jwt -> Objects.requireNonNull(
+                                jwtAuthenticationConverter.convert(jwt)).getAuthorities()))
+                        .contentType("application/json")
+                        .content(jsonMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        UUID consumerId = jsonMapper.readValue(responseJson, PostResponse.class).getId();
+
+        // 2. Delete the consumer
+        mockMvc.perform(delete("/consumers/{id}", consumerId)
+                        .with(jwt().jwt(jwt -> jwt.claim("permissions", List.of("delete:consumers")))
+                                .authorities(jwt -> Objects.requireNonNull(
+                                jwtAuthenticationConverter.convert(jwt)).getAuthorities())))
+                .andExpect(status().isNoContent());
+
+        // Verify soft delete fields are populated in DB
+        Consumer deletedConsumer = consumerRepository.findById(consumerId)
+                .orElseThrow(() -> new AssertionError("Consumer should still exist for soft delete"));
+        assertThat(deletedConsumer.isDeleted()).isTrue();
+        assertThat(deletedConsumer.getDeletedAt()).isNotNull();
+        assertThat(deletedConsumer.getDeletedBy()).isNotNull();
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingNonExistentConsumer() throws Exception {
+        mockMvc.perform(delete("/consumers/{id}", UUID.randomUUID())
+                        .with(jwt().jwt(jwt -> jwt.claim("permissions", List.of("delete:consumers")))
+                                .authorities(jwt -> Objects.requireNonNull(
+                                jwtAuthenticationConverter.convert(jwt)).getAuthorities())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRejectConsumerDeletionWithoutAuthority() throws Exception {
+        mockMvc.perform(delete("/consumers/{id}", UUID.randomUUID())
+                        .with(jwt())) // No permissions claim
+                .andExpect(status().isForbidden());
+    }
+
 }
