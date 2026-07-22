@@ -7,6 +7,7 @@ import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedExc
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PlanRequest;
+import com.cspot.insurahub.model.PlanResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
@@ -17,13 +18,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -60,13 +65,7 @@ class PlanServiceTest {
                 250,
                 500
         );
-        InsurancePlan plan = createPlan(
-                insurancePackage,
-                "Standard Health",
-                PlanType.HEALTH_INSURANCE,
-                250,
-                500
-        );
+        InsurancePlan plan = createPlan(insurancePackage);
         ReflectionTestUtils.setField(plan, "id", planId);
 
         when(insurancePackageRepository.findByIdOrThrow(packageId))
@@ -140,6 +139,41 @@ class PlanServiceTest {
         verify(insurancePlanRepository, never()).save(any(InsurancePlan.class));
     }
 
+    @Test
+    void shouldReturnPlansOfPackage() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+        insurancePackage.getPlans().add(plan);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<PlanResponse> expectedResponses = new PageImpl<>(
+                List.of(
+                        new PlanResponse(
+                                UUID.randomUUID(),
+                                "Standard Health",
+                                PlanType.HEALTH_INSURANCE,
+                                250,
+                                500
+                        )
+                ),
+                pageable,
+                1
+        );
+
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
+        when(insurancePlanRepository.findByInsurancePackageId(packageId, pageable))
+                .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
+        when(planMapper.toPlanResponse(plan))
+                .thenReturn(expectedResponses.getContent().get(0));
+
+        assertThat(planService.getPackagePlans(packageId, pageable))
+                .isEqualTo(expectedResponses);
+
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(planMapper).toPlanResponse(plan);
+    }
+
     private InsurancePackage createPackage() {
         return new InsurancePackage(
                 "Premium Health Package",
@@ -163,19 +197,13 @@ class PlanServiceTest {
         );
     }
 
-    private InsurancePlan createPlan(
-            InsurancePackage insurancePackage,
-            String name,
-            PlanType type,
-            int contribution,
-            int election
-    ) {
+    private InsurancePlan createPlan(InsurancePackage insurancePackage) {
         return new InsurancePlan(
                 insurancePackage,
-                name,
-                type,
-                BigDecimal.valueOf(contribution),
-                BigDecimal.valueOf(election)
+                "Plan",
+                PlanType.HEALTH_INSURANCE,
+                BigDecimal.valueOf(250),
+                BigDecimal.valueOf(500)
         );
     }
 }

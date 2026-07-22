@@ -2,6 +2,7 @@ package com.cspot.insurahub.plan.mapper;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.model.PlanRequest;
+import com.cspot.insurahub.model.PlanResponse;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,4 +17,6 @@ public interface PlanMapper {
 
     @Mapping(target = "name", source = "request.name")
     InsurancePlan toEntity(InsurancePackage insurancePackage, PlanRequest request);
+
+    PlanResponse toPlanResponse(InsurancePlan plan);
 }

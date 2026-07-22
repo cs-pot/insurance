@@ -4,7 +4,9 @@ import com.cspot.insurahub.BaseIntegrationTest;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
+import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
+import com.cspot.insurahub.plan.entity.InsurancePlan;
 import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -27,8 +29,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -215,6 +219,40 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
         assertEquals(plansBeforeRequest, planRepository.count());
+    }
+
+    @Test
+    void shouldGetPlansOfPackage() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        planRepository.saveAll(List.of(
+                new InsurancePlan(
+                        insurancePackage,
+                        "Standard Health",
+                        PlanType.HEALTH_INSURANCE,
+                        java.math.BigDecimal.valueOf(250),
+                        java.math.BigDecimal.valueOf(500)
+                ),
+                new InsurancePlan(
+                        insurancePackage,
+                        "Dental Basic",
+                        PlanType.DENTAL_INSURANCE,
+                        java.math.BigDecimal.valueOf(100),
+                        java.math.BigDecimal.valueOf(300)
+                )
+        ));
+
+        mockMvc.perform(get(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/plans")
+                        .with(jwtWithPermissions("view:packages")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content.[*].name").value(hasItems("Standard Health", "Dental Basic")))
+                .andExpect(jsonPath("$.content.[*].type").value(hasItems("HEALTH_INSURANCE", "DENTAL_INSURANCE")))
+                .andExpect(jsonPath("$.content.[*].contribution").value(hasItems(250, 100)))
+                .andExpect(jsonPath("$.content.[*].election").value(hasItems(500, 300)))
+                .andExpect(jsonPath("$.page.size").value(20))
+                .andExpect(jsonPath("$.page.number").value(0))
+                .andExpect(jsonPath("$.page.totalElements").value(2))
+                .andExpect(jsonPath("$.page.totalPages").value(1));
     }
 
     private String createPlanRequestBody(
