@@ -25,13 +25,6 @@ import java.util.UUID;
 @Table(name = "packages")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InsurancePackage extends SoftDeletableAuditableEntity {
-
-    @Id
-    @Setter(AccessLevel.NONE)
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false)
-    private UUID id;
-
     @Column(name = "name", nullable = false)
     private String name;
 

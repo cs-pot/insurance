@@ -22,13 +22,6 @@ import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 @Entity
 @Table(name = "consumers")
 public class Consumer extends SoftDeletableAuditableEntity {
-
-    @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Setter(AccessLevel.PROTECTED)
-    private UUID id;
-
     @Column(name = "idp_id", nullable = false)
     private String idpId;
 
