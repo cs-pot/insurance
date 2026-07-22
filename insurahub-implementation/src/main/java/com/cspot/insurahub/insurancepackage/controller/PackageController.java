@@ -4,9 +4,7 @@ import com.cspot.insurahub.api.PackagesApi;
 import com.cspot.insurahub.insurancepackage.service.PackageService;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.model.PackageResponse;
-import com.cspot.insurahub.model.PlanRequest;
 import com.cspot.insurahub.model.PostResponse;
-import com.cspot.insurahub.plan.service.PlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +20,6 @@ import java.util.UUID;
 public class PackageController implements PackagesApi {
 
     private final PackageService packageService;
-    private final PlanService planService;
 
     @Override
     @PreAuthorize("hasAuthority('view:packages')")
@@ -48,12 +45,5 @@ public class PackageController implements PackagesApi {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void putPackage(UUID id, PackageRequest packageRequest) {
         packageService.updatePackage(id, packageRequest);
-    }
-
-    @Override
-    @PreAuthorize("hasAuthority('update:packages')")
-    @ResponseStatus(HttpStatus.CREATED)
-    public PostResponse addPackagePlan(UUID packageId, PlanRequest planRequest) {
-        return planService.addPlan(packageId, planRequest);
     }
 }

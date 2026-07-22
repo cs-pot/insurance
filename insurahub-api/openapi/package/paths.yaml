@@ -90,52 +90,6 @@ initializePackage:
       '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'
 
-packagePlans:
-  post:
-    tags:
-      - Packages
-    summary: Add a plan to a package
-    description: Adds a new insurance plan to an existing package. Plans may be added after package initialization.
-    operationId: addPackagePlan
-    parameters:
-      - name: packageId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: './schemas.yaml#/PlanRequest'
-          examples:
-            validPlan:
-              summary: Valid plan creation request
-              value:
-                name: Standard Health
-                type: HEALTH_INSURANCE
-                contribution: 250
-                election: 500
-    responses:
-      '201':
-        $ref: '../common/responses.yaml#/Created'
-      '400':
-        $ref: '../common/responses.yaml#/BadRequest'
-      '401':
-        $ref: '../common/responses.yaml#/Unauthorized'
-      '403':
-        $ref: '../common/responses.yaml#/Forbidden'
-      '404':
-        $ref: '../common/responses.yaml#/NotFound'
-      '415':
-        $ref: '../common/responses.yaml#/UnsupportedMediaType'
-      '422':
-        $ref: '../common/responses.yaml#/UnprocessableEntity'
-      '500':
-        $ref: '../common/responses.yaml#/InternalServerError'
-
 packagesWithId:
   put:
     tags:
