@@ -14,6 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLRestriction("deleted_at IS NULL")
 public abstract class SoftDeletableAuditableEntity extends ModifiableAuditableEntity {
+    
     @Column(name = "deleted_at")
     private Instant deletedAt;
 

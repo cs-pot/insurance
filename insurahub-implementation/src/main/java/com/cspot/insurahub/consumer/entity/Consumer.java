@@ -22,6 +22,7 @@ import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 @Entity
 @Table(name = "consumers")
 public class Consumer extends SoftDeletableAuditableEntity {
+    
     @Column(name = "idp_id", nullable = false)
     private String idpId;
 
