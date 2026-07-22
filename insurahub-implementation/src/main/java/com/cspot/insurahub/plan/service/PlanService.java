@@ -4,7 +4,6 @@ import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.model.PlanRequest;
-import com.cspot.insurahub.model.PlanResponse;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
 import com.cspot.insurahub.plan.mapper.PlanMapper;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -41,9 +39,5 @@ public class PlanService {
         log.info("Plan added to package: packageId={}, planId={}", packageId, savedPlan.getId());
 
         return new PostResponse(savedPlan.getId());
-    }
-
-    public List<PlanResponse> getPackagePlans(UUID packageId) {
-        throw new RuntimeException();
     }
 }

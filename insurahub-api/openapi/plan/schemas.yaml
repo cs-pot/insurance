@@ -39,30 +39,3 @@ PlanRequest:
       maximum: 1000
       description: Election amount in whole euros.
       example: 500
-
-PlanResponse:
-  allOf:
-    - $ref: '../common/schemas.yaml#/BaseListItemResponse'
-    - type: object
-      required:
-        - name
-        - type
-        - contribution
-        - election
-      properties:
-        name:
-          type: string
-          description: Plan name.
-          example: Standard Health
-        type:
-          $ref: '#/PlanType'
-        contribution:
-          type: integer
-          format: int32
-          description: Contribution amount in whole euros.
-          example: 250
-        election:
-          type: integer
-          format: int32
-          description: Election amount in whole euros.
-          example: 500
