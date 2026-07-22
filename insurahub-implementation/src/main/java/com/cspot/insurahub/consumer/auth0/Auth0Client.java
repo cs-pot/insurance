@@ -4,9 +4,11 @@ import com.auth0.client.mgmt.ManagementApi;
 import com.auth0.client.mgmt.core.ManagementApiException;
 import com.auth0.client.mgmt.types.CreateUserRequestContent;
 import com.auth0.client.mgmt.types.CreateUserResponseContent;
+import com.auth0.client.mgmt.types.UpdateUserRequestContent;
 import com.auth0.client.mgmt.users.types.AssignUserRolesRequestContent;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.IdentityProviderConflictException;
+import com.cspot.insurahub.consumer.exception.IdentityProviderDeactivationException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRegistrationException;
 import com.cspot.insurahub.consumer.exception.IdentityProviderRoleAssignmentException;
 import com.cspot.insurahub.consumer.identity.IdentityProviderClient;
@@ -57,6 +59,19 @@ public class Auth0Client implements IdentityProviderClient {
             throw new IdentityProviderRegistrationException("Failed to delete user from Auth0", e);
         }
     }
+
+    @Override
+    public void deactivateUser(String idpId) {
+        try {
+            UpdateUserRequestContent request = UpdateUserRequestContent.builder()
+                    .blocked(true)
+                    .build();
+            managementApi.users().update(idpId, request);
+        } catch (ManagementApiException e) {
+            throw new IdentityProviderDeactivationException("Failed to deactivate user in Auth0", e);
+        }
+    }
+
 
     @Override
     public void addUserRole(String userId, IdpRole role) {

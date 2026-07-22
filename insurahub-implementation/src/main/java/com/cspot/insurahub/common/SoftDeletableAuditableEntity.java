@@ -5,14 +5,16 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 
 @Getter
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public abstract class SoftDeletableAuditableEntity extends ModifiableAuditableEntity {
-
+    
     @Column(name = "deleted_at")
     private Instant deletedAt;
 

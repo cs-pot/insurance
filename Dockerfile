@@ -13,18 +13,30 @@ COPY settings.gradle.kts .
 
 # Copy module build files
 COPY insurahub-api/build.gradle.kts insurahub-api/
+COPY insurahub-domain/build.gradle.kts insurahub-domain/
 COPY insurahub-implementation/build.gradle.kts insurahub-implementation/
 
 # Download dependencies
-RUN ./gradlew dependencies --no-daemon
+RUN ./gradlew :insurahub-implementation:dependencies \
+    --no-daemon \
+    --stacktrace \
+    --console=plain
 
 # Copy OpenAPI and generate sources
 COPY insurahub-api/openapi insurahub-api/openapi/
-RUN ./gradlew :insurahub-api:openApiGenerate --no-daemon
+RUN ./gradlew :insurahub-api:openApiGenerate \
+    --no-daemon \
+    --stacktrace \
+    --console=plain
 
 # Copy source code and build
+COPY insurahub-domain/src insurahub-domain/src/
 COPY insurahub-implementation/src insurahub-implementation/src/
-RUN ./gradlew :insurahub-implementation:bootJar -x test --no-daemon
+RUN ./gradlew :insurahub-implementation:bootJar \
+    -x test \
+    --no-daemon \
+    --stacktrace \
+    --console=plain
 
 # Stage 2: Run
 FROM eclipse-temurin:21-jre

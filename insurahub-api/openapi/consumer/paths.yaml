@@ -100,6 +100,32 @@ consumers:
         $ref: '../common/responses.yaml#/InternalServerError'
 
 consumerById:
+  delete:
+    tags:
+      - Consumers
+    summary: Remove a consumer
+    description: Removes a consumer record by its ID.
+    operationId: deleteConsumer
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Consumer removed successfully (No Content)
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        description: Not Found
+        content:
+          application/json:
+            schema:
+              $ref: '../common/schemas.yaml#/ErrorDto'
   put:
     tags:
       - Consumers

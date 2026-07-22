@@ -10,7 +10,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -22,15 +21,8 @@ import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 @NoArgsConstructor
 @Entity
 @Table(name = "consumers")
-@SQLRestriction("deleted_at IS NULL")
 public class Consumer extends SoftDeletableAuditableEntity {
-
-    @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Setter(AccessLevel.PROTECTED)
-    private UUID id;
-
+    
     @Column(name = "idp_id", nullable = false)
     private String idpId;
 
