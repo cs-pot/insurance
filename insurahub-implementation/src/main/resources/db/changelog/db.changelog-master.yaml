@@ -15,5 +15,9 @@ databaseChangeLog:
       file: migrations/ddl/add-package-status.sql
       relativeToChangelogFile: true
   - include:
+ HEAD
       file: migrations/ddl/create-enrollments-table.sql
+
+      file: migrations/ddl/create-plans-table.sql
+ feature/SCRUM-76-view-available-plans
       relativeToChangelogFile: true

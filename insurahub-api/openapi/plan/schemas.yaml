@@ -1,0 +1,30 @@
+PlanResponse:
+  type: object
+  required:
+    - id
+    - name
+    - type
+    - electionAmount
+    - contributionAmount
+    - status
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    type:
+      type: string
+    electionAmount:
+      type: number
+      format: double
+    contributionAmount:
+      type: number
+      format: double
+    coverageDetails:
+      type: string
+    status:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE

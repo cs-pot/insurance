@@ -15,8 +15,13 @@ tags:
     description: Operations related to consumer management
   - name: Packages
     description: Operations related to insurance package management
+ HEAD
   - name: Enrollments
     description: Operations related to enrollments
+
+  - name: Plans
+    description: Operations related to insurance plans
+ feature/SCRUM-76-view-available-plans
 
 paths:
   /auth/logout:
@@ -33,6 +38,10 @@ paths:
     $ref: './package/paths.yaml#/packagesWithId'
   /packages/{packageId}/initialize:
     $ref: './package/paths.yaml#/initializePackage'
+  /plans:
+    $ref: './plan/paths.yaml#/plans'
+  /plans/{id}:
+    $ref: './plan/paths.yaml#/planById'
 
 components:
   securitySchemes:

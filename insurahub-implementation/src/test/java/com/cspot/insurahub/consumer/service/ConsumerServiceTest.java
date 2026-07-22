@@ -1,5 +1,8 @@
 package com.cspot.insurahub.consumer.service;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
@@ -38,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -262,4 +266,43 @@ class ConsumerServiceTest {
                 .city("City");
         return createRequest;
     }
+    @Test
+    public void shouldDeleteConsumer() {
+        UUID id = UUID.randomUUID();
+        Consumer consumer = getConsumer();
+        when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin", null, java.util.Collections.emptyList()));
+
+        consumerService.deleteConsumer(id);
+
+        verify(consumerRepository).save(consumer);
+        verify(identityProviderClient).deactivateUser(consumer.getIdpId());
+    }
+
+    @Test
+    public void shouldThrowWhenDeletingNonExistentConsumer() {
+        UUID id = UUID.randomUUID();
+        when(consumerRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(ConsumerNotFoundException.class, () -> consumerService.deleteConsumer(id));
+        verify(consumerRepository, never()).save(any(Consumer.class));
+    }
+    @Test
+    public void shouldSoftDeleteConsumerEvenIfIdpDeactivationFails() {
+        UUID id = UUID.randomUUID();
+        Consumer consumer = getConsumer();
+        when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin", null, java.util.Collections.emptyList()));
+        Mockito.doThrow(new RuntimeException("Auth0 is down"))
+                .when(identityProviderClient).deactivateUser(consumer.getIdpId());
+
+        // Should not throw, should handle the exception internally
+        consumerService.deleteConsumer(id);
+
+        // Verify DB save still happened despite Auth0 failure
+        verify(consumerRepository).save(consumer);
+    }
+
 }
