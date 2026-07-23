@@ -15,5 +15,8 @@ databaseChangeLog:
       file: migrations/ddl/add-package-status.sql
       relativeToChangelogFile: true
   - include:
+      file: migrations/ddl/create-jwt-cleanup-trigger.sql
+      relativeToChangelogFile: true
+  - include:
       file: migrations/ddl/create-plans-table.sql
       relativeToChangelogFile: true
