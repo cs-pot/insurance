@@ -1,8 +1,10 @@
 package com.cspot.insurahub.insurancepackage.validation;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageAlreadyInitializedException;
+import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.BeforeEach;
@@ -167,7 +169,7 @@ class PackageValidatorTest {
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 9)
         );
-        insurancePackage.setStatus(com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus.INITIALIZED);
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
 
         PackageAlreadyInitializedException exception = assertThrows(
                 PackageAlreadyInitializedException.class,
@@ -176,6 +178,37 @@ class PackageValidatorTest {
 
         assertThat(exception.getCode())
                 .isEqualTo("PACKAGE_ALREADY_INITIALIZED");
+    }
+
+    @Test
+    void shouldAllowUpdateWhenPackageIsNotStarted() {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+
+        assertDoesNotThrow(() -> packageValidator.validateReadyForUpdate(insurancePackage));
+    }
+
+    @Test
+    void shouldRejectUpdateWhenPackageIsInitialized() {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+
+        PackageUpdateNotAllowedException exception = assertThrows(
+                PackageUpdateNotAllowedException.class,
+                () -> packageValidator.validateReadyForUpdate(insurancePackage)
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Package updates are only allowed when the status is NOT_STARTED");
     }
 
     @Test

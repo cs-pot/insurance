@@ -2,14 +2,13 @@ package com.cspot.insurahub.insurancepackage.entity;
 
 import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.plan.entity.InsurancePlan;
 import com.cspot.insurahub.payroll.Payroll;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -17,7 +16,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -42,6 +42,9 @@ public class InsurancePackage extends SoftDeletableAuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private InsurancePackageStatus status;
+
+    @OneToMany(mappedBy = "insurancePackage")
+    private List<InsurancePlan> plans = new ArrayList<>();
 
     public InsurancePackage(
             String name,

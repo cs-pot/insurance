@@ -8,6 +8,7 @@ import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
+import com.cspot.insurahub.plan.exception.InvalidPlanException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -189,6 +190,22 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public ErrorDto handleInvalidPackageException(
             InvalidPackageException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error(e.getCode())
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidPlanException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleInvalidPlanException(
+            InvalidPlanException e,
             HttpServletRequest request
     ) {
         logWarn(e);
