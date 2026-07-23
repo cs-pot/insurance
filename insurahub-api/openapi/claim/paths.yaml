@@ -1,0 +1,91 @@
+claims:
+  post:
+    tags:
+      - Claims
+    summary: File a claim for an employee
+    description: >
+      Creates a new pending claim for an employee and attaches one receipt file.
+      Only administrators can perform this operation. The receipt file must be a PDF,
+      JPG, or PNG and must be smaller than 10 MiB. Send this as multipart/form-data
+      with a JSON part named postClaimRequest and a file part named receiptFile.
+    operationId: postClaim
+    requestBody:
+      required: true
+      description: >
+        Multipart form containing claim details as JSON and one receipt file.
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - postClaimRequest
+              - receiptFile
+            properties:
+              postClaimRequest:
+                $ref: './schemas.yaml#/PostClaimRequest'
+              receiptFile:
+                type: string
+                format: binary
+                description: Receipt file upload. Accepted formats are PDF, JPG, and PNG.
+          encoding:
+            postClaimRequest:
+              contentType: application/json
+            receiptFile:
+              contentType: application/pdf, image/jpeg, image/png
+    responses:
+      '201':
+        $ref: '../common/responses.yaml#/Created'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '415':
+        $ref: '../common/responses.yaml#/UnsupportedMediaType'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
+receiptById:
+  get:
+    tags:
+      - Claims
+    summary: Download a receipt
+    description: Returns the receipt file by receipt ID.
+    operationId: getReceipt
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Receipt ID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Receipt file returned successfully.
+        content:
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'

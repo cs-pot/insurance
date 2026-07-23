@@ -30,6 +30,11 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 auth0:
   domain: ${AUTH0_DOMAIN}
   client-id: ${AUTH0_M2M_CLIENT_ID}

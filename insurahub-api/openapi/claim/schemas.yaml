@@ -1,0 +1,41 @@
+PostClaimRequest:
+  type: object
+  description: |
+    Claim details JSON part. In the OpenAPI UI, paste JSON like:
+    {"employeeId":"7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12","planId":"5a0d5de4-2f79-46f9-85c1-b588ea7b5c41","serviceDate":"2030-01-15","amount":125.50}
+  example:
+    employeeId: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
+    planId: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
+    serviceDate: "2030-01-15"
+    amount: 125.50
+  required:
+    - employeeId
+    - planId
+    - serviceDate
+    - amount
+  properties:
+    employeeId:
+      type: string
+      format: uuid
+      description: Employee or consumer ID for whom the claim is filed.
+      example: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
+
+    planId:
+      type: string
+      format: uuid
+      description: Insurance plan ID related to the claim.
+      example: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
+
+    serviceDate:
+      type: string
+      format: date
+      description: Date when the reimbursable service was provided.
+      example: "2030-01-15"
+
+    amount:
+      type: number
+      minimum: 0
+      exclusiveMinimum: true
+      multipleOf: 0.01
+      description: Positive claim amount in EUR.
+      example: 125.50
