@@ -20,6 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -197,26 +201,33 @@ class PlanServiceTest {
         InsurancePackage insurancePackage = createPackage();
         InsurancePlan plan = createPlan(insurancePackage);
         insurancePackage.getPlans().add(plan);
-        List<PlanResponse> expectedResponses = List.of(
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<PlanResponse> expectedResponses = new PageImpl<>(
+            List.of(
                 new PlanResponse(
-                        UUID.randomUUID(),
-                        "Standard Health",
-                        com.cspot.insurahub.model.PlanType.HEALTH_INSURANCE,
-                        250,
-                        500
+                    UUID.randomUUID(),
+                    "Standard Health",
+                    com.cspot.insurahub.model.PlanType.HEALTH_INSURANCE,
+                    250,
+                    500
                 )
+            ),
+            pageable,
+            1
         );
 
         when(insurancePackageRepository.findById(packageId))
                 .thenReturn(Optional.of(insurancePackage));
-        when(planMapper.toPlanResponses(insurancePackage.getPlans()))
-                .thenReturn(expectedResponses);
+        when(insurancePlanRepository.findByInsurancePackageId(packageId, pageable))
+                .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
+        when(planMapper.toPlanResponse(plan))
+                .thenReturn(expectedResponses.getContent().get(0));
 
-        assertThat(planService.getPackagePlans(packageId))
-                .isSameAs(expectedResponses);
+        assertThat(planService.getPackagePlans(packageId, pageable))
+                .isEqualTo(expectedResponses);
 
         verify(insurancePackageRepository).findById(packageId);
-        verify(planMapper).toPlanResponses(insurancePackage.getPlans());
+        verify(planMapper).toPlanResponse(plan);
     }
 
     @Test
@@ -228,7 +239,7 @@ class PlanServiceTest {
 
         assertThrows(
                 PackageNotFoundException.class,
-                () -> planService.getPackagePlans(packageId)
+                () -> planService.getPackagePlans(packageId, Pageable.ofSize(10))
         );
 
         verify(insurancePackageRepository).findById(packageId);

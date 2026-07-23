@@ -9,8 +9,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
-
 @Mapper(
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE
@@ -22,8 +20,6 @@ public interface PlanMapper {
     @Mapping(target = "contribution", source = "request.contribution")
     @Mapping(target = "election", source = "request.election")
     InsurancePlan toEntity(InsurancePackage insurancePackage, PlanRequest request);
-
-    List<PlanResponse> toPlanResponses(List<InsurancePlan> plans);
 
     PlanResponse toPlanResponse(InsurancePlan plan);
 }

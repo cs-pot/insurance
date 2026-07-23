@@ -244,11 +244,15 @@ class PlanIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get(PACKAGES_ENDPOINT + "/" + insurancePackage.getId() + "/plans")
                         .with(jwtWithPermissions("view:packages")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[*].name").value(hasItems("Standard Health", "Dental Basic")))
-                .andExpect(jsonPath("$[*].type").value(hasItems("HEALTH_INSURANCE", "DENTAL_INSURANCE")))
-                .andExpect(jsonPath("$[*].contribution").value(hasItems(250, 100)))
-                .andExpect(jsonPath("$[*].election").value(hasItems(500, 300)));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content.[*].name").value(hasItems("Standard Health", "Dental Basic")))
+                .andExpect(jsonPath("$.content.[*].type").value(hasItems("HEALTH_INSURANCE", "DENTAL_INSURANCE")))
+                .andExpect(jsonPath("$.content.[*].contribution").value(hasItems(250, 100)))
+                .andExpect(jsonPath("$.content.[*].election").value(hasItems(500, 300)))
+                .andExpect(jsonPath("$.page.size").value(20))
+                .andExpect(jsonPath("$.page.number").value(0))
+                .andExpect(jsonPath("$.page.totalElements").value(2))
+                .andExpect(jsonPath("$.page.totalPages").value(1));
     }
 
     private String createPlanRequestBody(

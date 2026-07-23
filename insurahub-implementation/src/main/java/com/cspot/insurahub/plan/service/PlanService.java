@@ -13,10 +13,11 @@ import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import com.cspot.insurahub.plan.validation.PlanValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -46,10 +47,11 @@ public class PlanService {
         return new PostResponse(plan.getId());
     }
 
-    public List<PlanResponse> getPackagePlans(UUID packageId) {
-        log.info("Returning all plans of package {}", packageId);
+    public Page<PlanResponse> getPackagePlans(UUID packageId, Pageable pageable) {
         InsurancePackage insurancePackage = packageRepository.findById(packageId)
                 .orElseThrow(() -> new PackageNotFoundException(packageId));
-        return planMapper.toPlanResponses(insurancePackage.getPlans());
+        Page<InsurancePlan> plansPage = planRepository.findByInsurancePackageId(packageId, pageable);
+        log.info("Returning page of {} plans of package {}", plansPage.getSize(), packageId);
+        return plansPage.map(planMapper::toPlanResponse);
     }
 }

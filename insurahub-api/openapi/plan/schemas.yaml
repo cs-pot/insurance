@@ -66,3 +66,16 @@ PlanResponse:
           format: int32
           description: Election amount in whole euros.
           example: 500
+
+GetPlansResponse:
+  type: object
+  required:
+    - content
+    - page
+  properties:
+    content:
+      type: array
+      items:
+        $ref: './schemas.yaml#/PlanResponse'
+    page:
+      $ref: '../common/schemas.yaml#/PageResponse'
