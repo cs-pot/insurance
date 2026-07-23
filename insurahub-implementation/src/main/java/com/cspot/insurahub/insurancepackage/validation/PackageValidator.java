@@ -1,9 +1,9 @@
 package com.cspot.insurahub.insurancepackage.validation;
 
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
-import com.cspot.insurahub.insurancepackage.exception.PackageAlreadyInitializedException;
+import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +38,21 @@ public class PackageValidator {
 
     public void validateReadyForInitialization(InsurancePackage insurancePackage) {
         if (isInitialized(insurancePackage)) {
-            throw new PackageAlreadyInitializedException();
+            throw new DomainValidationException(
+                    "PACKAGE_ALREADY_INITIALIZED",
+                    "Package is already initialized"
+            );
         }
 
         validateEndDateNotInPast(insurancePackage.getEndDate());
+    }
+
+    public void validateReadyForUpdate(InsurancePackage insurancePackage) {
+        if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
+            throw new PackageUpdateNotAllowedException(
+                    "Package updates are only allowed when the status is NOT_STARTED"
+            );
+        }
     }
 
     private boolean isInitialized(InsurancePackage insurancePackage) {
@@ -62,7 +73,7 @@ public class PackageValidator {
 
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new InvalidPackageException(
+            throw new DomainValidationException(
                     "PACKAGE_NAME_REQUIRED",
                     "Name is required"
             );
@@ -73,7 +84,7 @@ public class PackageValidator {
         LocalDate today = LocalDate.now(clock);
 
         if (startDate.isBefore(today)) {
-            throw new InvalidPackageException(
+            throw new DomainValidationException(
                     "PACKAGE_START_DATE_IN_PAST",
                     "Start date must not be before today"
             );
@@ -82,7 +93,7 @@ public class PackageValidator {
 
     private void validateEndDate(LocalDate startDate, LocalDate endDate) {
         if (endDate.isBefore(startDate)) {
-            throw new InvalidPackageException(
+            throw new DomainValidationException(
                     "PACKAGE_END_DATE_BEFORE_START_DATE",
                     "End date must be after or equal to start date"
             );
@@ -93,7 +104,7 @@ public class PackageValidator {
         LocalDate today = LocalDate.now(clock);
 
         if (endDate.isBefore(today)) {
-            throw new InvalidPackageException(
+            throw new DomainValidationException(
                     "PACKAGE_END_DATE_IN_PAST",
                     "End date must not be before today"
             );
@@ -113,7 +124,7 @@ public class PackageValidator {
                 payroll.minimumInclusiveEndDate(startDate);
 
         if (endDate.isBefore(minimumEndDate)) {
-            throw new InvalidPackageException(
+            throw new DomainValidationException(
                     "PACKAGE_PERIOD_TOO_SHORT",
                     "Package period must contain at least one full payroll cycle"
             );
