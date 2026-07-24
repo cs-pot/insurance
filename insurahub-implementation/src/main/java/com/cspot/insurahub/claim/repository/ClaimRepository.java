@@ -10,7 +10,6 @@ import java.util.UUID;
 
 public interface ClaimRepository extends JpaRepository<Claim, UUID> {
 
-    @Query(value = "SELECT c FROM Claim c JOIN FETCH c.employee JOIN FETCH c.plan",
-            countQuery = "SELECT count(c) FROM Claim c")
+    @Query("SELECT c FROM Claim c JOIN FETCH c.enrollment e JOIN FETCH e.consumer JOIN FETCH e.plan")
     Page<Claim> findAllWithDetails(Pageable pageable);
 }
