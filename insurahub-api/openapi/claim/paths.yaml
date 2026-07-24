@@ -1,4 +1,57 @@
 claims:
+  get:
+    tags:
+      - Claims
+    summary: View claims
+    description: >
+      Returns insurance claims with key information for claims management.
+      Only available to administrators. Claims are sorted by their creation
+      date in descending order by default (most recent first).
+    operationId: getClaims
+    x-spring-paginated: true
+    parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        required: false
+        description: Page size. Values above 100 are capped to 100 by the application.
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 20
+      - name: sort
+        in: query
+        required: false
+        description: >
+          Optional sorting in Spring Pageable format: property or property,direction.
+          Direction can be asc or desc. Allowed property: createdAt.
+        schema:
+          type: string
+          default: createdAt,desc
+    responses:
+      '200':
+        description: Claims retrieved successfully.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/GetClaimsResponse'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
   post:
     tags:
       - Claims

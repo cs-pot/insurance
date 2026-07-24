@@ -31,3 +31,57 @@ PostClaimRequest:
       multipleOf: 0.01
       description: Positive claim amount in EUR.
       example: 125.50
+
+ClaimStatus:
+  type: string
+  description: Current status of a claim.
+  enum:
+    - PENDING
+    - APPROVED
+    - REJECTED
+  example: PENDING
+
+ClaimResponse:
+  allOf:
+    - $ref: '../common/schemas.yaml#/BaseListItemResponse'
+    - type: object
+      required:
+        - consumerFullName
+        - serviceDate
+        - planName
+        - amount
+        - status
+      properties:
+        consumerFullName:
+          type: string
+          description: Full name of the consumer (employee) who submitted the claim.
+          example: John Doe
+        serviceDate:
+          type: string
+          format: date
+          description: Date the service was provided.
+          example: "2026-07-15"
+        planName:
+          type: string
+          description: Name of the insurance plan the claim is filed against.
+          example: Standard Health
+        amount:
+          type: number
+          format: double
+          description: Claimed amount in euros.
+          example: 285.50
+        status:
+          $ref: '#/ClaimStatus'
+
+GetClaimsResponse:
+  type: object
+  required:
+    - content
+    - page
+  properties:
+    content:
+      type: array
+      items:
+        $ref: './schemas.yaml#/ClaimResponse'
+    page:
+      $ref: '../common/schemas.yaml#/PageResponse'
