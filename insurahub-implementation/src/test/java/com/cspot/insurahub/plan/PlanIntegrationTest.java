@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -229,15 +230,15 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                         insurancePackage,
                         "Standard Health",
                         PlanType.HEALTH_INSURANCE,
-                        java.math.BigDecimal.valueOf(250),
-                        java.math.BigDecimal.valueOf(500)
+                        BigDecimal.valueOf(250),
+                        BigDecimal.valueOf(500)
                 ),
                 new InsurancePlan(
                         insurancePackage,
                         "Dental Basic",
                         PlanType.DENTAL_INSURANCE,
-                        java.math.BigDecimal.valueOf(100),
-                        java.math.BigDecimal.valueOf(300)
+                        BigDecimal.valueOf(100),
+                        BigDecimal.valueOf(300)
                 )
         ));
 
