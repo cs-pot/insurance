@@ -2,8 +2,6 @@ package com.cspot.insurahub.insurancepackage.service;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -57,8 +55,8 @@ public class PackageService {
 
     @Transactional
     public void initializePackage(UUID packageId) {
-        InsurancePackage insurancePackage = packageRepository.findById(packageId)
-                .orElseThrow(() -> new PackageNotFoundException(packageId));
+        InsurancePackage insurancePackage =
+                packageRepository.findByIdOrThrow(packageId);
 
         packageValidator.validateReadyForInitialization(insurancePackage);
 
@@ -68,20 +66,11 @@ public class PackageService {
     @Transactional
     public void updatePackage(UUID id, PackageRequest packageRequest) {
         logPackageUpdate(id, packageRequest);
-        InsurancePackage insurancePackage = packageRepository.findById(id)
-                .orElseThrow(() -> new PackageNotFoundException(id));
+        InsurancePackage insurancePackage = packageRepository.findByIdOrThrow(id);
 
-        checkPackageStatusBeforeUpdate(insurancePackage);
+        packageValidator.validateReadyForUpdate(insurancePackage);
         packageMapper.updateFromUpdateRequest(insurancePackage, packageRequest);
         packageValidator.validate(insurancePackage);
-    }
-
-    private void checkPackageStatusBeforeUpdate(InsurancePackage insurancePackage) {
-        if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
-            throw new PackageUpdateNotAllowedException(
-                    "Package updates are only allowed when the status is NOT_STARTED"
-            );
-        }
     }
 
     private void logPackageUpdate(UUID id, PackageRequest packageRequest) {

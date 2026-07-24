@@ -1,8 +1,9 @@
 package com.cspot.insurahub.insurancepackage.validation;
 
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
-import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
-import com.cspot.insurahub.insurancepackage.exception.PackageAlreadyInitializedException;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,8 +71,8 @@ class PackageValidatorTest {
                 TODAY.plusMonths(1).minusDays(1)
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validate(request)
         );
 
@@ -88,8 +89,8 @@ class PackageValidatorTest {
                 TODAY.plusMonths(1).minusDays(1)
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validate(request)
         );
 
@@ -106,8 +107,8 @@ class PackageValidatorTest {
                 TODAY.minusDays(1)
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validate(request)
         );
 
@@ -124,8 +125,8 @@ class PackageValidatorTest {
                 TODAY.plusDays(10)
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validate(request)
         );
 
@@ -167,15 +168,46 @@ class PackageValidatorTest {
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 9)
         );
-        insurancePackage.setStatus(com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus.INITIALIZED);
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
 
-        PackageAlreadyInitializedException exception = assertThrows(
-                PackageAlreadyInitializedException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validateReadyForInitialization(insurancePackage)
         );
 
         assertThat(exception.getCode())
                 .isEqualTo("PACKAGE_ALREADY_INITIALIZED");
+    }
+
+    @Test
+    void shouldAllowUpdateWhenPackageIsNotStarted() {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+
+        assertDoesNotThrow(() -> packageValidator.validateReadyForUpdate(insurancePackage));
+    }
+
+    @Test
+    void shouldRejectUpdateWhenPackageIsInitialized() {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+
+        PackageUpdateNotAllowedException exception = assertThrows(
+                PackageUpdateNotAllowedException.class,
+                () -> packageValidator.validateReadyForUpdate(insurancePackage)
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Package updates are only allowed when the status is NOT_STARTED");
     }
 
     @Test
@@ -187,8 +219,8 @@ class PackageValidatorTest {
                 LocalDate.of(2026, 7, 8)
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validateReadyForInitialization(insurancePackage)
         );
 
