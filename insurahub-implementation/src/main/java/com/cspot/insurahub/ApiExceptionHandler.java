@@ -1,10 +1,10 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.InvalidPageRequestException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
-import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
@@ -185,10 +185,10 @@ public class ApiExceptionHandler {
     }
 
 
-    @ExceptionHandler(InvalidPackageException.class)
+    @ExceptionHandler(DomainValidationException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    public ErrorDto handleInvalidPackageException(
-            InvalidPackageException e,
+    public ErrorDto handleDomainValidationException(
+            DomainValidationException e,
             HttpServletRequest request
     ) {
         logWarn(e);

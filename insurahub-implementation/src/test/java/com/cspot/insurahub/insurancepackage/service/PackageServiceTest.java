@@ -1,8 +1,8 @@
 package com.cspot.insurahub.insurancepackage.service;
 
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.InvalidPackageException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
@@ -21,7 +21,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,8 +114,8 @@ class PackageServiceTest {
                 endDate
         );
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageService.createPackage(request)
         );
 
@@ -149,8 +148,8 @@ class PackageServiceTest {
         );
         ReflectionTestUtils.setField(insurancePackage, "id", packageId);
 
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.of(insurancePackage));
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
         doAnswer(invocation -> {
             InsurancePackage target = invocation.getArgument(0);
             ReflectionTestUtils.setField(target, "name", "Updated Package");
@@ -162,7 +161,7 @@ class PackageServiceTest {
 
         packageService.updatePackage(packageId, request);
 
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
         verify(packageMapper).updateFromUpdateRequest(insurancePackage, request);
         verifyNoMoreInteractions(insurancePackageRepository, packageMapper);
     }
@@ -180,15 +179,15 @@ class PackageServiceTest {
                 endDate
         );
 
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.empty());
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenThrow(new PackageNotFoundException(packageId));
 
         assertThrows(
                 PackageNotFoundException.class,
                 () -> packageService.updatePackage(packageId, request)
         );
 
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
         verify(packageMapper, never()).updateFromUpdateRequest(
                 any(InsurancePackage.class),
                 any(PackageRequest.class)
@@ -216,15 +215,15 @@ class PackageServiceTest {
                 LocalDate.of(2026, 7, 17)
         );
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.of(insurancePackage));
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
 
         assertThrows(
                 PackageUpdateNotAllowedException.class,
                 () -> packageService.updatePackage(packageId, request)
         );
 
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
         verify(packageMapper, never()).updateFromUpdateRequest(
                 any(InsurancePackage.class),
                 any(PackageRequest.class)
@@ -241,14 +240,14 @@ class PackageServiceTest {
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 9)
         );
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.of(insurancePackage));
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
 
         packageService.initializePackage(packageId);
 
         assertThat(insurancePackage.getStatus())
                 .isEqualTo(InsurancePackageStatus.INITIALIZED);
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
     }
 
     @Test
@@ -260,11 +259,11 @@ class PackageServiceTest {
                 LocalDate.of(2026, 6, 8),
                 LocalDate.of(2026, 7, 8)
         );
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.of(insurancePackage));
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
 
-        InvalidPackageException exception = assertThrows(
-                InvalidPackageException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageService.initializePackage(packageId)
         );
 
@@ -272,20 +271,20 @@ class PackageServiceTest {
                 .isEqualTo("PACKAGE_END_DATE_IN_PAST");
         assertThat(insurancePackage.getStatus())
                 .isEqualTo(InsurancePackageStatus.NOT_STARTED);
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
     }
 
     @Test
     void shouldRejectInitializePackageWhenPackageDoesNotExist() {
         UUID packageId = UUID.randomUUID();
-        when(insurancePackageRepository.findById(packageId))
-                .thenReturn(Optional.empty());
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenThrow(new PackageNotFoundException(packageId));
 
         assertThrows(
                 PackageNotFoundException.class,
                 () -> packageService.initializePackage(packageId)
         );
 
-        verify(insurancePackageRepository).findById(packageId);
+        verify(insurancePackageRepository).findByIdOrThrow(packageId);
     }
 }
