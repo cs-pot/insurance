@@ -44,12 +44,16 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].id").value("cccccccc-0001-0001-0001-000000000001"))
+                .andExpect(jsonPath("$.content[0].consumerId").value("11111111-1111-1111-1111-111111111111"))
                 .andExpect(jsonPath("$.content[0].consumerFullName").value("First Consumer"))
                 .andExpect(jsonPath("$.content[0].serviceDate").value("2026-07-15"))
+                .andExpect(jsonPath("$.content[0].planId").value("bbbbbbbb-0001-0001-0001-000000000001"))
                 .andExpect(jsonPath("$.content[0].planName").value("Standard Health"))
                 .andExpect(jsonPath("$.content[0].amount").value(285.5))
                 .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[1].consumerId").value("22222222-2222-2222-2222-222222222222"))
                 .andExpect(jsonPath("$.content[1].consumerFullName").value("Second Consumer"))
+                .andExpect(jsonPath("$.content[1].planId").value("bbbbbbbb-0002-0002-0002-000000000002"))
                 .andExpect(jsonPath("$.content[1].planName").value("Dental Care"))
                 .andExpect(jsonPath("$.content[1].status").value("APPROVED"))
                 .andExpect(jsonPath("$.page.number").value(0))
@@ -107,6 +111,42 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/claims")
                         .with(jwt()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldAcceptAllowedSortProperty() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("sort", "amount,asc")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldRejectUnsupportedSortProperty() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("sort", "claimNumber,asc")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message")
+                        .value("sort property must be one of: createdAt, serviceDate, amount, status"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.path").value("/claims"));
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldRejectUnsupportedSortDirection() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("sort", "createdAt,ascending")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("sort direction must be asc or desc"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.path").value("/claims"));
     }
 
     private RequestPostProcessor jwtWithPermission(String permission) {

@@ -5,8 +5,7 @@ claims:
     summary: View claims
     description: >
       Returns insurance claims with key information for claims management.
-      Only available to administrators. Claims are sorted by their creation
-      date in descending order by default (most recent first).
+      Only available to administrators.
     operationId: getClaims
     x-spring-paginated: true
     parameters:
@@ -32,7 +31,8 @@ claims:
         required: false
         description: >
           Optional sorting in Spring Pageable format: property or property,direction.
-          Direction can be asc or desc. Allowed property: createdAt.
+          Direction can be asc or desc. Allowed properties: createdAt, serviceDate,
+          amount, status.
         schema:
           type: string
           default: createdAt,desc

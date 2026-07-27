@@ -276,7 +276,7 @@ class ClaimServiceTest {
                 .serviceDate(LocalDate.of(2026, 7, 15))
                 .planName("Standard Health")
                 .amount(285.50)
-                .status(ClaimStatus.PENDING);
+                .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
     }
 
     private Enrollment enrollment(UUID enrollmentId) {
