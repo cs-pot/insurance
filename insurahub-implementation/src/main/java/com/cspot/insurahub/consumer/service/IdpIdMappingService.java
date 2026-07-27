@@ -1,9 +1,10 @@
 package com.cspot.insurahub.consumer.service;
 
-import com.cspot.insurahub.auth.exception.AuthenticatedPrincipalIsNotConsumerException;
 import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -20,12 +21,12 @@ public class IdpIdMappingService {
         return consumerRepository.findIdByIdpId(idpId)
                 .orElseThrow(() -> {
                     String message = "Failed to find consumer with idpId " + idpId;
-                    return new AuthenticatedPrincipalIsNotConsumerException(message);
+                    return new ConsumerNotFoundException(message);
                 });
     }
 
     private String getAuthenticatedPrincipalName() {
         return authenticationMetadataQueryService.getAuthenticatedPrincipalName()
-                .orElseThrow(() -> new AuthenticatedPrincipalIsNotConsumerException("Failed to get idpId"));
+                .orElseThrow(() -> new InsufficientAuthenticationException("Failed to get idpId"));
     }
 }

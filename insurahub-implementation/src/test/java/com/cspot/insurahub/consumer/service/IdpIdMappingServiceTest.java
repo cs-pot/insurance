@@ -1,13 +1,14 @@
 package com.cspot.insurahub.consumer.service;
 
-import com.cspot.insurahub.auth.exception.AuthenticatedPrincipalIsNotConsumerException;
 import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -58,7 +59,7 @@ class IdpIdMappingServiceTest {
 
         // WHEN / THEN
         assertThatThrownBy(service::getCurrentAuthenticatedConsumerId)
-                .isInstanceOf(AuthenticatedPrincipalIsNotConsumerException.class);
+                .isInstanceOf(InsufficientAuthenticationException.class);
     }
 
     @Test
@@ -73,7 +74,7 @@ class IdpIdMappingServiceTest {
 
         // WHEN / THEN
         assertThatThrownBy(service::getCurrentAuthenticatedConsumerId)
-                .isInstanceOf(AuthenticatedPrincipalIsNotConsumerException.class);
+                .isInstanceOf(ConsumerNotFoundException.class);
 
         verify(authenticationMetadataQueryService).getAuthenticatedPrincipalName();
         verify(consumerRepository).findIdByIdpId(idpId);

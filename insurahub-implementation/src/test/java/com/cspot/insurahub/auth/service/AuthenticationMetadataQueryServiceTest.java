@@ -81,7 +81,6 @@ class AuthenticationMetadataQueryServiceTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Optional<String> result = service.getAuthenticatedPrincipalName();
-        System.out.println(result);
 
         assertTrue(result.isEmpty());
     }

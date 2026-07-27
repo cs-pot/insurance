@@ -22,6 +22,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,7 +102,8 @@ public class ConsumerService {
 
     private String getDeletedBy() {
         return authenticationMetadataQueryService.getAuthenticatedPrincipalName()
-                .orElseThrow(() -> new IllegalStateException("Principal name is required to delete a consumer"));
+                .orElseThrow(() -> new InsufficientAuthenticationException("Principal name is required to delete a " +
+                        "consumer"));
     }
 
     private void deactivateUserInIdp(String idpId) {
