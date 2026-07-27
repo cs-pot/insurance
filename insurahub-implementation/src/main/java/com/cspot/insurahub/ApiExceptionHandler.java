@@ -6,6 +6,7 @@ import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
+import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
@@ -157,6 +158,19 @@ public class ApiExceptionHandler {
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.CONFLICT)
+    public ErrorDto handlePackageRemovalNotAllowedException(PackageRemovalNotAllowedException e,
+                                                            HttpServletRequest request) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("PACKAGE_REMOVAL_NOT_ALLOWED")
+                .status(409)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
     }
 
     @ExceptionHandler

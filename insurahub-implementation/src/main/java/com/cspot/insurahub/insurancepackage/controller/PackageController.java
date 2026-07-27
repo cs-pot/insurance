@@ -46,4 +46,11 @@ public class PackageController implements PackagesApi {
     public void putPackage(UUID id, PackageRequest packageRequest) {
         packageService.updatePackage(id, packageRequest);
     }
+
+    @Override
+    @PreAuthorize("hasAuthority('delete:packages')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePackage(UUID id) {
+        packageService.deletePackage(id);
+    }
 }
