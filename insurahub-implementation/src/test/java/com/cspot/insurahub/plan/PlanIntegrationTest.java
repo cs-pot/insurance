@@ -81,7 +81,7 @@ class PlanIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectAddPlanToInitializedPackage() throws Exception {
+    void shouldAddPlanToInitializedPackage() throws Exception {
         InsurancePackage insurancePackage = savePackage();
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
         packageRepository.save(insurancePackage);
@@ -96,11 +96,10 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                                 120,
                                 300
                         )))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("PACKAGE_UPDATE_NOT_ALLOWED"))
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists());
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertEquals(plansBeforeRequest + 1, planRepository.count());
     }
 
     @Test

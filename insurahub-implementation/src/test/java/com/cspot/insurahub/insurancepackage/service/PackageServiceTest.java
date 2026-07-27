@@ -4,7 +4,6 @@ import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -152,10 +151,10 @@ class PackageServiceTest {
                 .thenReturn(insurancePackage);
         doAnswer(invocation -> {
             InsurancePackage target = invocation.getArgument(0);
-            ReflectionTestUtils.setField(target, "name", "Updated Package");
-            ReflectionTestUtils.setField(target, "payroll", Payroll.MONTHLY);
-            ReflectionTestUtils.setField(target, "startDate", startDate);
-            ReflectionTestUtils.setField(target, "endDate", endDate);
+            target.setName("Updated Package");
+            target.setPayroll(Payroll.MONTHLY);
+            target.setStartDate(startDate);
+            target.setEndDate(endDate);
             return null;
         }).when(packageMapper).updateFromUpdateRequest(same(insurancePackage), same(request));
 
@@ -196,7 +195,7 @@ class PackageServiceTest {
     }
 
     @Test
-    void shouldThrowOnUpdateWhenPackageIsInitialized() {
+    void shouldUpdatePackageWhenPackageIsInitialized() {
         UUID packageId = UUID.randomUUID();
         LocalDate startDate = LocalDate.of(2026, 7, 10);
         LocalDate endDate = LocalDate.of(2026, 8, 10);
@@ -217,17 +216,19 @@ class PackageServiceTest {
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
         when(insurancePackageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
+        doAnswer(invocation -> {
+            InsurancePackage target = invocation.getArgument(0);
+            target.setName("Updated Package");
+            target.setPayroll(Payroll.MONTHLY);
+            target.setStartDate(startDate);
+            target.setEndDate(endDate);
+            return null;
+        }).when(packageMapper).updateFromUpdateRequest(same(insurancePackage), same(request));
 
-        assertThrows(
-                PackageUpdateNotAllowedException.class,
-                () -> packageService.updatePackage(packageId, request)
-        );
+        packageService.updatePackage(packageId, request);
 
         verify(insurancePackageRepository).findByIdOrThrow(packageId);
-        verify(packageMapper, never()).updateFromUpdateRequest(
-                any(InsurancePackage.class),
-                any(PackageRequest.class)
-        );
+        verify(packageMapper).updateFromUpdateRequest(insurancePackage, request);
         verifyNoMoreInteractions(insurancePackageRepository, packageMapper);
     }
 

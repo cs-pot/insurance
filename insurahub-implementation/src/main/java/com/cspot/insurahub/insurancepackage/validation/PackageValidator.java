@@ -48,9 +48,12 @@ public class PackageValidator {
     }
 
     public void validateReadyForUpdate(InsurancePackage insurancePackage) {
-        if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
+        InsurancePackageStatus status = insurancePackage.getStatus();
+
+        if (status != InsurancePackageStatus.NOT_STARTED
+                && status != InsurancePackageStatus.INITIALIZED) {
             throw new PackageUpdateNotAllowedException(
-                    "Package updates are only allowed when the status is NOT_STARTED"
+                    "Package updates are only allowed when the status is NOT_STARTED or INITIALIZED"
             );
         }
     }

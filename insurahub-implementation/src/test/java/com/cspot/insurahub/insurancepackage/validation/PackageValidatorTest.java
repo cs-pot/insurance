@@ -3,7 +3,6 @@ package com.cspot.insurahub.insurancepackage.validation;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.BeforeEach;
@@ -192,7 +191,7 @@ class PackageValidatorTest {
     }
 
     @Test
-    void shouldRejectUpdateWhenPackageIsInitialized() {
+    void shouldAllowUpdateWhenPackageIsInitialized() {
         InsurancePackage insurancePackage = new InsurancePackage(
                 "Premium Health Package",
                 Payroll.MONTHLY,
@@ -201,13 +200,7 @@ class PackageValidatorTest {
         );
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
 
-        PackageUpdateNotAllowedException exception = assertThrows(
-                PackageUpdateNotAllowedException.class,
-                () -> packageValidator.validateReadyForUpdate(insurancePackage)
-        );
-
-        assertThat(exception.getMessage())
-                .isEqualTo("Package updates are only allowed when the status is NOT_STARTED");
+        assertDoesNotThrow(() -> packageValidator.validateReadyForUpdate(insurancePackage));
     }
 
     @Test

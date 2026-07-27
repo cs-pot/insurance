@@ -186,6 +186,40 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldUpdateInitializedPackage() throws Exception {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Original Package",
+                Payroll.WEEKLY,
+                LocalDate.now(clock).plusDays(1),
+                LocalDate.now(clock).plusDays(7)
+        );
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        UUID packageId = repository.save(insurancePackage).getId();
+
+        LocalDate updatedStartDate = LocalDate.now(clock).plusDays(2);
+        LocalDate updatedEndDate = updatedStartDate.plusMonths(1);
+
+        mockMvc.perform(put(PACKAGES_ENDPOINT + "/" + packageId)
+                        .with(jwtWithPermissions("update:packages"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(
+                                "Updated Initialized Package",
+                                "MONTHLY",
+                                updatedStartDate,
+                                updatedEndDate
+                        )))
+                .andExpect(status().isNoContent());
+
+        var updatedPackage = repository.findById(packageId)
+                .orElseThrow(() -> new AssertionError("Package must exist after update"));
+        assertEquals("Updated Initialized Package", updatedPackage.getName());
+        assertEquals(Payroll.MONTHLY, updatedPackage.getPayroll());
+        assertEquals(updatedStartDate, updatedPackage.getStartDate());
+        assertEquals(updatedEndDate, updatedPackage.getEndDate());
+        assertEquals(InsurancePackageStatus.INITIALIZED, updatedPackage.getStatus());
+    }
+
+    @Test
     void shouldRejectPackageUpdateWithoutUpdatePermission() throws Exception {
         UUID packageId = repository.save(new InsurancePackage(
                 "Original Package",

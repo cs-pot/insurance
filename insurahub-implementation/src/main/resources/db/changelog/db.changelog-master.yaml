@@ -18,5 +18,8 @@ databaseChangeLog:
       file: migrations/ddl/add-package-status.sql
       relativeToChangelogFile: true
   - include:
+      file: migrations/ddl/update-package-status-lifecycle-values.sql
+      relativeToChangelogFile: true
+  - include:
       file: migrations/ddl/create-plans-table.sql
       relativeToChangelogFile: true

@@ -3,7 +3,6 @@ package com.cspot.insurahub.plan.service;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PlanRequest;
@@ -32,7 +31,6 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,8 +84,9 @@ class PlanServiceTest {
     }
 
     @Test
-    void shouldRejectAddingPlanToInitializedPackage() {
+    void shouldAddPlanToInitializedPackage() {
         UUID packageId = UUID.randomUUID();
+        UUID planId = UUID.randomUUID();
         InsurancePackage insurancePackage = createPackage();
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
         PlanRequest request = createPlanRequest(
@@ -96,24 +95,22 @@ class PlanServiceTest {
                 100,
                 300
         );
+        InsurancePlan plan = createPlan(insurancePackage);
+        ReflectionTestUtils.setField(plan, "id", planId);
+
         when(insurancePackageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
-        doThrow(new PackageUpdateNotAllowedException(
-                "Package updates are only allowed when the status is NOT_STARTED"
-        )).when(packageValidator).validateReadyForUpdate(insurancePackage);
+        when(planMapper.toEntity(insurancePackage, request))
+                .thenReturn(plan);
+        when(insurancePlanRepository.save(plan))
+                .thenReturn(plan);
 
-        assertThrows(
-                PackageUpdateNotAllowedException.class,
-                () -> planService.addPlan(packageId, request)
-        );
+        assertThat(planService.addPlan(packageId, request).getId())
+                .isEqualTo(planId);
 
         verify(packageValidator).validateReadyForUpdate(insurancePackage);
-        verify(planMapper, never()).toEntity(
-                any(InsurancePackage.class),
-                any(PlanRequest.class)
-        );
-        verify(insurancePlanRepository, never())
-                .save(any(InsurancePlan.class));
+        verify(planMapper).toEntity(insurancePackage, request);
+        verify(insurancePlanRepository).save(plan);
     }
 
     @Test
