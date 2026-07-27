@@ -65,15 +65,6 @@ public class PackageService {
 
     @Transactional
     public void updatePackage(UUID id, PackageRequest packageRequest) {
-        logPackageUpdate(id, packageRequest);
-        InsurancePackage insurancePackage = packageRepository.findByIdOrThrow(id);
-
-        packageValidator.validateReadyForUpdate(insurancePackage);
-        packageMapper.updateFromUpdateRequest(insurancePackage, packageRequest);
-        packageValidator.validate(insurancePackage);
-    }
-
-    private void logPackageUpdate(UUID id, PackageRequest packageRequest) {
         log.debug(
                 "Updating package: id={}, name={}, payroll={}, startDate={}, endDate={}",
                 id,
@@ -82,5 +73,10 @@ public class PackageService {
                 packageRequest.getStartDate(),
                 packageRequest.getEndDate()
         );
+        InsurancePackage insurancePackage = packageRepository.findByIdOrThrow(id);
+
+        packageValidator.validateReadyForUpdate(insurancePackage);
+        packageMapper.updateFromUpdateRequest(insurancePackage, packageRequest);
+        packageValidator.validate(insurancePackage);
     }
 }
