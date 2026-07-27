@@ -3,12 +3,14 @@ package com.cspot.insurahub.auth.service;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -83,5 +85,25 @@ class AuthenticationMetadataQueryServiceTest {
         Optional<String> result = service.getAuthenticatedPrincipalName();
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldThrowWhenPrincipalNameIsRequiredForDeleteOperation() {
+        SecurityContextHolder.clearContext();
+
+        assertThatThrownBy(service::getAuthenticatedPrincipalNameForDeleteOperation)
+                .isInstanceOf(InsufficientAuthenticationException.class)
+                .hasMessage("Principal name is required to perform a delete operation");
+    }
+
+    @Test
+    void shouldReturnPrincipalNameForDeleteOperation() {
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken("john.doe", "password");
+        authentication.setAuthenticated(true);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        assertEquals("john.doe", service.getAuthenticatedPrincipalNameForDeleteOperation());
     }
 }
