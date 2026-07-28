@@ -1,7 +1,6 @@
 package com.cspot.insurahub.consumer.service;
 
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
@@ -58,6 +57,9 @@ class ConsumerServiceTest {
 
     @Mock
     private ConsumerMapper consumerMapper;
+
+    @Mock
+    private AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @InjectMocks
     private ConsumerService consumerService;
@@ -271,8 +273,7 @@ class ConsumerServiceTest {
         UUID id = UUID.randomUUID();
         Consumer consumer = getConsumer();
         when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin", null, java.util.Collections.emptyList()));
+        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName()).thenReturn(Optional.of("admin"));
 
         consumerService.deleteConsumer(id);
 
@@ -293,8 +294,7 @@ class ConsumerServiceTest {
         UUID id = UUID.randomUUID();
         Consumer consumer = getConsumer();
         when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin", null, java.util.Collections.emptyList()));
+        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName()).thenReturn(Optional.of("admin"));
         Mockito.doThrow(new RuntimeException("Auth0 is down"))
                 .when(identityProviderClient).deactivateUser(consumer.getIdpId());
 

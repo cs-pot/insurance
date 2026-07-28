@@ -1,5 +1,6 @@
 package com.cspot.insurahub.consumer.service;
 
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.enumeration.IdpRole;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
@@ -21,8 +22,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +36,7 @@ public class ConsumerService {
     private final IdentityProviderClient identityProviderClient;
     private final ConsumerRepository consumerRepository;
     private final ConsumerMapper consumerMapper;
+    private final AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @Transactional(readOnly = true)
     public Page<ConsumerResponse> getConsumers(String search, Pageable pageable) {
@@ -80,7 +81,7 @@ public class ConsumerService {
     public void updateConsumer(UUID id, PutConsumerRequest updateRequest) {
         Consumer consumer = consumerRepository.findById(id)
                 .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
-        
+
         consumerMapper.applyUpdateRequest(consumer, updateRequest);
         consumerRepository.save(consumer);
     }
@@ -92,7 +93,7 @@ public class ConsumerService {
                 .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
 
         String deletedBy = getDeletedBy();
-        
+
         consumer.markDeleted(deletedBy);
         consumerRepository.save(consumer);
 
@@ -100,11 +101,9 @@ public class ConsumerService {
     }
 
     private String getDeletedBy() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("Authentication is required to delete a consumer");
-        }
-        return authentication.getName();
+        return authenticationMetadataQueryService.getAuthenticatedPrincipalName()
+                .orElseThrow(() -> new InsufficientAuthenticationException("Principal name is required to delete a " +
+                        "consumer"));
     }
 
     private void deactivateUserInIdp(String idpId) {
