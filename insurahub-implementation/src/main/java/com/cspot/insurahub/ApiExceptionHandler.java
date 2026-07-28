@@ -5,6 +5,7 @@ import com.cspot.insurahub.common.exception.InvalidPageRequestException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
+import com.cspot.insurahub.enrollment.exception.EnrollmentDeniedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
@@ -212,6 +213,18 @@ public class ApiExceptionHandler {
         return new ErrorDto()
                 .error("PACKAGE_NOT_FOUND")
                 .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(EnrollmentDeniedException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleEnrollmentDeniedException(EnrollmentDeniedException e, HttpServletRequest request) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("ENROLLMENT_DENIED")
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());

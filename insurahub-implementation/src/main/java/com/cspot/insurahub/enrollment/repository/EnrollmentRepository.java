@@ -9,4 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID>, JpaSpecificationExecutor<Enrollment> {
+
+    boolean existsByConsumerIdAndPlanId(UUID consumerId, UUID planId);
 }

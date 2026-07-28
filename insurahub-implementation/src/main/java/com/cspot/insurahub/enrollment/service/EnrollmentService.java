@@ -1,5 +1,7 @@
 package com.cspot.insurahub.enrollment.service;
 
+import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.entity.EnrollmentStatus;
@@ -10,6 +12,10 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import com.cspot.insurahub.model.PostResponse;
+import com.cspot.insurahub.plan.entity.InsurancePlan;
+import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +29,10 @@ public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final IdpIdMappingService idpIdMappingService;
+    private final ConsumerRepository consumerRepository;
+    private final InsurancePlanRepository insurancePlanRepository;
     private final EnrollmentMapper enrollmentMapper;
+    private final EnrollmentValidationService enrollmentValidationService;
 
     @Transactional(readOnly = true)
     public List<EnrollmentResponse> getEnrollments(EnrollmentStatus status) {
@@ -42,5 +51,26 @@ public class EnrollmentService {
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    @Transactional
+    public PostResponse enrollCurrentAuthenticatedConsumerOnPlan(UUID planId) {
+        Consumer consumer = getConsumer();
+        InsurancePlan insurancePlan = insurancePlanRepository.findByIdOrThrow(planId);
+        enrollmentValidationService.assertConsumerCanEnrollOnPlan(consumer, insurancePlan);
+        Enrollment enrollment = createEnrollment(consumer, insurancePlan);
+        return new PostResponse(enrollment.getId());
+    }
+
+    private @NonNull Enrollment createEnrollment(Consumer consumer, InsurancePlan insurancePlan) {
+        Enrollment enrollment = new Enrollment(consumer, insurancePlan);
+        enrollment = enrollmentRepository.save(enrollment);
+        return enrollment;
+    }
+
+    private @NonNull Consumer getConsumer() {
+        UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
+        Consumer consumer = consumerRepository.findByIdOrThrow(consumerId);
+        return consumer;
     }
 }

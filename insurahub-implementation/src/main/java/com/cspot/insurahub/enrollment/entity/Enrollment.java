@@ -33,4 +33,10 @@ public class Enrollment extends SoftDeletableAuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private EnrollmentStatus status;
+
+    public Enrollment(Consumer consumer, InsurancePlan insurancePlan) {
+        this.consumer = consumer;
+        this.plan = insurancePlan;
+        this.status = EnrollmentStatus.ACTIVE;
+    }
 }
