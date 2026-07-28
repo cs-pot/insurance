@@ -91,6 +91,35 @@ initializePackage:
         $ref: '../common/responses.yaml#/UnprocessableEntity'
 
 packagesWithId:
+  delete:
+    tags:
+      - Packages
+    summary: Remove a package
+    description: >
+      Deletes a package and all connected plans. Removal is allowed only when the package has NOT_STARTED status.
+    operationId: deletePackage
+    parameters:
+      - in: path
+        name: id
+        description: ID of the package to remove.
+        schema:
+          type: string
+          format: uuid
+        required: true
+    responses:
+      '204':
+        description: Package removed successfully
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '409':
+        $ref: '../common/responses.yaml#/Conflict'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
   put:
     tags:
       - Packages

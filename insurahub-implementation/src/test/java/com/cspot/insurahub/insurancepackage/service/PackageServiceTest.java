@@ -1,15 +1,19 @@
 package com.cspot.insurahub.insurancepackage.service;
 
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
+import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PackageRequest;
+import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
+import com.cspot.insurahub.plan.entity.InsurancePlan;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,10 +21,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +53,9 @@ class PackageServiceTest {
     @Mock
     private PackageMapper packageMapper;
 
+    @Mock
+    private AuthenticationMetadataQueryService authenticationMetadataQueryService;
+
     private PackageService packageService;
 
     private PackageValidator packageValidator;
@@ -57,7 +66,8 @@ class PackageServiceTest {
         packageService = new PackageService(
                 insurancePackageRepository,
                 packageMapper,
-                packageValidator
+                packageValidator,
+                authenticationMetadataQueryService
         );
     }
 
@@ -286,5 +296,62 @@ class PackageServiceTest {
         );
 
         verify(insurancePackageRepository).findByIdOrThrow(packageId);
+    }
+
+    @Test
+    void shouldRemovePackageAndConnectedPlans() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        InsurancePlan plan = new InsurancePlan(
+                insurancePackage,
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                BigDecimal.valueOf(250),
+                BigDecimal.valueOf(500)
+        );
+        insurancePackage.getPlans().add(plan);
+
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
+        mockAuthenticatedPrincipalName();
+
+        packageService.deletePackage(packageId);
+
+        assertThat(insurancePackage.isDeleted()).isTrue();
+        assertThat(insurancePackage.getDeletedBy()).isEqualTo("admin-user");
+        assertThat(plan.isDeleted()).isTrue();
+        assertThat(plan.getDeletedBy()).isEqualTo("admin-user");
+    }
+
+    @Test
+    void shouldRejectRemovalWhenPackageIsInitialized() {
+        UUID packageId = UUID.randomUUID();
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+
+        when(insurancePackageRepository.findByIdOrThrow(packageId))
+                .thenReturn(insurancePackage);
+
+        assertThrows(
+                PackageRemovalNotAllowedException.class,
+                () -> packageService.deletePackage(packageId)
+        );
+
+        verify(authenticationMetadataQueryService, never()).getAuthenticatedPrincipalName();
+    }
+
+    private void mockAuthenticatedPrincipalName() {
+        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName())
+                .thenReturn(Optional.of("admin-user"));
     }
 }

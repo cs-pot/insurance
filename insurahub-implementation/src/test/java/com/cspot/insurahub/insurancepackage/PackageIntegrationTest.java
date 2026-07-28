@@ -4,7 +4,10 @@ import com.cspot.insurahub.BaseIntegrationTest;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
+import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
+import com.cspot.insurahub.plan.entity.InsurancePlan;
+import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,6 +15,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -19,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -29,7 +34,10 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -49,6 +57,12 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private InsurancePackageRepository repository;
+
+    @Autowired
+    private InsurancePlanRepository planRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private Clock clock;
@@ -550,6 +564,42 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.status").value(422));
     }
 
+    @Test
+    void shouldRemovePackageAndConnectedPlans() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        List<InsurancePlan> plans = planRepository.saveAll(List.of(
+                createPlan(insurancePackage, "Standard Health"),
+                createPlan(insurancePackage, "Dental Basic")
+        ));
+
+        mockMvc.perform(delete(PACKAGES_ENDPOINT + "/" + insurancePackage.getId())
+                        .with(jwtWithPermissions("delete:packages")))
+                .andExpect(status().isNoContent());
+
+        assertFalse(repository.existsById(insurancePackage.getId()));
+        plans.forEach(plan -> assertFalse(planRepository.existsById(plan.getId())));
+        assertSoftDeleted("packages", insurancePackage.getId());
+        plans.forEach(plan -> assertSoftDeleted("plans", plan.getId()));
+    }
+
+    @Test
+    void shouldRejectPackageRemovalWhenPackageIsInitialized() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        repository.save(insurancePackage);
+
+        mockMvc.perform(delete(PACKAGES_ENDPOINT + "/" + insurancePackage.getId())
+                        .with(jwtWithPermissions("delete:packages")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("PACKAGE_REMOVAL_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value(
+                        "Package removal is only allowed when the status is NOT_STARTED"
+                ));
+
+        assertTrue(repository.existsById(insurancePackage.getId()));
+    }
+
     private void assertPackageCreated(
             String name,
             String payroll,
@@ -622,6 +672,26 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 startDate,
                 startDate.plusMonths(1)
         ));
+    }
+
+    private InsurancePlan createPlan(InsurancePackage insurancePackage, String name) {
+        return new InsurancePlan(
+                insurancePackage,
+                name,
+                PlanType.HEALTH_INSURANCE,
+                BigDecimal.valueOf(250),
+                BigDecimal.valueOf(500)
+        );
+    }
+
+    private void assertSoftDeleted(String tableName, UUID id) {
+        Integer deletedRows = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + tableName
+                        + " WHERE id = ? AND deleted_at IS NOT NULL AND deleted_by IS NOT NULL",
+                Integer.class,
+                id
+        );
+        assertEquals(1, deletedRows);
     }
 
     private RequestPostProcessor jwtWithPermissions(String... permissions) {

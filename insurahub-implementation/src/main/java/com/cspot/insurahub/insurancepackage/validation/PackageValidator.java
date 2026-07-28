@@ -3,6 +3,7 @@ package com.cspot.insurahub.insurancepackage.validation;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
@@ -51,6 +52,18 @@ public class PackageValidator {
         if (insurancePackage.getStatus() != InsurancePackageStatus.NOT_STARTED) {
             throw new PackageUpdateNotAllowedException(
                     "Package updates are only allowed when the status is NOT_STARTED"
+            );
+        }
+    }
+
+    public void validateReadyForRemoval(InsurancePackage insurancePackage) {
+        validateNotInitializedForRemoval(insurancePackage);
+    }
+
+    private void validateNotInitializedForRemoval(InsurancePackage insurancePackage) {
+        if (isInitialized(insurancePackage)) {
+            throw new PackageRemovalNotAllowedException(
+                    "Package removal is only allowed when the status is NOT_STARTED"
             );
         }
     }
