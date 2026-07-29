@@ -49,8 +49,5 @@ server:
   forward-headers-strategy: framework
 
 springdoc:
-  api-docs:
-    path: /v3/api-docs
-
-scalar:
-  url: /v3/api-docs
+  cache:
+    disabled: true
