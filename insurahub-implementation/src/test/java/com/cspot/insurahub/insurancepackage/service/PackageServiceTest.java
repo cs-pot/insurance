@@ -347,11 +347,11 @@ class PackageServiceTest {
 
         assertThat(exception.getCode())
                 .isEqualTo("PACKAGE_REMOVAL_NOT_ALLOWED");
-        verify(authenticationMetadataQueryService, never()).getAuthenticatedPrincipalNameForDeleteOperation();
+        verify(authenticationMetadataQueryService, never()).getRequiredAuthenticatedPrincipalName();
     }
 
     private void mockAuthenticatedPrincipalName() {
-        when(authenticationMetadataQueryService.getAuthenticatedPrincipalNameForDeleteOperation())
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName())
                 .thenReturn("admin-user");
     }
 }

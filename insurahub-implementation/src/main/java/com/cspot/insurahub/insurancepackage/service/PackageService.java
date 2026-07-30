@@ -97,7 +97,7 @@ public class PackageService {
     }
 
     private void markPackageAndConnectedPlansDeleted(InsurancePackage insurancePackage) {
-        String deletedBy = authenticationMetadataQueryService.getAuthenticatedPrincipalNameForDeleteOperation();
+        String deletedBy = authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName();
 
         insurancePackage.getPlans()
                 .forEach(plan -> plan.markDeleted(deletedBy));
