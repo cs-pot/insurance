@@ -10,6 +10,8 @@ import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.EnrollmentResponse;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import com.cspot.insurahub.model.PostResponse;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnrollmentService {
@@ -59,6 +62,7 @@ public class EnrollmentService {
         InsurancePlan insurancePlan = insurancePlanRepository.findByIdOrThrow(planId);
         enrollmentValidationService.assertConsumerCanEnrollOnPlan(consumer, insurancePlan);
         Enrollment enrollment = createEnrollment(consumer, insurancePlan);
+        log.info("Enrolled consumer with ID {} on plan with ID {}", consumer.getId(), insurancePlan.getId());
         return new PostResponse(enrollment.getId());
     }
 
