@@ -91,7 +91,7 @@ public class ConsumerService {
         Consumer consumer = consumerRepository.findById(id)
                 .orElseThrow(() -> new ConsumerNotFoundException("Consumer not found with id: " + id));
 
-        String deletedBy = authenticationMetadataQueryService.getAuthenticatedPrincipalNameForDeleteOperation();
+        String deletedBy = authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName();
 
         consumer.markDeleted(deletedBy);
         consumerRepository.save(consumer);

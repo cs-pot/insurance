@@ -23,7 +23,7 @@ public class AuthenticationMetadataQueryService {
         return Optional.ofNullable(authentication.getName());
     }
 
-    public String getAuthenticatedPrincipalNameForDeleteOperation() {
+    public String getRequiredAuthenticatedPrincipalName() {
         return getAuthenticatedPrincipalName()
                 .orElseThrow(() -> new InsufficientAuthenticationException(
                         "Principal name is required to perform a delete operation"

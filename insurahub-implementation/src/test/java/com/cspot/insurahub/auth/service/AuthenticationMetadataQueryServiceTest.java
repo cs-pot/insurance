@@ -91,7 +91,7 @@ class AuthenticationMetadataQueryServiceTest {
     void shouldThrowWhenPrincipalNameIsRequiredForDeleteOperation() {
         SecurityContextHolder.clearContext();
 
-        assertThatThrownBy(service::getAuthenticatedPrincipalNameForDeleteOperation)
+        assertThatThrownBy(service::getRequiredAuthenticatedPrincipalName)
                 .isInstanceOf(InsufficientAuthenticationException.class)
                 .hasMessage("Principal name is required to perform a delete operation");
     }
@@ -104,6 +104,6 @@ class AuthenticationMetadataQueryServiceTest {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        assertEquals("john.doe", service.getAuthenticatedPrincipalNameForDeleteOperation());
+        assertEquals("john.doe", service.getRequiredAuthenticatedPrincipalName());
     }
 }
