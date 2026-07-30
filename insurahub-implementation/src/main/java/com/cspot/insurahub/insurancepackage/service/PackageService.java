@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,10 +78,13 @@ public class PackageService {
     @Transactional
     public void deletePackage(UUID packageId) {
         InsurancePackage insurancePackage = getPackageReadyForRemoval(packageId);
-        String deletedBy = getDeletedBy();
 
-        markPackageAndConnectedPlansDeleted(insurancePackage, deletedBy);
-        logPackageDeleted(packageId, insurancePackage);
+        markPackageAndConnectedPlansDeleted(insurancePackage);
+        log.info(
+                "Package deleted: id={}, connectedPlans={}",
+                packageId,
+                insurancePackage.getPlans().size()
+        );
     }
 
     private InsurancePackage getPackageReadyForRemoval(UUID packageId) {
@@ -94,31 +96,12 @@ public class PackageService {
         return insurancePackage;
     }
 
-    private void markPackageAndConnectedPlansDeleted(
-            InsurancePackage insurancePackage,
-            String deletedBy
-    ) {
+    private void markPackageAndConnectedPlansDeleted(InsurancePackage insurancePackage) {
+        String deletedBy = authenticationMetadataQueryService.getAuthenticatedPrincipalNameForDeleteOperation();
+
         insurancePackage.getPlans()
                 .forEach(plan -> plan.markDeleted(deletedBy));
         insurancePackage.markDeleted(deletedBy);
-    }
-
-    private void logPackageDeleted(
-            UUID packageId,
-            InsurancePackage insurancePackage
-    ) {
-        log.info(
-                "Package deleted: id={}, connectedPlans={}",
-                packageId,
-                insurancePackage.getPlans().size()
-        );
-    }
-
-    private String getDeletedBy() {
-        return authenticationMetadataQueryService.getAuthenticatedPrincipalName()
-                .orElseThrow(() -> new InsufficientAuthenticationException(
-                        "Principal name is required to delete a package"
-                ));
     }
 
     private void logPackageUpdate(UUID id, PackageRequest packageRequest) {

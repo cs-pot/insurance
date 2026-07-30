@@ -5,7 +5,6 @@ import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
@@ -26,7 +25,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -342,16 +340,18 @@ class PackageServiceTest {
         when(insurancePackageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
 
-        assertThrows(
-                PackageRemovalNotAllowedException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageService.deletePackage(packageId)
         );
 
-        verify(authenticationMetadataQueryService, never()).getAuthenticatedPrincipalName();
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_REMOVAL_NOT_ALLOWED");
+        verify(authenticationMetadataQueryService, never()).getAuthenticatedPrincipalNameForDeleteOperation();
     }
 
     private void mockAuthenticatedPrincipalName() {
-        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName())
-                .thenReturn(Optional.of("admin-user"));
+        when(authenticationMetadataQueryService.getAuthenticatedPrincipalNameForDeleteOperation())
+                .thenReturn("admin-user");
     }
 }

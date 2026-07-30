@@ -3,7 +3,6 @@ package com.cspot.insurahub.insurancepackage.validation;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
@@ -233,11 +232,13 @@ class PackageValidatorTest {
         );
         insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
 
-        PackageRemovalNotAllowedException exception = assertThrows(
-                PackageRemovalNotAllowedException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> packageValidator.validateReadyForRemoval(insurancePackage)
         );
 
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_REMOVAL_NOT_ALLOWED");
         assertThat(exception.getMessage())
                 .isEqualTo("Package removal is only allowed when the status is NOT_STARTED");
     }
