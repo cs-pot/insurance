@@ -1,6 +1,11 @@
 package com.cspot.insurahub.insurancepackage;
 
 import com.cspot.insurahub.BaseIntegrationTest;
+import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.repository.ConsumerRepository;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
+import com.cspot.insurahub.enrollment.entity.EnrollmentStatus;
+import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
@@ -60,6 +65,12 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private InsurancePlanRepository planRepository;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private ConsumerRepository consumerRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -600,6 +611,25 @@ class PackageIntegrationTest extends BaseIntegrationTest {
         assertTrue(repository.existsById(insurancePackage.getId()));
     }
 
+    @Test
+    void shouldRejectPackageRemovalWhenAnyPlanHasEnrollment() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        InsurancePlan plan = planRepository.save(createPlan(insurancePackage, "Standard Health"));
+        enrollmentRepository.save(createEnrollment(plan));
+
+        mockMvc.perform(delete(PACKAGES_ENDPOINT + "/" + insurancePackage.getId())
+                        .with(jwtWithPermissions("delete:packages")))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("PACKAGE_PLANS_HAVE_ENROLLMENTS"))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.message").value(
+                        "Package removal is only allowed when its plans have no enrollments"
+                ));
+
+        assertTrue(repository.existsById(insurancePackage.getId()));
+        assertTrue(planRepository.existsById(plan.getId()));
+    }
+
     private void assertPackageCreated(
             String name,
             String payroll,
@@ -682,6 +712,28 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 BigDecimal.valueOf(250),
                 BigDecimal.valueOf(500)
         );
+    }
+
+    private Enrollment createEnrollment(InsurancePlan plan) {
+        return new Enrollment(
+                consumerRepository.save(createConsumer()),
+                plan,
+                EnrollmentStatus.ACTIVE
+        );
+    }
+
+    private Consumer createConsumer() {
+        Consumer consumer = new Consumer();
+        String uniqueValue = UUID.randomUUID().toString();
+        consumer.setIdpId("auth0|" + uniqueValue);
+        consumer.setEmail(uniqueValue + "@email.org");
+        consumer.setFirstName("First Name");
+        consumer.setLastName("Last Name");
+        consumer.setPersonalId(uniqueValue.substring(0, 11));
+        consumer.setDateOfBirth(LocalDate.of(2026, 7, 7));
+        consumer.setAddress("Address");
+        consumer.setCity("City");
+        return consumer;
     }
 
     private void assertSoftDeleted(String tableName, UUID id) {

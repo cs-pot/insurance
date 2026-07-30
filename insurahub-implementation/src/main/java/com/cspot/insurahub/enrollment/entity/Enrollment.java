@@ -35,8 +35,16 @@ public class Enrollment extends SoftDeletableAuditableEntity {
     private EnrollmentStatus status;
 
     public Enrollment(Consumer consumer, InsurancePlan insurancePlan) {
+        this(consumer, insurancePlan, EnrollmentStatus.ACTIVE);
+    }
+
+    public Enrollment(
+            Consumer consumer,
+            InsurancePlan plan,
+            EnrollmentStatus status
+    ) {
         this.consumer = consumer;
-        this.plan = insurancePlan;
-        this.status = EnrollmentStatus.ACTIVE;
+        this.plan = plan;
+        this.status = status;
     }
 }
