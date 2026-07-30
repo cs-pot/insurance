@@ -6,10 +6,11 @@ import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -19,24 +20,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@ExtendWith(MockitoExtension.class)
 class PackageValidatorTest {
 
     private static final LocalDate TODAY = LocalDate.of(2026, 7, 15);
 
-    @Mock
+    @Spy
     private Clock clock = Clock.fixed(TODAY.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
     @InjectMocks
     private PackageValidator packageValidator;
-
-    @BeforeEach
-    void setUp() {
-        Clock clock = Clock.fixed(
-                TODAY.atStartOfDay().toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC
-        );
-        packageValidator = new PackageValidator(clock);
-    }
 
     @Test
     void shouldValidateCreateRequestWhenAllFieldsAreValid() {
