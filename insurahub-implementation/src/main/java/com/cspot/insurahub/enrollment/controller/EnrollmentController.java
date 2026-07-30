@@ -1,0 +1,25 @@
+package com.cspot.insurahub.enrollment.controller;
+
+import com.cspot.insurahub.api.EnrollmentsApi;
+import com.cspot.insurahub.enrollment.entity.EnrollmentStatus;
+import com.cspot.insurahub.enrollment.service.EnrollmentService;
+import com.cspot.insurahub.model.EnrollmentResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+public class EnrollmentController implements EnrollmentsApi {
+
+    private final EnrollmentService enrollmentService;
+
+    @Override
+    @PreAuthorize("hasAuthority('view:own:enrollments')")
+    public List<EnrollmentResponse> getEnrollments(String status) {
+        EnrollmentStatus entityStatus = status != null ? EnrollmentStatus.valueOf(status) : null;
+        return enrollmentService.getEnrollments(entityStatus);
+    }
+}

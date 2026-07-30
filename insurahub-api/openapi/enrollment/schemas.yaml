@@ -1,0 +1,29 @@
+EnrollmentResponse:
+  type: object
+  required:
+    - id
+    - planName
+    - planType
+    - electionAmount
+    - contributionAmount
+    - status
+  properties:
+    id:
+      type: string
+      format: uuid
+    planName:
+      type: string
+    planType:
+      type: string
+    electionAmount:
+      type: string
+      format: number
+    contributionAmount:
+      type: string
+      format: number
+    status:
+      type: string
+      enum:
+        - ACTIVE
+        - CANCELLED
+        - EXPIRED

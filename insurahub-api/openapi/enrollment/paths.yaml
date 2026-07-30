@@ -1,0 +1,31 @@
+enrollments:
+  get:
+    tags:
+      - Enrollments
+    summary: Get enrollments for the current consumer
+    description: Returns a list of enrollments for the authenticated consumer, optionally filtered by status.
+    operationId: getEnrollments
+    parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+            - ACTIVE
+            - CANCELLED
+            - EXPIRED
+          default: ACTIVE
+    responses:
+      '200':
+        description: Successfully retrieved enrollments
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './schemas.yaml#/EnrollmentResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
