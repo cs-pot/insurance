@@ -1,6 +1,7 @@
 package com.cspot.insurahub.insurancepackage.validation;
 
 import com.cspot.insurahub.common.exception.DomainValidationException;
+import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
@@ -9,6 +10,7 @@ import com.cspot.insurahub.payroll.Payroll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,6 +21,9 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PackageValidatorTest {
@@ -26,7 +31,13 @@ class PackageValidatorTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 7, 15);
 
     @Spy
-    private Clock clock = Clock.fixed(TODAY.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+    private Clock clock = Clock.fixed(
+            TODAY.atStartOfDay().toInstant(ZoneOffset.UTC),
+            ZoneOffset.UTC
+    );
+
+    @Mock
+    private EnrollmentRepository enrollmentRepository;
 
     @InjectMocks
     private PackageValidator packageValidator;
@@ -211,6 +222,8 @@ class PackageValidatorTest {
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 9)
         );
+        when(enrollmentRepository.existsByPlanInsurancePackage(insurancePackage))
+                .thenReturn(false);
 
         assertDoesNotThrow(() -> packageValidator.validateReadyForRemoval(insurancePackage));
     }
@@ -234,6 +247,29 @@ class PackageValidatorTest {
                 .isEqualTo("PACKAGE_REMOVAL_NOT_ALLOWED");
         assertThat(exception.getMessage())
                 .isEqualTo("Package removal is only allowed when the status is NOT_STARTED");
+        verify(enrollmentRepository, never()).existsByPlanInsurancePackage(insurancePackage);
+    }
+
+    @Test
+    void shouldRejectRemovalWhenAnyPlanHasEnrollment() {
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        when(enrollmentRepository.existsByPlanInsurancePackage(insurancePackage))
+                .thenReturn(true);
+
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
+                () -> packageValidator.validateReadyForRemoval(insurancePackage)
+        );
+
+        assertThat(exception.getCode())
+                .isEqualTo("PACKAGE_PLANS_HAVE_ENROLLMENTS");
+        assertThat(exception.getMessage())
+                .isEqualTo("Package removal is only allowed when its plans have no enrollments");
     }
 
     @Test

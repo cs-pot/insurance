@@ -119,10 +119,10 @@ class PackageServiceTest {
                 .thenReturn(insurancePackage);
         doAnswer(invocation -> {
             InsurancePackage target = invocation.getArgument(0);
-            ReflectionTestUtils.setField(target, "name", "Updated Package");
-            ReflectionTestUtils.setField(target, "payroll", Payroll.MONTHLY);
-            ReflectionTestUtils.setField(target, "startDate", startDate);
-            ReflectionTestUtils.setField(target, "endDate", endDate);
+            target.setName("Updated Package");
+            target.setPayroll(Payroll.MONTHLY);
+            target.setStartDate(startDate);
+            target.setEndDate(endDate);
             return null;
         }).when(packageMapper).updateFromUpdateRequest(same(insurancePackage), same(request));
 
