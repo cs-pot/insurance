@@ -37,6 +37,8 @@ paths:
     $ref: './plan/paths.yaml#/packagePlans'
   /enrollments:
     $ref: './enrollment/paths.yaml#/enrollments'
+  /plans/{planId}/enroll:
+    $ref: './enrollment/paths.yaml#/planEnroll'
 
 components:
   securitySchemes:
