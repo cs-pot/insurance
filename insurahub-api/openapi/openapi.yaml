@@ -33,6 +33,8 @@ paths:
     $ref: './package/paths.yaml#/initializePackage'
   /packages/{packageId}/plans:
     $ref: './plan/paths.yaml#/packagePlans'
+  /plans/{id}:
+    $ref: './plan/paths.yaml#/planWithId'
 
 components:
   securitySchemes:

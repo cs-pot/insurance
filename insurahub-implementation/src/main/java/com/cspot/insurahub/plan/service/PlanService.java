@@ -49,4 +49,25 @@ public class PlanService {
         log.info("Returning page of {} plans of package {}", plansPage.getSize(), packageId);
         return plansPage.map(planMapper::toPlanResponse);
     }
+
+    @Transactional
+    public void updatePlan(UUID id, PlanRequest planRequest) {
+        logPlanUpdate(id, planRequest);
+
+        InsurancePlan insurancePlan = planRepository.findByIdOrThrow(id);
+
+        packageValidator.validateReadyForUpdate(insurancePlan.getInsurancePackage());
+        planMapper.updateFromUpdateRequest(insurancePlan, planRequest);
+    }
+
+    private void logPlanUpdate(UUID id, PlanRequest planRequest) {
+        log.debug(
+                "Updating plan: id={}, name={}, type={}, contribution={}, election={}",
+                id,
+                planRequest.getName(),
+                planRequest.getType(),
+                planRequest.getContribution(),
+                planRequest.getElection()
+        );
+    }
 }

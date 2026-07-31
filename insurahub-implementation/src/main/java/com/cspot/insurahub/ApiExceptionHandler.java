@@ -9,6 +9,7 @@ import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
+import com.cspot.insurahub.plan.exception.PlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -225,6 +226,22 @@ public class ApiExceptionHandler {
 
         return new ErrorDto()
                 .error("PACKAGE_NOT_FOUND")
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(PlanNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDto handlePlanNotFoundException(
+            PlanNotFoundException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error("PLAN_NOT_FOUND")
                 .status(HttpStatus.NOT_FOUND.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
