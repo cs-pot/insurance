@@ -22,6 +22,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -131,6 +132,21 @@ public class ApiExceptionHandler {
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("VALIDATION_FAILED")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Invalid request parameter format")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
     }
 
     @ExceptionHandler
