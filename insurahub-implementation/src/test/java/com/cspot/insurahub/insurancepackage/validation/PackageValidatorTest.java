@@ -7,8 +7,12 @@ import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -17,28 +21,26 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class PackageValidatorTest {
 
     private static final LocalDate TODAY = LocalDate.of(2026, 7, 15);
 
-    private PackageValidator packageValidator;
+    @Spy
+    private Clock clock = Clock.fixed(
+            TODAY.atStartOfDay().toInstant(ZoneOffset.UTC),
+            ZoneOffset.UTC
+    );
 
+    @Mock
     private EnrollmentRepository enrollmentRepository;
 
-    @BeforeEach
-    void setUp() {
-        Clock clock = Clock.fixed(
-                TODAY.atStartOfDay().toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC
-        );
-        enrollmentRepository = mock(EnrollmentRepository.class);
-        packageValidator = new PackageValidator(clock, enrollmentRepository);
-    }
+    @InjectMocks
+    private PackageValidator packageValidator;
 
     @Test
     void shouldValidateCreateRequestWhenAllFieldsAreValid() {

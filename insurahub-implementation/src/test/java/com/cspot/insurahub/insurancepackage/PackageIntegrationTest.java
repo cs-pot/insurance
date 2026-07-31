@@ -4,7 +4,6 @@ import com.cspot.insurahub.BaseIntegrationTest;
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.repository.ConsumerRepository;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
-import com.cspot.insurahub.enrollment.entity.EnrollmentStatus;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
@@ -717,8 +716,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     private Enrollment createEnrollment(InsurancePlan plan) {
         return new Enrollment(
                 consumerRepository.save(createConsumer()),
-                plan,
-                EnrollmentStatus.ACTIVE
+                plan
         );
     }
 

@@ -1,8 +1,6 @@
 package com.cspot.insurahub.insurancepackage.service;
 
 import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
-import com.cspot.insurahub.common.exception.DomainValidationException;
-import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
@@ -13,18 +11,16 @@ import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,18 +30,12 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PackageServiceTest {
-
-    private static final Clock CLOCK = Clock.fixed(
-            LocalDate.of(2026, 7, 1).atStartOfDay().toInstant(ZoneOffset.UTC),
-            ZoneOffset.UTC
-    );
 
     @Mock
     private InsurancePackageRepository insurancePackageRepository;
@@ -57,22 +47,10 @@ class PackageServiceTest {
     private AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @Mock
-    private EnrollmentRepository enrollmentRepository;
-
-    private PackageService packageService;
-
     private PackageValidator packageValidator;
 
-    @BeforeEach
-    void setUp() {
-        packageValidator = spy(new PackageValidator(CLOCK, enrollmentRepository));
-        packageService = new PackageService(
-                insurancePackageRepository,
-                packageMapper,
-                packageValidator,
-                authenticationMetadataQueryService
-        );
-    }
+    @InjectMocks
+    private PackageService packageService;
 
     @Test
     void shouldCreatePackage() {
@@ -141,10 +119,10 @@ class PackageServiceTest {
                 .thenReturn(insurancePackage);
         doAnswer(invocation -> {
             InsurancePackage target = invocation.getArgument(0);
-            ReflectionTestUtils.setField(target, "name", "Updated Package");
-            ReflectionTestUtils.setField(target, "payroll", Payroll.MONTHLY);
-            ReflectionTestUtils.setField(target, "startDate", startDate);
-            ReflectionTestUtils.setField(target, "endDate", endDate);
+            target.setName("Updated Package");
+            target.setPayroll(Payroll.MONTHLY);
+            target.setStartDate(startDate);
+            target.setEndDate(endDate);
             return null;
         }).when(packageMapper).updateFromUpdateRequest(same(insurancePackage), same(request));
 
@@ -250,31 +228,6 @@ class PackageServiceTest {
         assertThat(plan.isDeleted()).isTrue();
         assertThat(plan.getDeletedBy()).isEqualTo("admin-user");
         verify(packageValidator).validateReadyForRemoval(insurancePackage);
-    }
-
-    @Test
-    void shouldRejectRemovalWhenAnyPlanHasEnrollment() {
-        UUID packageId = UUID.randomUUID();
-        InsurancePackage insurancePackage = new InsurancePackage(
-                "Premium Health Package",
-                Payroll.MONTHLY,
-                LocalDate.of(2026, 7, 10),
-                LocalDate.of(2026, 8, 9)
-        );
-
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
-        when(enrollmentRepository.existsByPlanInsurancePackage(insurancePackage))
-                .thenReturn(true);
-
-        DomainValidationException exception = assertThrows(
-                DomainValidationException.class,
-                () -> packageService.deletePackage(packageId)
-        );
-
-        assertThat(exception.getCode())
-                .isEqualTo("PACKAGE_PLANS_HAVE_ENROLLMENTS");
-        verify(authenticationMetadataQueryService, never()).getRequiredAuthenticatedPrincipalName();
     }
 
     private void mockAuthenticatedPrincipalName() {
