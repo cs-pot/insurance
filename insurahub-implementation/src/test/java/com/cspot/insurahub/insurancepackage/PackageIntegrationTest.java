@@ -590,9 +590,9 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(delete(PACKAGES_ENDPOINT + "/" + insurancePackage.getId())
                         .with(jwtWithPermissions("delete:packages")))
-                .andExpect(status().isConflict())
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("PACKAGE_REMOVAL_NOT_ALLOWED"))
-                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.message").value(
                         "Package removal is only allowed when the status is NOT_STARTED"
                 ));

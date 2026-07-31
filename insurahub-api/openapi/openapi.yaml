@@ -17,6 +17,8 @@ tags:
     description: Operations related to insurance package management
   - name: Plans
     description: Operations related to plan management
+  - name: Enrollments
+    description: Operations related to enrollments
 
 paths:
   /auth/logout:
@@ -35,6 +37,8 @@ paths:
     $ref: './plan/paths.yaml#/packagePlans'
   /plans/{id}:
     $ref: './plan/paths.yaml#/planWithId'
+  /enrollments:
+    $ref: './enrollment/paths.yaml#/enrollments'
 
 components:
   securitySchemes:
