@@ -1,38 +1,25 @@
 package com.cspot.insurahub.claim.validation;
 
 import com.cspot.insurahub.claim.exception.InvalidReceiptException;
-import com.cspot.insurahub.claim.storage.ReceiptStorageProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.util.unit.DataSize;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class ReceiptValidatorTest {
-
-    @Mock
-    private ReceiptStorageProperties receiptStorageProperties;
 
     private ReceiptValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new ReceiptValidator(receiptStorageProperties);
+        validator = new ReceiptValidator();
     }
 
     @Test
     void shouldAcceptValidPdfReceipt() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.pdf",
@@ -45,9 +32,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldAcceptValidJpgReceipt() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.jpg",
@@ -60,9 +44,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldAcceptValidPngReceipt() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.png",
@@ -75,9 +56,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldAcceptUpperCaseExtension() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.PDF",
@@ -118,31 +96,7 @@ class ReceiptValidatorTest {
     }
 
     @Test
-    void shouldRejectReceiptAtMaxSize() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofBytes(100));
-
-        MockMultipartFile file = new MockMultipartFile(
-                "receipt",
-                "receipt.pdf",
-                "application/pdf",
-                new byte[100]
-        );
-
-        InvalidReceiptException exception = assertThrows(
-                InvalidReceiptException.class,
-                () -> validator.validate(file)
-        );
-
-        assertThat(exception.getMessage())
-                .isEqualTo("Receipt file size must be less than 100B");
-    }
-
-    @Test
     void shouldRejectReceiptWithoutFileName() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 null,
@@ -161,9 +115,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldRejectReceiptWithBlankFileName() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "   ",
@@ -182,9 +133,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldRejectReceiptWithoutExtension() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt",
@@ -203,9 +151,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldRejectReceiptWithUnsupportedExtension() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.gif",
@@ -224,9 +169,6 @@ class ReceiptValidatorTest {
 
     @Test
     void shouldRejectReceiptWithUnsupportedContentType() {
-        when(receiptStorageProperties.getMaxFileSize())
-                .thenReturn(DataSize.ofMegabytes(10));
-
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.pdf",

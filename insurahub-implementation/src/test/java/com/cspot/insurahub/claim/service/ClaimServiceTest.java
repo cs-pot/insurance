@@ -8,14 +8,14 @@ import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.entity.Consumer;
-import com.cspot.insurahub.consumer.repository.ConsumerRepository;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
+import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
-import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,10 +54,7 @@ class ClaimServiceTest {
     private ReceiptRepository receiptRepository;
 
     @Mock
-    private ConsumerRepository consumerRepository;
-
-    @Mock
-    private InsurancePlanRepository insurancePlanRepository;
+    private EnrollmentRepository enrollmentRepository;
 
     @Mock
     private PostgresReceiptStorage receiptStorage;
@@ -70,19 +67,13 @@ class ClaimServiceTest {
 
     @Test
     void shouldCreateClaim() {
-        UUID consumerId = UUID.randomUUID();
-        Consumer consumer = consumer(consumerId);
+        UUID enrollmentId = UUID.randomUUID();
+        Enrollment enrollment = enrollment(enrollmentId);
 
-        UUID planId = UUID.randomUUID();
-        InsurancePlan plan = insurancePlan(planId);
+        PostClaimRequest request = claimRequest(enrollmentId);
 
-        PostClaimRequest request = claimRequest(consumerId, planId);
-
-        when(consumerRepository.findById(consumerId))
-                .thenReturn(Optional.of(consumer));
-
-        when(insurancePlanRepository.findById(planId))
-                .thenReturn(Optional.of(plan));
+        when(enrollmentRepository.findById(enrollmentId))
+                .thenReturn(Optional.of(enrollment));
 
         UUID claimId = UUID.randomUUID();
         doAnswer(invocation -> {
@@ -101,15 +92,13 @@ class ClaimServiceTest {
 
         assertThat(response.getId()).isEqualTo(claimId);
 
-        verify(consumerRepository).findById(consumerId);
-        verify(insurancePlanRepository).findById(planId);
+        verify(enrollmentRepository).findById(enrollmentId);
 
         ArgumentCaptor<Claim> claimCaptor = ArgumentCaptor.forClass(Claim.class);
         verify(claimRepository).save(claimCaptor.capture());
         Claim savedClaim = claimCaptor.getValue();
 
-        assertThat(savedClaim.getEmployee()).isSameAs(consumer);
-        assertThat(savedClaim.getPlan()).isSameAs(plan);
+        assertThat(savedClaim.getEnrollment()).isSameAs(enrollment);
         assertThat(savedClaim.getServiceDate()).isEqualTo(request.getServiceDate());
         assertThat(savedClaim.getAmount()).isEqualByComparingTo(request.getAmount());
         assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.PENDING);
@@ -119,12 +108,11 @@ class ClaimServiceTest {
     }
 
     @Test
-    void shouldThrowWhenEmployeeDoesNotExist() {
-        UUID consumerId = UUID.randomUUID();
-        UUID planId = UUID.randomUUID();
-        PostClaimRequest request = claimRequest(consumerId, planId);
+    void shouldThrowWhenEnrollmentDoesNotExist() {
+        UUID enrollmentId = UUID.randomUUID();
+        PostClaimRequest request = claimRequest(enrollmentId);
 
-        when(consumerRepository.findById(consumerId))
+        when(enrollmentRepository.findById(enrollmentId))
                 .thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
@@ -133,11 +121,10 @@ class ClaimServiceTest {
         );
 
         assertThat(exception.getMessage())
-                .isEqualTo("Consumer not found with id: " + consumerId);
+                .isEqualTo("Enrollment not found with id: " + enrollmentId);
 
-        verify(consumerRepository).findById(consumerId);
+        verify(enrollmentRepository).findById(enrollmentId);
         verifyNoInteractions(
-                insurancePlanRepository,
                 claimRepository,
                 receiptRepository,
                 receiptStorage
@@ -145,33 +132,8 @@ class ClaimServiceTest {
     }
 
     @Test
-    void shouldThrowWhenPlanDoesNotExist() {
-        UUID consumerId = UUID.randomUUID();
-        UUID planId = UUID.randomUUID();
-        Consumer consumer = consumer(consumerId);
-        PostClaimRequest request = claimRequest(consumerId, planId);
-
-        when(consumerRepository.findById(consumerId))
-                .thenReturn(Optional.of(consumer));
-        when(insurancePlanRepository.findById(planId))
-                .thenReturn(Optional.empty());
-
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> claimService.createClaim(request, multipartFile)
-        );
-
-        assertThat(exception.getMessage())
-                .isEqualTo("Insurance plan not found with id: " + planId);
-
-        verify(consumerRepository).findById(consumerId);
-        verify(insurancePlanRepository).findById(planId);
-        verifyNoInteractions(claimRepository, receiptRepository, receiptStorage);
-    }
-
-    @Test
     void shouldReturnReceiptContent() throws IOException {
-        UUID receiptId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
         byte[] content = "receipt".getBytes();
         Receipt receipt = new Receipt(
                 claim(),
@@ -181,62 +143,67 @@ class ClaimServiceTest {
                 content
         );
 
-        when(receiptRepository.findById(receiptId))
+        when(receiptRepository.findByClaimId(claimId))
                 .thenReturn(Optional.of(receipt));
 
-        Resource resource = claimService.getReceipt(receiptId);
+        Resource resource = claimService.getReceipt(claimId);
 
         assertThat(resource.getInputStream().readAllBytes())
                 .containsExactly(content);
 
-        verify(receiptRepository).findById(receiptId);
+        verify(receiptRepository).findByClaimId(claimId);
         verifyNoInteractions(
-                consumerRepository,
-                insurancePlanRepository,
                 claimRepository,
+                enrollmentRepository,
                 receiptStorage
         );
     }
 
     @Test
     void shouldThrowWhenReceiptDoesNotExist() {
-        UUID receiptId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
 
-        when(receiptRepository.findById(receiptId))
+        when(receiptRepository.findByClaimId(claimId))
                 .thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> claimService.getReceipt(receiptId)
+                () -> claimService.getReceipt(claimId)
         );
 
         assertThat(exception.getMessage())
-                .isEqualTo("Receipt not found with id: " + receiptId);
+                .isEqualTo("Receipt not found with claim id: " + claimId);
 
-        verify(receiptRepository).findById(receiptId);
+        verify(receiptRepository).findByClaimId(claimId);
         verifyNoInteractions(
-                consumerRepository,
-                insurancePlanRepository,
                 claimRepository,
+                enrollmentRepository,
                 receiptStorage
         );
     }
 
-    private PostClaimRequest claimRequest(UUID consumerId, UUID planId) {
+    private PostClaimRequest claimRequest(UUID enrollmentId) {
         return new PostClaimRequest()
-                .employeeId(consumerId)
-                .planId(planId)
+                .enrollmentId(enrollmentId)
                 .serviceDate(LocalDate.of(2026, 7, 10))
                 .amount(BigDecimal.valueOf(123.45));
     }
 
     private Claim claim() {
         return new Claim(
-                consumer(UUID.randomUUID()),
-                insurancePlan(UUID.randomUUID()),
+                enrollment(UUID.randomUUID()),
                 LocalDate.of(2026, 7, 10),
                 BigDecimal.valueOf(123.45)
         );
+    }
+
+    private Enrollment enrollment(UUID enrollmentId) {
+        Enrollment enrollment = new Enrollment(
+                consumer(UUID.randomUUID()),
+                insurancePlan(UUID.randomUUID())
+        );
+        ReflectionTestUtils.setField(enrollment, "id", enrollmentId);
+        return enrollment;
     }
 
     private Consumer consumer(UUID consumerId) {

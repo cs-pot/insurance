@@ -6,8 +6,7 @@ CREATE TABLE IF NOT EXISTS claims
 (
     id               UUID           NOT NULL,
     version          BIGINT         NOT NULL DEFAULT 0,
-    employee_id      UUID           NOT NULL,
-    plan_id          UUID           NOT NULL,
+    enrollment_id    UUID           NOT NULL,
     service_date     DATE           NOT NULL,
     amount           NUMERIC(12, 2) NOT NULL,
     status           VARCHAR(32)    NOT NULL DEFAULT 'PENDING',
@@ -22,13 +21,9 @@ CREATE TABLE IF NOT EXISTS claims
     CONSTRAINT pk_claims
         PRIMARY KEY (id),
 
-    CONSTRAINT fk_claims_employee
-        FOREIGN KEY (employee_id)
-            REFERENCES consumers (id),
-
-    CONSTRAINT fk_claims_plan
-        FOREIGN KEY (plan_id)
-            REFERENCES plans (id),
+    CONSTRAINT fk_claims_enrollment
+        FOREIGN KEY (enrollment_id)
+            REFERENCES enrollments (id),
 
     CONSTRAINT chk_claims_amount_positive
         CHECK (amount > 0),
@@ -37,13 +32,10 @@ CREATE TABLE IF NOT EXISTS claims
         CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))
 );
 
-CREATE INDEX idx_claims_employee_id
-    ON claims (employee_id);
+CREATE INDEX idx_claims_enrollment_id
+    ON claims (enrollment_id);
 
-CREATE INDEX idx_claims_plan_id
-    ON claims (plan_id);
-
-CREATE INDEX idx_claims_employee_created_at
-    ON claims (employee_id, created_at DESC);
+CREATE INDEX idx_claims_enrollment_created_at
+    ON claims (enrollment_id, created_at DESC);
 
 --rollback DROP TABLE claims;

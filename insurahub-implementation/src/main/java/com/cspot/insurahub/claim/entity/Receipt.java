@@ -47,5 +47,9 @@ public class Receipt extends ImmutableAuditableEntity {
         this.contentType = contentType;
         this.sizeBytes = sizeBytes;
         this.content = content;
+
+        if (claim != null) {
+            claim.setReceipt(this);
+        }
     }
 }

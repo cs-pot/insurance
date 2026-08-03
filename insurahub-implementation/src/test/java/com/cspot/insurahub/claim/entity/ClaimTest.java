@@ -2,6 +2,7 @@ package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
@@ -17,19 +18,22 @@ class ClaimTest {
 
     @Test
     void shouldCreateClaimWithPendingStatus() {
-        Consumer employee = consumer();
-        InsurancePlan plan = insurancePlan();
+        Enrollment enrollment = enrollment();
 
         LocalDate serviceDate = LocalDate.now();
         BigDecimal amount = BigDecimal.valueOf(999.99);
 
-        Claim claim = new Claim(employee, plan, serviceDate, amount);
+        Claim claim = new Claim(enrollment, serviceDate, amount);
 
-        assertEquals(employee, claim.getEmployee());
-        assertEquals(plan, claim.getPlan());
+        assertEquals(enrollment, claim.getEnrollment());
         assertEquals(serviceDate, claim.getServiceDate());
         assertEquals(amount, claim.getAmount());
         assertEquals(ClaimStatus.PENDING, claim.getStatus());
+        assertEquals(claim, enrollment.getClaims().getFirst());
+    }
+
+    private Enrollment enrollment() {
+        return new Enrollment(consumer(), insurancePlan());
     }
 
     private Consumer consumer() {

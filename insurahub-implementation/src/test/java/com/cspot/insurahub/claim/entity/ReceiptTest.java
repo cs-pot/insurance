@@ -1,6 +1,7 @@
 package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
@@ -29,6 +30,7 @@ class ReceiptTest {
         );
 
         assertEquals(claim, receipt.getClaim());
+        assertEquals(receipt, claim.getReceipt());
         assertEquals("receipt.pdf", receipt.getOriginalFileName());
         assertEquals("application/pdf", receipt.getContentType());
         assertEquals(content.length, receipt.getSizeBytes());
@@ -37,11 +39,14 @@ class ReceiptTest {
 
     private Claim claim() {
         return new Claim(
-                consumer(),
-                insurancePlan(),
+                enrollment(),
                 LocalDate.now(),
                 BigDecimal.valueOf(100)
         );
+    }
+
+    private Enrollment enrollment() {
+        return new Enrollment(consumer(), insurancePlan());
     }
 
     private Consumer consumer() {

@@ -6,20 +6,19 @@ import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
-import com.cspot.insurahub.consumer.entity.Consumer;
-import com.cspot.insurahub.consumer.repository.ConsumerRepository;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
+import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
-import com.cspot.insurahub.plan.entity.InsurancePlan;
-import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.util.UUID;
 
 @Slf4j
@@ -29,33 +28,25 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final ReceiptRepository receiptRepository;
-    private final ConsumerRepository consumerRepository;
-    private final InsurancePlanRepository insurancePlanRepository;
+    private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
 
     @Transactional
     public PostResponse createClaim(PostClaimRequest request, MultipartFile receipt) {
-        Consumer employee = consumerRepository.findById(request.getEmployeeId())
+        Enrollment enrollment = enrollmentRepository.findById(request.getEnrollmentId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Consumer not found with id: " + request.getEmployeeId()
-                ));
-
-        InsurancePlan plan = insurancePlanRepository.findById(request.getPlanId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Insurance plan not found with id: " + request.getPlanId()
+                        "Enrollment not found with id: " + request.getEnrollmentId()
                 ));
 
         Claim claim = new Claim(
-                employee,
-                plan,
+                enrollment,
                 request.getServiceDate(),
                 request.getAmount()
         );
 
         log.debug(
-                "Creating Claim: name={}, payroll={}, startDate={}, endDate={}",
-                employee,
-                plan,
+                "Creating Claim: enrollmentId={}, serviceDate={}, amount={}",
+                enrollment.getId(),
                 request.getServiceDate(),
                 request.getAmount()
         );
@@ -70,11 +61,11 @@ public class ClaimService {
     }
 
     @Transactional(readOnly = true)
-    public Resource getReceipt(UUID receiptId) {
-        Receipt receipt = receiptRepository.findById(receiptId)
+    public Resource getReceipt(UUID claimId) {
+        Receipt receipt = receiptRepository.findByClaimId(claimId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Receipt not found with id: " + receiptId));
+                        "Receipt not found with claim id: " + claimId));
 
-        return new ByteArrayResource(receipt.getContent());
+        return new InputStreamResource(new ByteArrayInputStream(receipt.getContent()));
     }
 }

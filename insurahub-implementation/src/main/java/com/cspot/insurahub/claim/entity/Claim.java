@@ -2,8 +2,7 @@ package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
 import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
-import com.cspot.insurahub.consumer.entity.Consumer;
-import com.cspot.insurahub.plan.entity.InsurancePlan;
+import com.cspot.insurahub.enrollment.entity.Enrollment;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,12 +26,11 @@ import java.time.LocalDate;
 public class Claim extends SoftDeletableAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "employee_id", nullable = false, updatable = false)
-    private Consumer employee;
+    @JoinColumn(name = "enrollment_id", nullable = false, updatable = false)
+    private Enrollment enrollment;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "plan_id", nullable = false, updatable = false)
-    private InsurancePlan plan;
+    @OneToOne(mappedBy = "claim", fetch = FetchType.LAZY)
+    private Receipt receipt;
 
     @Column(name = "service_date", nullable = false)
     private LocalDate serviceDate;
@@ -44,15 +43,21 @@ public class Claim extends SoftDeletableAuditableEntity {
     private ClaimStatus status;
 
     public Claim(
-            Consumer employee,
-            InsurancePlan plan,
+            Enrollment enrollment,
             LocalDate serviceDate,
             BigDecimal amount
     ) {
-        this.employee = employee;
-        this.plan = plan;
+        this.enrollment = enrollment;
         this.serviceDate = serviceDate;
         this.amount = amount;
         this.status = ClaimStatus.PENDING;
+
+        if (enrollment != null) {
+            enrollment.getClaims().add(this);
+        }
+    }
+
+    void setReceipt(Receipt receipt) {
+        this.receipt = receipt;
     }
 }

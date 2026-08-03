@@ -24,8 +24,8 @@ public class ClaimController implements ClaimsApi {
 
     @Override
     @PreAuthorize("hasAuthority('create:claims')")
-    public Resource getReceipt(UUID id) {
-        return claimService.getReceipt(id);
+    public Resource getReceipt(UUID claimId) {
+        return claimService.getReceipt(claimId);
     }
 
     @Override

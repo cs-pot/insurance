@@ -2,9 +2,9 @@ claims:
   post:
     tags:
       - Claims
-    summary: File a claim for an employee
+    summary: File a claim for an enrollment
     description: >
-      Creates a new pending claim for an employee and attaches one receipt file.
+      Creates a new pending claim for a specific enrollment and attaches one receipt file.
       Only administrators can perform this operation. The receipt file must be a PDF,
       JPG, or PNG and must be smaller than 10 MiB. Send this as multipart/form-data
       with a JSON part named postClaimRequest and a file part named receiptFile.
@@ -50,18 +50,18 @@ claims:
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 
-receiptById:
+receiptByClaimId:
   get:
     tags:
       - Claims
     summary: Download a receipt
-    description: Returns the receipt file by receipt ID.
+    description: Returns the receipt file by claim ID.
     operationId: getReceipt
     parameters:
-      - name: id
+      - name: claimId
         in: path
         required: true
-        description: Receipt ID.
+        description: Claim ID.
         schema:
           type: string
           format: uuid

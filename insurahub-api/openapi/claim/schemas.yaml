@@ -2,29 +2,21 @@ PostClaimRequest:
   type: object
   description: |
     Claim details JSON part. In the OpenAPI UI, paste JSON like:
-    {"employeeId":"7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12","planId":"5a0d5de4-2f79-46f9-85c1-b588ea7b5c41","serviceDate":"2030-01-15","amount":125.50}
+    {"enrollmentId":"43a2fb61-ea60-4096-960a-cc1d4a372d62","serviceDate":"2030-01-15","amount":125.50}
   example:
-    employeeId: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
-    planId: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
+    enrollmentId: "43a2fb61-ea60-4096-960a-cc1d4a372d62"
     serviceDate: "2030-01-15"
     amount: 125.50
   required:
-    - employeeId
-    - planId
+    - enrollmentId
     - serviceDate
     - amount
   properties:
-    employeeId:
+    enrollmentId:
       type: string
       format: uuid
-      description: Employee or consumer ID for whom the claim is filed.
-      example: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
-
-    planId:
-      type: string
-      format: uuid
-      description: Insurance plan ID related to the claim.
-      example: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
+      description: Enrollment ID related to the claim.
+      example: "43a2fb61-ea60-4096-960a-cc1d4a372d62"
 
     serviceDate:
       type: string
