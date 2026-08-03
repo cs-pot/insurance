@@ -35,6 +35,10 @@ paths:
     $ref: './package/paths.yaml#/initializePackage'
   /packages/{packageId}/plans:
     $ref: './plan/paths.yaml#/packagePlans'
+  /plans:
+    $ref: './plan/paths.yaml#/plans'
+  /plans/{id}:
+    $ref: './plan/paths.yaml#/planById'
   /enrollments:
     $ref: './enrollment/paths.yaml#/enrollments'
   /plans/{planId}/enroll:
