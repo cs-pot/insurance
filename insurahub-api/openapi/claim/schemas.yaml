@@ -1,0 +1,33 @@
+PostClaimRequest:
+  type: object
+  description: |
+    Claim details JSON part. In the OpenAPI UI, paste JSON like:
+    {"enrollmentId":"43a2fb61-ea60-4096-960a-cc1d4a372d62","serviceDate":"2030-01-15","amount":125.50}
+  example:
+    enrollmentId: "43a2fb61-ea60-4096-960a-cc1d4a372d62"
+    serviceDate: "2030-01-15"
+    amount: 125.50
+  required:
+    - enrollmentId
+    - serviceDate
+    - amount
+  properties:
+    enrollmentId:
+      type: string
+      format: uuid
+      description: Enrollment ID related to the claim.
+      example: "43a2fb61-ea60-4096-960a-cc1d4a372d62"
+
+    serviceDate:
+      type: string
+      format: date
+      description: Date when the reimbursable service was provided.
+      example: "2030-01-15"
+
+    amount:
+      type: number
+      minimum: 0
+      exclusiveMinimum: true
+      multipleOf: 0.01
+      description: Positive claim amount in EUR.
+      example: 125.50
