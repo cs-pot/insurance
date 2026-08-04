@@ -1,5 +1,6 @@
 package com.cspot.insurahub.plan.service;
 
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -27,6 +28,7 @@ public class PlanService {
     private final InsurancePlanRepository planRepository;
     private final PlanMapper planMapper;
     private final PackageValidator packageValidator;
+    private final AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @Transactional
     public PostResponse addPlan(UUID packageId, PlanRequest request) {
@@ -69,5 +71,14 @@ public class PlanService {
                 planRequest.getContribution(),
                 planRequest.getElection()
         );
+    }
+
+    @Transactional
+    public void deletePlan(UUID planId) {
+        InsurancePlan plan = planRepository.findByIdOrThrow(planId);
+        packageValidator.validateReadyForUpdate(plan.getInsurancePackage());
+        String deletedBy = authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName();
+        plan.markDeleted(deletedBy);
+        log.info("Plan deleted: id={}, packageId={}", planId, plan.getInsurancePackage().getId());
     }
 }
