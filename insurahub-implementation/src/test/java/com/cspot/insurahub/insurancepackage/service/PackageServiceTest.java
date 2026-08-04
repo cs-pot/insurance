@@ -8,6 +8,7 @@ import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PackageRequest;
+import com.cspot.insurahub.model.PackageResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
@@ -17,10 +18,14 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +56,68 @@ class PackageServiceTest {
 
     @InjectMocks
     private PackageService packageService;
+
+    @Test
+    void shouldGetPackagesFilteredByName() {
+        Pageable pageable = PageRequest.of(0, 20);
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        PackageResponse response = new PackageResponse(
+                UUID.randomUUID(),
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+
+        when(insurancePackageRepository.findByNameContainingIgnoreCase("premium", pageable))
+                .thenReturn(new PageImpl<>(List.of(insurancePackage), pageable, 1));
+        when(packageMapper.toListItemResponse(insurancePackage))
+                .thenReturn(response);
+
+        assertThat(packageService.getPackages("  premium  ", pageable).getContent())
+                .containsExactly(response);
+
+        verify(insurancePackageRepository)
+                .findByNameContainingIgnoreCase("premium", pageable);
+        verify(insurancePackageRepository, never())
+                .findAll(pageable);
+    }
+
+    @Test
+    void shouldGetAllPackagesWhenSearchIsBlank() {
+        Pageable pageable = PageRequest.of(0, 20);
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+        PackageResponse response = new PackageResponse(
+                UUID.randomUUID(),
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 7, 10),
+                LocalDate.of(2026, 8, 9)
+        );
+
+        when(insurancePackageRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(insurancePackage), pageable, 1));
+        when(packageMapper.toListItemResponse(insurancePackage))
+                .thenReturn(response);
+
+        assertThat(packageService.getPackages("   ", pageable).getContent())
+                .containsExactly(response);
+
+        verify(insurancePackageRepository)
+                .findAll(pageable);
+        verify(insurancePackageRepository, never())
+                .findByNameContainingIgnoreCase(any(String.class), same(pageable));
+    }
 
     @Test
     void shouldCreatePackage() {

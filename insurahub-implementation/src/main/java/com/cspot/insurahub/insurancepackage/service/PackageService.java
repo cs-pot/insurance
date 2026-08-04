@@ -29,8 +29,11 @@ public class PackageService {
     private final AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @Transactional(readOnly = true)
-    public Page<PackageResponse> getPackages(Pageable pageable) {
-        return packageRepository.findAll(pageable)
+    public Page<PackageResponse> getPackages(String search, Pageable pageable) {
+        Page<InsurancePackage> packages = (search != null && !search.isBlank())
+                ? packageRepository.findByNameContainingIgnoreCase(search.trim(), pageable)
+                : packageRepository.findAll(pageable);
+        return packages
                 .map(packageMapper::toListItemResponse);
     }
 

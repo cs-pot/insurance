@@ -23,8 +23,8 @@ public class PackageController implements PackagesApi {
 
     @Override
     @PreAuthorize("hasAuthority('view:packages')")
-    public Page<PackageResponse> getPackages(Pageable pageable) {
-        return packageService.getPackages(pageable);
+    public Page<PackageResponse> getPackages(String search, Pageable pageable) {
+        return packageService.getPackages(search, pageable);
     }
 
     @Override

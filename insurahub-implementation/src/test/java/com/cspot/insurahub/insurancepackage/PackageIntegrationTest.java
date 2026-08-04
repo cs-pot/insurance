@@ -36,7 +36,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,6 +121,84 @@ class PackageIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content[*].endDate").value(hasItem(endDate.toString())))
                 .andExpect(jsonPath("$.page.number").value(0))
                 .andExpect(jsonPath("$.page.size").value(100));
+    }
+
+    @Test
+    void shouldSearchPackagesByNameIgnoringCase() throws Exception {
+        String uniqueValue = UUID.randomUUID().toString();
+        String matchingPackageName = "Searchable Premium Package " + uniqueValue;
+        String otherPackageName = "Unrelated Basic Package " + uniqueValue;
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+
+        repository.saveAll(List.of(
+                new InsurancePackage(
+                        matchingPackageName,
+                        Payroll.MONTHLY,
+                        startDate,
+                        startDate.plusMonths(1)
+                ),
+                new InsurancePackage(
+                        otherPackageName,
+                        Payroll.MONTHLY,
+                        startDate,
+                        startDate.plusMonths(1)
+                )
+        ));
+
+        mockMvc.perform(get(PACKAGES_ENDPOINT)
+                        .with(jwtWithPermissions("view:packages"))
+                        .param("search", ("premium package " + uniqueValue).toUpperCase())
+                        .param("page", "0")
+                        .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].name").value(hasItem(matchingPackageName)))
+                .andExpect(jsonPath("$.content[*].name").value(not(hasItem(otherPackageName))));
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenPackageSearchHasNoMatches() throws Exception {
+        mockMvc.perform(get(PACKAGES_ENDPOINT)
+                        .with(jwtWithPermissions("view:packages"))
+                        .param("search", "missing-package-" + UUID.randomUUID())
+                        .param("page", "0")
+                        .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value(empty()))
+                .andExpect(jsonPath("$.page.totalElements").value(0));
+    }
+
+    @Test
+    void shouldReturnAllPackagesWhenSearchIsCleared() throws Exception {
+        String uniqueValue = UUID.randomUUID().toString();
+        String firstPackageName = "Cleared Search First Package " + uniqueValue;
+        String secondPackageName = "Cleared Search Second Package " + uniqueValue;
+        LocalDate startDate = LocalDate.now(clock).plusDays(1);
+
+        repository.saveAll(List.of(
+                new InsurancePackage(
+                        firstPackageName,
+                        Payroll.MONTHLY,
+                        startDate,
+                        startDate.plusMonths(1)
+                ),
+                new InsurancePackage(
+                        secondPackageName,
+                        Payroll.MONTHLY,
+                        startDate,
+                        startDate.plusMonths(1)
+                )
+        ));
+
+        mockMvc.perform(get(PACKAGES_ENDPOINT)
+                        .with(jwtWithPermissions("view:packages"))
+                        .param("search", "")
+                        .param("page", "0")
+                        .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].name").value(hasItems(
+                        firstPackageName,
+                        secondPackageName
+                )));
     }
 
     @ParameterizedTest
