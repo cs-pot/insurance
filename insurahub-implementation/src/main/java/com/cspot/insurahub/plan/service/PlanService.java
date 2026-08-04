@@ -1,6 +1,7 @@
 package com.cspot.insurahub.plan.service;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PlanRequest;
@@ -42,7 +43,9 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public Page<PlanResponse> getPackagePlans(UUID packageId, Pageable pageable) {
-        packageRepository.findByIdOrThrow(packageId);
+        if (!packageRepository.existsById(packageId)) {
+            throw new PackageNotFoundException(packageId);
+        }
         Page<InsurancePlan> plansPage = planRepository.findByInsurancePackageId(packageId, pageable);
         log.info("Returning page of {} plans of package {}", plansPage.getSize(), packageId);
         return plansPage.map(planMapper::toPlanResponse);

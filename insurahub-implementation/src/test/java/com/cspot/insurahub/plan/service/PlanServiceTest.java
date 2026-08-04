@@ -161,8 +161,8 @@ class PlanServiceTest {
                 1
         );
 
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
+        when(insurancePackageRepository.existsById(packageId))
+                .thenReturn(true);
         when(insurancePlanRepository.findByInsurancePackageId(packageId, pageable))
                 .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
         when(planMapper.toPlanResponse(plan))
@@ -171,8 +171,25 @@ class PlanServiceTest {
         assertThat(planService.getPackagePlans(packageId, pageable))
                 .isEqualTo(expectedResponses);
 
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(insurancePackageRepository).existsById(packageId);
         verify(planMapper).toPlanResponse(plan);
+    }
+
+    @Test
+    void shouldThrowOnGetPackagePlansWhenPackageDoesNotExist() {
+        UUID packageId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(insurancePackageRepository.existsById(packageId))
+                .thenReturn(false);
+
+        assertThrows(
+                PackageNotFoundException.class,
+                () -> planService.getPackagePlans(packageId, pageable)
+        );
+
+        verify(insurancePlanRepository, never())
+                .findByInsurancePackageId(any(UUID.class), any(Pageable.class));
     }
 
     private InsurancePackage createPackage() {
