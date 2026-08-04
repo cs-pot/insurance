@@ -140,3 +140,33 @@ planWithId:
         $ref: '../common/responses.yaml#/UnprocessableEntity'
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
+
+  delete:
+    tags:
+      - Plans
+    summary: Remove a plan
+    description: Removes a plan from its package. Removal is allowed only when the package has NOT_STARTED status.
+    operationId: deletePlan
+    parameters:
+      - in: path
+        name: id
+        description: ID of the plan to remove.
+        schema:
+          type: string
+          format: uuid
+        required: true
+    responses:
+      '204':
+        description: Plan removed successfully
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
