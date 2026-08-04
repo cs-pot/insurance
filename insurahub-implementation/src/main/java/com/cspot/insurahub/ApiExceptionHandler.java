@@ -1,7 +1,9 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.claim.exception.InvalidReceiptException;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.InvalidPageRequestException;
+import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
@@ -127,6 +129,32 @@ public class ApiExceptionHandler {
         logWarn(e);
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")
+                .status(400)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public ErrorDto handleResourceNotFoundException(ResourceNotFoundException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("RESOURCE_NOT_FOUND")
+                .status(404)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleInvalidReceiptException(InvalidReceiptException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("INVALID_RECEIPT")
                 .status(400)
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
