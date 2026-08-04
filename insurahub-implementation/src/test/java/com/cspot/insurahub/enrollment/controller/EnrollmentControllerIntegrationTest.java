@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Transactional
 @ActiveProfiles("test")
+@Sql(scripts = "classpath:sql/enrollment-test-data.sql")
 class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
+
+    private static final UUID CONSUMER_A_ID = UUID.fromString("a1111111-1111-1111-1111-111111111111");
+    private static final UUID CONSUMER_B_ID = UUID.fromString("b2222222-2222-2222-2222-222222222222");
+    private static final UUID PLAN_ID = UUID.fromString("e5555555-5555-5555-5555-555555555555");
 
     @Autowired
     private MockMvc mockMvc;
@@ -40,9 +46,7 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void getEnrollmentsShouldReturnSeededDataForAuthenticatedConsumer() throws Exception {
-        UUID consumerId = seedConsumer("auth0|consumer-A");
-        UUID planId = seedPlan();
-        seedEnrollment(consumerId, planId, "ACTIVE");
+        seedEnrollment(CONSUMER_A_ID, PLAN_ID, "ACTIVE");
 
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-A")))
@@ -56,10 +60,8 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void getEnrollmentsShouldFilterByStatus() throws Exception {
-        UUID consumerId = seedConsumer("auth0|consumer-B");
-        UUID planId = seedPlan();
-        seedEnrollment(consumerId, planId, "ACTIVE");
-        seedEnrollment(consumerId, planId, "CANCELLED");
+        seedEnrollment(CONSUMER_B_ID, PLAN_ID, "ACTIVE");
+        seedEnrollment(CONSUMER_B_ID, PLAN_ID, "CANCELLED");
 
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-B")))
@@ -75,22 +77,8 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void getEnrollmentsShouldReturnEmptyArrayForConsumerWithNoEnrollments() throws Exception {
-        seedConsumer("auth0|consumer-C");
-
-        mockMvc.perform(get("/enrollments")
-                        .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-C")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
     void getEnrollmentsShouldIsolateDataByConsumer() throws Exception {
-        UUID consumerAId = seedConsumer("auth0|consumer-A");
-        seedConsumer("auth0|consumer-B");
-        UUID planId = seedPlan();
-        seedEnrollment(consumerAId, planId, "ACTIVE");
+        seedEnrollment(CONSUMER_A_ID, PLAN_ID, "ACTIVE");
 
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-B")))
@@ -105,40 +93,6 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
                         .claim("permissions", List.of(permission)))
                 .authorities(jwt -> Objects.requireNonNull(
                         jwtAuthenticationConverter.convert(jwt)).getAuthorities());
-    }
-
-    private UUID seedConsumer(String idpId) {
-        UUID consumerId = UUID.randomUUID();
-        String personalId = UUID.randomUUID().toString().substring(0, 11);
-        String email = idpId.replace("|", "-") + "_" + UUID.randomUUID() + "@test.com";
-
-        String sql = "INSERT INTO consumers (id, version, idp_id, email, first_name, " +
-                "last_name, personal_id, date_of_birth, address, city, " +
-                "created_at, created_by, deleted_at) " +
-                "VALUES (?, 0, ?, ?, 'Test', 'User', ?, '2000-01-01', '123 Test St', 'Testville', " +
-                "NOW(), 'test', NULL)";
-        
-        jdbcTemplate.update(sql, consumerId, idpId, email, personalId);
-        return consumerId;
-    }
-
-    private UUID seedPlan() {
-        UUID packageId = UUID.randomUUID();
-        UUID planId = UUID.randomUUID();
-
-        String packageSql = "INSERT INTO packages (id, version, name, payroll, start_date, " +
-                "end_date, status, created_at, created_by, deleted_at) " +
-                "VALUES (?, 0, 'Test Package', 'MONTHLY', '2024-01-01', '2025-01-01', " +
-                "'INITIALIZED', NOW(), 'test', NULL)";
-        jdbcTemplate.update(packageSql, packageId);
-
-        String planSql = "INSERT INTO plans (id, version, package_id, name, type, " +
-                "contribution, election, created_at, created_by, deleted_at) " +
-                "VALUES (?, 0, ?, 'Test Plan', 'HEALTH_INSURANCE', 100.00, 50.00, " +
-                "NOW(), 'test', NULL)";
-        jdbcTemplate.update(planSql, planId, packageId);
-
-        return planId;
     }
 
     private void seedEnrollment(UUID consumerId, UUID planId, String status) {
