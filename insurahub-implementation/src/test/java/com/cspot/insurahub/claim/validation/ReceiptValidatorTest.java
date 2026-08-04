@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,7 +26,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt.pdf",
                 "application/pdf",
-                new byte[1024]
+                pdfContent()
         );
 
         assertDoesNotThrow(() -> validator.validate(file));
@@ -36,7 +38,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt.jpg",
                 "image/jpeg",
-                new byte[1024]
+                jpgContent()
         );
 
         assertDoesNotThrow(() -> validator.validate(file));
@@ -48,7 +50,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt.png",
                 "image/png",
-                new byte[1024]
+                pngContent()
         );
 
         assertDoesNotThrow(() -> validator.validate(file));
@@ -60,7 +62,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt.PDF",
                 "application/pdf",
-                new byte[1024]
+                pdfContent()
         );
 
         assertDoesNotThrow(() -> validator.validate(file));
@@ -101,7 +103,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 null,
                 "application/pdf",
-                new byte[100]
+                pdfContent()
         );
 
         InvalidReceiptException exception = assertThrows(
@@ -119,7 +121,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "   ",
                 "application/pdf",
-                new byte[100]
+                pdfContent()
         );
 
         InvalidReceiptException exception = assertThrows(
@@ -137,7 +139,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt",
                 "application/pdf",
-                new byte[100]
+                pdfContent()
         );
 
         InvalidReceiptException exception = assertThrows(
@@ -155,7 +157,7 @@ class ReceiptValidatorTest {
                 "receipt",
                 "receipt.gif",
                 "image/gif",
-                new byte[100]
+                pdfContent()
         );
 
         InvalidReceiptException exception = assertThrows(
@@ -168,12 +170,24 @@ class ReceiptValidatorTest {
     }
 
     @Test
-    void shouldRejectReceiptWithUnsupportedContentType() {
+    void shouldAcceptReceiptWhenReportedContentTypeIsUnreliable() {
         MockMultipartFile file = new MockMultipartFile(
                 "receipt",
                 "receipt.pdf",
                 "text/plain",
-                new byte[100]
+                pdfContent()
+        );
+
+        assertDoesNotThrow(() -> validator.validate(file));
+    }
+
+    @Test
+    void shouldRejectReceiptWithUnsupportedContent() {
+        MockMultipartFile file = new MockMultipartFile(
+                "receipt",
+                "receipt.pdf",
+                "application/pdf",
+                "not a pdf".getBytes(StandardCharsets.UTF_8)
         );
 
         InvalidReceiptException exception = assertThrows(
@@ -183,5 +197,35 @@ class ReceiptValidatorTest {
 
         assertThat(exception.getMessage())
                 .isEqualTo("Receipt must be a PDF, JPG, or PNG file");
+    }
+
+    @Test
+    void shouldRejectReceiptWhenContentDoesNotMatchExtension() {
+        MockMultipartFile file = new MockMultipartFile(
+                "receipt",
+                "receipt.pdf",
+                "application/pdf",
+                pngContent()
+        );
+
+        InvalidReceiptException exception = assertThrows(
+                InvalidReceiptException.class,
+                () -> validator.validate(file)
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Receipt must be a PDF, JPG, or PNG file");
+    }
+
+    private byte[] pdfContent() {
+        return "%PDF-1.7\n".getBytes(StandardCharsets.UTF_8);
+    }
+
+    private byte[] jpgContent() {
+        return new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00};
+    }
+
+    private byte[] pngContent() {
+        return new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     }
 }

@@ -22,22 +22,7 @@ CREATE TABLE IF NOT EXISTS receipts
 
     CONSTRAINT fk_receipts_claim
         FOREIGN KEY (claim_id)
-            REFERENCES claims (id),
-
-    CONSTRAINT chk_receipts_content_type
-        CHECK (
-            content_type IN (
-                'application/pdf',
-                'image/jpeg',
-                'image/png'
-            )
-        ),
-
-    CONSTRAINT chk_receipts_size
-        CHECK (
-            size_bytes > 0
-            AND size_bytes < 10485760
-        )
+            REFERENCES claims (id)
 );
 
 --rollback DROP TABLE receipts;
