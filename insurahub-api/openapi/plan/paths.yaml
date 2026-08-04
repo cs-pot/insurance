@@ -105,7 +105,7 @@ plans:
     tags:
       - Plans
     summary: Get available plans
-    description: Returns a list of all available (ACTIVE) plans.
+    description: Returns a list of all plans belonging to initialized packages (i.e. plans available for enrollment).
     operationId: getPlans
     responses:
       '200':

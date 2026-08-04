@@ -29,7 +29,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -190,6 +190,40 @@ class PlanServiceTest {
 
         verify(insurancePlanRepository, never())
                 .findByInsurancePackageId(any(UUID.class), any(Pageable.class));
+    }
+
+    @Test
+    void shouldReturnOnlyPlansFromInitializedPackages() {
+        InsurancePackage initializedPackage = createPackage();
+        initializedPackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        InsurancePlan plan = createPlan(initializedPackage);
+        PlanResponse expectedResponse = new PlanResponse(
+                UUID.randomUUID(),
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                250,
+                500
+        );
+
+        when(insurancePlanRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of(plan));
+        when(planMapper.toPlanResponse(plan))
+                .thenReturn(expectedResponse);
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).containsExactly(expectedResponse);
+        verify(insurancePlanRepository).findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoInitializedPackagesHavePlans() {
+        when(insurancePlanRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of());
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).isEmpty();
     }
 
     private InsurancePackage createPackage() {

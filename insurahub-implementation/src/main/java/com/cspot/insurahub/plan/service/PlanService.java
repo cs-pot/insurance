@@ -1,6 +1,7 @@
 package com.cspot.insurahub.plan.service;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -53,7 +54,10 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public List<PlanResponse> getAvailablePlans() {
-        return planRepository.findAll().stream().map(planMapper::toPlanResponse).toList();
+        return planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED)
+                .stream()
+                .map(planMapper::toPlanResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
