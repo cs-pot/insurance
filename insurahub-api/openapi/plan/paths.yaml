@@ -147,8 +147,44 @@ planById:
       '403':
         $ref: '../common/responses.yaml#/Forbidden'
       '404':
-        description: Plan not found
-        content:
-          application/json:
-            schema:
-              $ref: '../common/schemas.yaml#/ErrorDto'
+        $ref: '../common/responses.yaml#/NotFound'
+
+  put:
+    tags:
+      - Plans
+    summary: Update a plan
+    description: Updates a plan. Only available to administrators.
+    operationId: putPlan
+    parameters:
+      - in: path
+        name: id
+        description: ID of the plan to update.
+        schema:
+          type: string
+          format: uuid
+        required: true
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/PlanRequest'
+    responses:
+      '204':
+        description: Successful update
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '409':
+        $ref: '../common/responses.yaml#/Conflict'
+      '415':
+        $ref: '../common/responses.yaml#/UnsupportedMediaType'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'

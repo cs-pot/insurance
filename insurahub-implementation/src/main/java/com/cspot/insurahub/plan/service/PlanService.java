@@ -9,7 +9,6 @@ import com.cspot.insurahub.model.PlanRequest;
 import com.cspot.insurahub.model.PlanResponse;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
-import com.cspot.insurahub.plan.exception.PlanNotFoundException;
 import com.cspot.insurahub.plan.mapper.PlanMapper;
 import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,8 +61,28 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public PlanResponse getPlanById(UUID id) {
-        InsurancePlan plan = planRepository.findById(id)
-                .orElseThrow(() -> new PlanNotFoundException("Plan not found with id: " + id));
+        InsurancePlan plan = planRepository.findByIdOrThrow(id);
         return planMapper.toPlanResponse(plan);
+    }
+
+    @Transactional
+    public void updatePlan(UUID id, PlanRequest planRequest) {
+        logPlanUpdate(id, planRequest);
+
+        InsurancePlan insurancePlan = planRepository.findByIdOrThrow(id);
+
+        packageValidator.validateReadyForUpdate(insurancePlan.getInsurancePackage());
+        planMapper.updateFromUpdateRequest(insurancePlan, planRequest);
+    }
+
+    private void logPlanUpdate(UUID id, PlanRequest planRequest) {
+        log.debug(
+                "Updating plan: id={}, name={}, type={}, contribution={}, election={}",
+                id,
+                planRequest.getName(),
+                planRequest.getType(),
+                planRequest.getContribution(),
+                planRequest.getElection()
+        );
     }
 }

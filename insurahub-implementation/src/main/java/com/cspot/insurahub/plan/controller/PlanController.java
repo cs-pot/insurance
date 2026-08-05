@@ -44,4 +44,11 @@ public class PlanController implements PlansApi {
     public PlanResponse getPlanById(UUID id) {
         return planService.getPlanById(id);
     }
+
+    @Override
+    @PreAuthorize("hasAuthority('update:plans')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void putPlan(UUID id, PlanRequest planRequest) {
+        planService.updatePlan(id, planRequest);
+    }
 }

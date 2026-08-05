@@ -7,11 +7,12 @@ import com.cspot.insurahub.plan.entity.InsurancePlan;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
         componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE
+        unmappedTargetPolicy = ReportingPolicy.ERROR
 )
 public interface PlanMapper {
 
@@ -19,4 +20,8 @@ public interface PlanMapper {
     InsurancePlan toEntity(InsurancePackage insurancePackage, PlanRequest request);
 
     PlanResponse toPlanResponse(InsurancePlan plan);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "insurancePackage", ignore = true)
+    void updateFromUpdateRequest(@MappingTarget InsurancePlan insurancePlan, PlanRequest request);
 }

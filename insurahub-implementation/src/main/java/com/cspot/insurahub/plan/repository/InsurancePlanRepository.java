@@ -1,8 +1,8 @@
 package com.cspot.insurahub.plan.repository;
 
+import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
-import com.cspot.insurahub.plan.exception.PlanNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +17,7 @@ public interface InsurancePlanRepository extends JpaRepository<InsurancePlan, UU
     List<InsurancePlan> findByInsurancePackageStatus(InsurancePackageStatus status);
 
     default InsurancePlan findByIdOrThrow(UUID id) {
-        return findById(id).orElseThrow(PlanNotFoundException::new);
+        return findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(InsurancePlan.class, id));
     }
 }
