@@ -1,6 +1,7 @@
 package com.cspot.insurahub.consumer.repository;
 
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,10 @@ public interface ConsumerRepository extends JpaRepository<Consumer, UUID> {
             + "OR LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) "
             + "OR c.personalId LIKE CONCAT('%', :search, '%')")
     Page<Consumer> findBySearch(@Param("search") String search, Pageable pageable);
+
+    Optional<Consumer> findByIdpId(String idpId);
+
+    default Consumer findByIdOrThrow(UUID id) {
+        return findById(id).orElseThrow(ConsumerNotFoundException::new);
+    }
 }

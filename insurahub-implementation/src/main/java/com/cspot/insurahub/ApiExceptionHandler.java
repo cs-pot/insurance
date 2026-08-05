@@ -1,15 +1,16 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.claim.exception.InvalidReceiptException;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.InvalidPageRequestException;
+import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.exception.EmailAlreadyInUseException;
 import com.cspot.insurahub.consumer.exception.ConsumerNotFoundException;
 import com.cspot.insurahub.consumer.exception.UserCreationException;
+import com.cspot.insurahub.enrollment.exception.EnrollmentDeniedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.ErrorDto;
-import com.cspot.insurahub.plan.exception.PlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -135,6 +137,47 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public ErrorDto handleResourceNotFoundException(ResourceNotFoundException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("RESOURCE_NOT_FOUND")
+                .status(404)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleInvalidReceiptException(InvalidReceiptException e, HttpServletRequest request) {
+        logWarn(e);
+        ErrorDto errorDto = new ErrorDto()
+                .error("INVALID_RECEIPT")
+                .status(400)
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+        return errorDto;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorDto handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("VALIDATION_FAILED")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Invalid request parameter format")
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     public ErrorDto handleMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
         logWarn(e);
@@ -159,19 +202,6 @@ public class ApiExceptionHandler {
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());
         return errorDto;
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(code = HttpStatus.CONFLICT)
-    public ErrorDto handlePackageRemovalNotAllowedException(PackageRemovalNotAllowedException e,
-                                                            HttpServletRequest request) {
-        logWarn(e);
-        return new ErrorDto()
-                .error("PACKAGE_REMOVAL_NOT_ALLOWED")
-                .status(409)
-                .message(e.getMessage())
-                .timestamp(OffsetDateTime.now(clock))
-                .path(request.getRequestURI());
     }
 
     @ExceptionHandler
@@ -232,17 +262,13 @@ public class ApiExceptionHandler {
                 .path(request.getRequestURI());
     }
 
-    @ExceptionHandler(PlanNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorDto handlePlanNotFoundException(
-            PlanNotFoundException e,
-            HttpServletRequest request
-    ) {
+    @ExceptionHandler(EnrollmentDeniedException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleEnrollmentDeniedException(EnrollmentDeniedException e, HttpServletRequest request) {
         logWarn(e);
-
         return new ErrorDto()
-                .error("PLAN_NOT_FOUND")
-                .status(HttpStatus.NOT_FOUND.value())
+                .error("ENROLLMENT_DENIED")
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());

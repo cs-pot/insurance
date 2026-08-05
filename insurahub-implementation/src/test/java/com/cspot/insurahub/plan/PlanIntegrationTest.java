@@ -30,8 +30,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -79,7 +79,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists());
 
-        assertEquals(plansBeforeRequest + 1, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest + 1);
     }
 
     @Test
@@ -102,7 +103,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("PACKAGE_UPDATE_NOT_ALLOWED"))
                 .andExpect(jsonPath("$.status").value(400));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -122,7 +124,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.status").value(401));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -143,7 +146,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.status").value(403));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -182,10 +186,12 @@ class PlanIntegrationTest extends BaseIntegrationTest {
         InsurancePlan updatedPlan = planRepository.findById(plan.getId())
                 .orElseThrow(() -> new AssertionError("Plan must exist after update"));
 
-        assertEquals("Updated Dental", updatedPlan.getName());
-        assertEquals(PlanType.DENTAL_INSURANCE, updatedPlan.getType());
-        assertEquals(0, BigDecimal.valueOf(300).compareTo(updatedPlan.getContribution()));
-        assertEquals(0, BigDecimal.valueOf(600).compareTo(updatedPlan.getElection()));
+        assertThat(updatedPlan.getName()).isEqualTo("Updated Dental");
+        assertThat(updatedPlan.getType()).isEqualTo(PlanType.DENTAL_INSURANCE);
+        assertThat(updatedPlan.getContribution())
+                .isEqualByComparingTo(BigDecimal.valueOf(300));
+        assertThat(updatedPlan.getElection())
+                .isEqualByComparingTo(BigDecimal.valueOf(600));
     }
 
     @Test
@@ -202,8 +208,9 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                                 600
                         )))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("PLAN_NOT_FOUND"))
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message")
+                        .value("InsurancePlan with id '" + planId + "' was not found."));
     }
 
     @Test
@@ -281,7 +288,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").exists());
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @ParameterizedTest
@@ -305,7 +313,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -325,7 +334,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -403,10 +413,12 @@ class PlanIntegrationTest extends BaseIntegrationTest {
         InsurancePlan savedPlan = planRepository.findById(plan.getId())
                 .orElseThrow(() -> new AssertionError("Plan must exist after rejected update"));
 
-        assertEquals(plan.getName(), savedPlan.getName());
-        assertEquals(plan.getType(), savedPlan.getType());
-        assertEquals(0, plan.getContribution().compareTo(savedPlan.getContribution()));
-        assertEquals(0, plan.getElection().compareTo(savedPlan.getElection()));
+        assertThat(savedPlan.getName()).isEqualTo(plan.getName());
+        assertThat(savedPlan.getType()).isEqualTo(plan.getType());
+        assertThat(savedPlan.getContribution())
+                .isEqualByComparingTo(plan.getContribution());
+        assertThat(savedPlan.getElection())
+                .isEqualByComparingTo(plan.getElection());
     }
 
     private RequestPostProcessor jwtWithPermissions(String... permissions) {

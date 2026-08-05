@@ -1,0 +1,55 @@
+enrollments:
+  get:
+    tags:
+      - Enrollments
+    summary: Get enrollments for the current consumer
+    description: Returns a list of enrollments for the authenticated consumer, optionally filtered by status.
+    operationId: getEnrollments
+    parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+            - ACTIVE
+            - CANCELLED
+            - EXPIRED
+          default: ACTIVE
+    responses:
+      '200':
+        description: Successfully retrieved enrollments
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './schemas.yaml#/EnrollmentResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+
+planEnroll:
+  post:
+    tags:
+      - Enrollments
+    summary: Enroll on plan
+    description: Enrolls the authenticated consumer on the plan. Only available to consumers.
+    operationId: createEnrollment
+    parameters:
+      - name: planId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      201:
+        $ref: '../common/responses.yaml#/Created'
+      401:
+        $ref: '../common/responses.yaml#/Unauthorized'
+      403:
+        $ref: '../common/responses.yaml#/Forbidden'
+      422:
+        $ref: '../common/responses.yaml#/UnprocessableEntity'

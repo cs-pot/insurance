@@ -461,4 +461,20 @@ class ConsumerControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRejectConsumerDeletionWithInvalidUuidFormat() throws Exception {
+        // Given an endpoint expects a UUID path parameter
+        String invalidConsumerId = "not-a-uuid";
+
+        // When an invalid UUID value is provided
+        mockMvc.perform(delete("/consumers/{id}", invalidConsumerId)
+                        .with(jwtWithPermission("delete:consumers")))
+                // Then the API returns 400 Bad Request
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Invalid request parameter format"))
+                .andExpect(jsonPath("$.path").value("/consumers/" + invalidConsumerId));
+    }
+
 }

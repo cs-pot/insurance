@@ -30,10 +30,19 @@ spring:
           audiences:
             - ${AUTH0_AUDIENCE}
 
-  mvc:
-    servlet:
-      path:
-        /api/v1
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  servlet:
+    context-path: /api/v1
+  forward-headers-strategy: framework
+
+springdoc:
+  cache:
+    disabled: true
 
 auth0:
   domain: ${AUTH0_DOMAIN}
@@ -44,10 +53,3 @@ auth0:
   role:
     consumer: ${AUTH0_CONSUMER_ROLE}
     admin: ${AUTH0_ADMIN_ROLE}
-
-server:
-  forward-headers-strategy: framework
-
-springdoc:
-  cache:
-    disabled: true

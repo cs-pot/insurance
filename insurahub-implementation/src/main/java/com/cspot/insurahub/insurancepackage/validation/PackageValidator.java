@@ -1,9 +1,9 @@
 package com.cspot.insurahub.insurancepackage.validation;
 
 import com.cspot.insurahub.common.exception.DomainValidationException;
+import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
-import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
 import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.payroll.Payroll;
@@ -18,6 +18,7 @@ import java.time.LocalDate;
 public class PackageValidator {
 
     private final Clock clock;
+    private final EnrollmentRepository enrollmentRepository;
 
     public void validate(PackageRequest request) {
         validate(
@@ -58,11 +59,13 @@ public class PackageValidator {
 
     public void validateReadyForRemoval(InsurancePackage insurancePackage) {
         validateNotInitializedForRemoval(insurancePackage);
+        validatePlansHaveNoEnrollments(insurancePackage);
     }
 
     private void validateNotInitializedForRemoval(InsurancePackage insurancePackage) {
         if (isInitialized(insurancePackage)) {
-            throw new PackageRemovalNotAllowedException(
+            throw new DomainValidationException(
+                    "PACKAGE_REMOVAL_NOT_ALLOWED",
                     "Package removal is only allowed when the status is NOT_STARTED"
             );
         }
@@ -70,6 +73,15 @@ public class PackageValidator {
 
     private boolean isInitialized(InsurancePackage insurancePackage) {
         return insurancePackage.getStatus() == InsurancePackageStatus.INITIALIZED;
+    }
+
+    private void validatePlansHaveNoEnrollments(InsurancePackage insurancePackage) {
+        if (enrollmentRepository.existsByPlanInsurancePackage(insurancePackage)) {
+            throw new DomainValidationException(
+                    "PACKAGE_PLANS_HAVE_ENROLLMENTS",
+                    "Package removal is only allowed when its plans have no enrollments"
+            );
+        }
     }
 
     private void validate(

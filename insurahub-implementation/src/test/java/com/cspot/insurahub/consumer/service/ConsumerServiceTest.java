@@ -273,7 +273,7 @@ class ConsumerServiceTest {
         UUID id = UUID.randomUUID();
         Consumer consumer = getConsumer();
         when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
-        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName()).thenReturn(Optional.of("admin"));
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName()).thenReturn("admin");
 
         consumerService.deleteConsumer(id);
 
@@ -294,7 +294,7 @@ class ConsumerServiceTest {
         UUID id = UUID.randomUUID();
         Consumer consumer = getConsumer();
         when(consumerRepository.findById(id)).thenReturn(Optional.of(consumer));
-        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName()).thenReturn(Optional.of("admin"));
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName()).thenReturn("admin");
         Mockito.doThrow(new RuntimeException("Auth0 is down"))
                 .when(identityProviderClient).deactivateUser(consumer.getIdpId());
 

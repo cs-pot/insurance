@@ -1,12 +1,9 @@
 package com.cspot.insurahub.insurancepackage.service;
 
 import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
-import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
-import com.cspot.insurahub.insurancepackage.exception.PackageRemovalNotAllowedException;
-import com.cspot.insurahub.insurancepackage.exception.PackageUpdateNotAllowedException;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -14,19 +11,16 @@ import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -41,11 +36,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PackageServiceTest {
-
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-07-09T00:00:00Z"),
-            ZoneOffset.UTC
-    );
 
     @Mock
     private InsurancePackageRepository insurancePackageRepository;
@@ -56,20 +46,11 @@ class PackageServiceTest {
     @Mock
     private AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
-    private PackageService packageService;
-
+    @Mock
     private PackageValidator packageValidator;
 
-    @BeforeEach
-    void setUp() {
-        packageValidator = new PackageValidator(CLOCK);
-        packageService = new PackageService(
-                insurancePackageRepository,
-                packageMapper,
-                packageValidator,
-                authenticationMetadataQueryService
-        );
-    }
+    @InjectMocks
+    private PackageService packageService;
 
     @Test
     void shouldCreatePackage() {
@@ -110,31 +91,7 @@ class PackageServiceTest {
                 .initializeFromCreateRequest(request);
         verify(insurancePackageRepository)
                 .save(insurancePackage);
-    }
-
-    @Test
-    void shouldRejectStartDateBeforeToday() {
-        LocalDate startDate = LocalDate.of(2026, 7, 8);
-        LocalDate endDate = LocalDate.of(2026, 8, 8);
-
-        PackageRequest request = new PackageRequest(
-                "Premium Health Package",
-                Payroll.MONTHLY,
-                startDate,
-                endDate
-        );
-
-        DomainValidationException exception = assertThrows(
-                DomainValidationException.class,
-                () -> packageService.createPackage(request)
-        );
-
-        assertThat(exception.getCode())
-                .isEqualTo("PACKAGE_START_DATE_IN_PAST");
-        verify(packageMapper, never())
-                .initializeFromCreateRequest(any(PackageRequest.class));
-        verify(insurancePackageRepository, never())
-                .save(any(InsurancePackage.class));
+        verify(packageValidator).validate(request);
     }
 
     @Test
@@ -162,17 +119,20 @@ class PackageServiceTest {
                 .thenReturn(insurancePackage);
         doAnswer(invocation -> {
             InsurancePackage target = invocation.getArgument(0);
-            ReflectionTestUtils.setField(target, "name", "Updated Package");
-            ReflectionTestUtils.setField(target, "payroll", Payroll.MONTHLY);
-            ReflectionTestUtils.setField(target, "startDate", startDate);
-            ReflectionTestUtils.setField(target, "endDate", endDate);
+            target.setName("Updated Package");
+            target.setPayroll(Payroll.MONTHLY);
+            target.setStartDate(startDate);
+            target.setEndDate(endDate);
             return null;
         }).when(packageMapper).updateFromUpdateRequest(same(insurancePackage), same(request));
 
         packageService.updatePackage(packageId, request);
 
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
-        verify(packageMapper).updateFromUpdateRequest(insurancePackage, request);
+        InOrder inOrder = inOrder(insurancePackageRepository, packageMapper, packageValidator);
+        inOrder.verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        inOrder.verify(packageValidator).validateReadyForUpdate(insurancePackage);
+        inOrder.verify(packageMapper).updateFromUpdateRequest(insurancePackage, request);
+        inOrder.verify(packageValidator).validate(insurancePackage);
         verifyNoMoreInteractions(insurancePackageRepository, packageMapper);
     }
 
@@ -206,42 +166,6 @@ class PackageServiceTest {
     }
 
     @Test
-    void shouldThrowOnUpdateWhenPackageIsInitialized() {
-        UUID packageId = UUID.randomUUID();
-        LocalDate startDate = LocalDate.of(2026, 7, 10);
-        LocalDate endDate = LocalDate.of(2026, 8, 10);
-
-        PackageRequest request = new PackageRequest(
-                "Updated Package",
-                Payroll.MONTHLY,
-                startDate,
-                endDate
-        );
-
-        InsurancePackage insurancePackage = new InsurancePackage(
-                "Original Package",
-                Payroll.WEEKLY,
-                LocalDate.of(2026, 7, 10),
-                LocalDate.of(2026, 7, 17)
-        );
-        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
-
-        assertThrows(
-                PackageUpdateNotAllowedException.class,
-                () -> packageService.updatePackage(packageId, request)
-        );
-
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
-        verify(packageMapper, never()).updateFromUpdateRequest(
-                any(InsurancePackage.class),
-                any(PackageRequest.class)
-        );
-        verifyNoMoreInteractions(insurancePackageRepository, packageMapper);
-    }
-
-    @Test
     void shouldInitializePackage() {
         UUID packageId = UUID.randomUUID();
         InsurancePackage insurancePackage = new InsurancePackage(
@@ -258,30 +182,7 @@ class PackageServiceTest {
         assertThat(insurancePackage.getStatus())
                 .isEqualTo(InsurancePackageStatus.INITIALIZED);
         verify(insurancePackageRepository).findByIdOrThrow(packageId);
-    }
-
-    @Test
-    void shouldRejectInitializationWhenValidationFails() {
-        UUID packageId = UUID.randomUUID();
-        InsurancePackage insurancePackage = new InsurancePackage(
-                "Premium Health Package",
-                Payroll.MONTHLY,
-                LocalDate.of(2026, 6, 8),
-                LocalDate.of(2026, 7, 8)
-        );
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
-
-        DomainValidationException exception = assertThrows(
-                DomainValidationException.class,
-                () -> packageService.initializePackage(packageId)
-        );
-
-        assertThat(exception.getCode())
-                .isEqualTo("PACKAGE_END_DATE_IN_PAST");
-        assertThat(insurancePackage.getStatus())
-                .isEqualTo(InsurancePackageStatus.NOT_STARTED);
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(packageValidator).validateReadyForInitialization(insurancePackage);
     }
 
     @Test
@@ -326,32 +227,11 @@ class PackageServiceTest {
         assertThat(insurancePackage.getDeletedBy()).isEqualTo("admin-user");
         assertThat(plan.isDeleted()).isTrue();
         assertThat(plan.getDeletedBy()).isEqualTo("admin-user");
-    }
-
-    @Test
-    void shouldRejectRemovalWhenPackageIsInitialized() {
-        UUID packageId = UUID.randomUUID();
-        InsurancePackage insurancePackage = new InsurancePackage(
-                "Premium Health Package",
-                Payroll.MONTHLY,
-                LocalDate.of(2026, 7, 10),
-                LocalDate.of(2026, 8, 9)
-        );
-        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
-
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
-
-        assertThrows(
-                PackageRemovalNotAllowedException.class,
-                () -> packageService.deletePackage(packageId)
-        );
-
-        verify(authenticationMetadataQueryService, never()).getAuthenticatedPrincipalName();
+        verify(packageValidator).validateReadyForRemoval(insurancePackage);
     }
 
     private void mockAuthenticatedPrincipalName() {
-        when(authenticationMetadataQueryService.getAuthenticatedPrincipalName())
-                .thenReturn(Optional.of("admin-user"));
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName())
+                .thenReturn("admin-user");
     }
 }
