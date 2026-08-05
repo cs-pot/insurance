@@ -124,9 +124,9 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldSearchPackagesByNameIgnoringCase() throws Exception {
+    void shouldFilterPackagesByNameIgnoringCase() throws Exception {
         String uniqueValue = UUID.randomUUID().toString();
-        String matchingPackageName = "Searchable Premium Package " + uniqueValue;
+        String matchingPackageName = "Filterable Premium Package " + uniqueValue;
         String otherPackageName = "Unrelated Basic Package " + uniqueValue;
         LocalDate startDate = LocalDate.now(clock).plusDays(1);
 
@@ -147,7 +147,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(get(PACKAGES_ENDPOINT)
                         .with(jwtWithPermissions("view:packages"))
-                        .param("search", ("premium package " + uniqueValue).toUpperCase())
+                        .param("name", ("premium package " + uniqueValue).toUpperCase())
                         .param("page", "0")
                         .param("size", "100"))
                 .andExpect(status().isOk())
@@ -156,10 +156,10 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldReturnEmptyPageWhenPackageSearchHasNoMatches() throws Exception {
+    void shouldReturnEmptyPageWhenPackageNameHasNoMatches() throws Exception {
         mockMvc.perform(get(PACKAGES_ENDPOINT)
                         .with(jwtWithPermissions("view:packages"))
-                        .param("search", "missing-package-" + UUID.randomUUID())
+                        .param("name", "missing-package-" + UUID.randomUUID())
                         .param("page", "0")
                         .param("size", "100"))
                 .andExpect(status().isOk())
@@ -168,10 +168,10 @@ class PackageIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldReturnAllPackagesWhenSearchIsCleared() throws Exception {
+    void shouldReturnAllPackagesWhenNameIsCleared() throws Exception {
         String uniqueValue = UUID.randomUUID().toString();
-        String firstPackageName = "Cleared Search First Package " + uniqueValue;
-        String secondPackageName = "Cleared Search Second Package " + uniqueValue;
+        String firstPackageName = "Cleared Name First Package " + uniqueValue;
+        String secondPackageName = "Cleared Name Second Package " + uniqueValue;
         LocalDate startDate = LocalDate.now(clock).plusDays(1);
 
         repository.saveAll(List.of(
@@ -191,7 +191,7 @@ class PackageIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(get(PACKAGES_ENDPOINT)
                         .with(jwtWithPermissions("view:packages"))
-                        .param("search", "")
+                        .param("name", "")
                         .param("page", "0")
                         .param("size", "100"))
                 .andExpect(status().isOk())

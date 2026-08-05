@@ -4,6 +4,7 @@ import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
+import com.cspot.insurahub.insurancepackage.filter.PackageFilter;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -74,22 +76,23 @@ class PackageServiceTest {
                 LocalDate.of(2026, 8, 9)
         );
 
-        when(insurancePackageRepository.findByNameContainingIgnoreCase("premium", pageable))
+        when(insurancePackageRepository.findAll(
+                anyPackageSpecification(),
+                same(pageable)
+        ))
                 .thenReturn(new PageImpl<>(List.of(insurancePackage), pageable, 1));
         when(packageMapper.toListItemResponse(insurancePackage))
                 .thenReturn(response);
 
-        assertThat(packageService.getPackages("  premium  ", pageable).getContent())
+        assertThat(packageService.getPackages(new PackageFilter("  premium  "), pageable).getContent())
                 .containsExactly(response);
 
         verify(insurancePackageRepository)
-                .findByNameContainingIgnoreCase("premium", pageable);
-        verify(insurancePackageRepository, never())
-                .findAll(pageable);
+                .findAll(anyPackageSpecification(), same(pageable));
     }
 
     @Test
-    void shouldGetAllPackagesWhenSearchIsBlank() {
+    void shouldGetAllPackagesWhenNameIsBlank() {
         Pageable pageable = PageRequest.of(0, 20);
         InsurancePackage insurancePackage = new InsurancePackage(
                 "Premium Health Package",
@@ -105,18 +108,19 @@ class PackageServiceTest {
                 LocalDate.of(2026, 8, 9)
         );
 
-        when(insurancePackageRepository.findAll(pageable))
+        when(insurancePackageRepository.findAll(
+                anyPackageSpecification(),
+                same(pageable)
+        ))
                 .thenReturn(new PageImpl<>(List.of(insurancePackage), pageable, 1));
         when(packageMapper.toListItemResponse(insurancePackage))
                 .thenReturn(response);
 
-        assertThat(packageService.getPackages("   ", pageable).getContent())
+        assertThat(packageService.getPackages(new PackageFilter("   "), pageable).getContent())
                 .containsExactly(response);
 
         verify(insurancePackageRepository)
-                .findAll(pageable);
-        verify(insurancePackageRepository, never())
-                .findByNameContainingIgnoreCase(any(String.class), same(pageable));
+                .findAll(anyPackageSpecification(), same(pageable));
     }
 
     @Test
@@ -300,5 +304,9 @@ class PackageServiceTest {
     private void mockAuthenticatedPrincipalName() {
         when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName())
                 .thenReturn("admin-user");
+    }
+
+    private Specification<InsurancePackage> anyPackageSpecification() {
+        return any();
     }
 }

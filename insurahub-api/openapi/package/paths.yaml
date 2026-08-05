@@ -62,10 +62,10 @@ packages:
           format: int32
           minimum: 1
           default: 20
-      - name: search
+      - name: name
         in: query
         required: false
-        description: Optional search term to filter packages by name.
+        description: Optional package name fragment to filter packages by.
         schema:
           type: string
       - name: sort
