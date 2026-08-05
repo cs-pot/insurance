@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,7 +41,7 @@ class PlanControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/plans/{id}", nonExistentPlanId)
                         .with(authenticatedUser()))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("PLAN_NOT_FOUND"))
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -56,13 +58,16 @@ class PlanControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void getPlansShouldReturnOnlyPlansFromInitializedPackages() throws Exception {
-        seedPlan("INITIALIZED");
-        seedPlan("NOT_STARTED");
+        String initializedPlanName = "Init Plan " + randomLetters();
+        String notStartedPlanName = "Not Started Plan " + randomLetters();
+        seedPlan("INITIALIZED", initializedPlanName);
+        seedPlan("NOT_STARTED", notStartedPlanName);
 
         mockMvc.perform(get("/plans")
                         .with(authenticatedUser()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$[*].name", hasItem(initializedPlanName)))
+                .andExpect(jsonPath("$[*].name", not(hasItem(notStartedPlanName))));
     }
 
     private RequestPostProcessor authenticatedUser() {
@@ -74,7 +79,22 @@ class PlanControllerIntegrationTest extends BaseIntegrationTest {
                         jwtAuthenticationConverter.convert(jwt)).getAuthorities());
     }
 
+    private String randomLetters() {
+        UUID uuid = UUID.randomUUID();
+        StringBuilder letters = new StringBuilder();
+        for (char c : uuid.toString().replace("-", "").toCharArray()) {
+            if (Character.isLetter(c)) {
+                letters.append(c);
+            }
+        }
+        return letters.toString();
+    }
+
     private UUID seedPlan(String packageStatus) {
+        return seedPlan(packageStatus, "Test Plan");
+    }
+
+    private UUID seedPlan(String packageStatus, String planName) {
         UUID packageId = UUID.randomUUID();
         UUID planId = UUID.randomUUID();
 
@@ -86,9 +106,9 @@ class PlanControllerIntegrationTest extends BaseIntegrationTest {
 
         String planSql = "INSERT INTO plans (id, version, package_id, name, type, " +
                 "contribution, election, created_at, created_by, deleted_at) " +
-                "VALUES (?, 0, ?, 'Test Plan', 'HEALTH_INSURANCE', 100.00, 50.00, " +
+                "VALUES (?, 0, ?, ?, 'HEALTH_INSURANCE', 100.00, 50.00, " +
                 "NOW(), 'test', NULL)";
-        jdbcTemplate.update(planSql, planId, packageId);
+        jdbcTemplate.update(planSql, planId, packageId, planName);
 
         return planId;
     }
