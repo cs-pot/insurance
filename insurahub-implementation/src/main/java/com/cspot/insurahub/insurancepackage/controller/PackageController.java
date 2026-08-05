@@ -1,6 +1,7 @@
 package com.cspot.insurahub.insurancepackage.controller;
 
 import com.cspot.insurahub.api.PackagesApi;
+import com.cspot.insurahub.insurancepackage.filter.PackageFilter;
 import com.cspot.insurahub.insurancepackage.service.PackageService;
 import com.cspot.insurahub.model.PackageRequest;
 import com.cspot.insurahub.model.PackageResponse;
@@ -23,8 +24,8 @@ public class PackageController implements PackagesApi {
 
     @Override
     @PreAuthorize("hasAuthority('view:packages')")
-    public Page<PackageResponse> getPackages(Pageable pageable) {
-        return packageService.getPackages(pageable);
+    public Page<PackageResponse> getPackages(String name, Pageable pageable) {
+        return packageService.getPackages(new PackageFilter(name), pageable);
     }
 
     @Override

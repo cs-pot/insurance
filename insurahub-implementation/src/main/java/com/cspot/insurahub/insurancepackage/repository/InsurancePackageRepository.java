@@ -3,12 +3,14 @@ package com.cspot.insurahub.insurancepackage.repository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface InsurancePackageRepository extends JpaRepository<InsurancePackage, UUID> {
+public interface InsurancePackageRepository
+        extends JpaRepository<InsurancePackage, UUID>, JpaSpecificationExecutor<InsurancePackage> {
 
     default InsurancePackage findByIdOrThrow(UUID packageId) {
         return findById(packageId)

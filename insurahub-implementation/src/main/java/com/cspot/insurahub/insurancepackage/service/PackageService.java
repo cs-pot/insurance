@@ -3,6 +3,8 @@ package com.cspot.insurahub.insurancepackage.service;
 import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.filter.PackageFilter;
+import com.cspot.insurahub.insurancepackage.filter.PackageSpecification;
 import com.cspot.insurahub.insurancepackage.mapper.PackageMapper;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
@@ -29,8 +31,12 @@ public class PackageService {
     private final AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @Transactional(readOnly = true)
-    public Page<PackageResponse> getPackages(Pageable pageable) {
-        return packageRepository.findAll(pageable)
+    public Page<PackageResponse> getPackages(PackageFilter filter, Pageable pageable) {
+        Page<InsurancePackage> packages = packageRepository.findAll(
+                PackageSpecification.byFilter(filter),
+                pageable
+        );
+        return packages
                 .map(packageMapper::toListItemResponse);
     }
 
