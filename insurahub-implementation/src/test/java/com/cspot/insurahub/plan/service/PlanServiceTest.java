@@ -1,5 +1,6 @@
 package com.cspot.insurahub.plan.service;
 
+import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
 import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
@@ -29,8 +30,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -41,10 +42,10 @@ import static org.mockito.Mockito.when;
 class PlanServiceTest {
 
     @Mock
-    private InsurancePackageRepository insurancePackageRepository;
+    private InsurancePackageRepository packageRepository;
 
     @Mock
-    private InsurancePlanRepository insurancePlanRepository;
+    private InsurancePlanRepository planRepository;
 
     @Mock
     private PlanMapper planMapper;
@@ -69,20 +70,20 @@ class PlanServiceTest {
         InsurancePlan plan = createPlan(insurancePackage);
         ReflectionTestUtils.setField(plan, "id", planId);
 
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
+        when(packageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
         when(planMapper.toEntity(insurancePackage, request))
                 .thenReturn(plan);
-        when(insurancePlanRepository.save(plan))
+        when(planRepository.save(plan))
                 .thenReturn(plan);
 
         assertThat(planService.addPlan(packageId, request).getId())
                 .isEqualTo(planId);
 
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(packageRepository).findByIdOrThrow(packageId);
         verify(packageValidator).validateReadyForUpdate(insurancePackage);
         verify(planMapper).toEntity(insurancePackage, request);
-        verify(insurancePlanRepository).save(plan);
+        verify(planRepository).save(plan);
     }
 
     @Test
@@ -96,23 +97,21 @@ class PlanServiceTest {
                 100,
                 300
         );
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
+        when(packageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
         doThrow(new PackageUpdateNotAllowedException(
                 "Package updates are only allowed when the status is NOT_STARTED"
         )).when(packageValidator).validateReadyForUpdate(insurancePackage);
 
-        assertThrows(
-                PackageUpdateNotAllowedException.class,
-                () -> planService.addPlan(packageId, request)
-        );
+        assertThatThrownBy(() -> planService.addPlan(packageId, request))
+                .isInstanceOf(PackageUpdateNotAllowedException.class);
 
         verify(packageValidator).validateReadyForUpdate(insurancePackage);
         verify(planMapper, never()).toEntity(
                 any(InsurancePackage.class),
                 any(PlanRequest.class)
         );
-        verify(insurancePlanRepository, never())
+        verify(planRepository, never())
                 .save(any(InsurancePlan.class));
     }
 
@@ -126,18 +125,16 @@ class PlanServiceTest {
                 500
         );
 
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
+        when(packageRepository.findByIdOrThrow(packageId))
                 .thenThrow(new PackageNotFoundException(packageId));
 
-        assertThrows(
-                PackageNotFoundException.class,
-                () -> planService.addPlan(packageId, request)
-        );
+        assertThatThrownBy(() -> planService.addPlan(packageId, request))
+                .isInstanceOf(PackageNotFoundException.class);
 
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(packageRepository).findByIdOrThrow(packageId);
         verify(packageValidator, never())
                 .validateReadyForUpdate(any(InsurancePackage.class));
-        verify(insurancePlanRepository, never()).save(any(InsurancePlan.class));
+        verify(planRepository, never()).save(any(InsurancePlan.class));
     }
 
     @Test
@@ -161,9 +158,9 @@ class PlanServiceTest {
                 1
         );
 
-        when(insurancePackageRepository.findByIdOrThrow(packageId))
+        when(packageRepository.findByIdOrThrow(packageId))
                 .thenReturn(insurancePackage);
-        when(insurancePlanRepository.findByInsurancePackageId(packageId, pageable))
+        when(planRepository.findByInsurancePackageId(packageId, pageable))
                 .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
         when(planMapper.toPlanResponse(plan))
                 .thenReturn(expectedResponses.getContent().get(0));
@@ -171,8 +168,85 @@ class PlanServiceTest {
         assertThat(planService.getPackagePlans(packageId, pageable))
                 .isEqualTo(expectedResponses);
 
-        verify(insurancePackageRepository).findByIdOrThrow(packageId);
+        verify(packageRepository).findByIdOrThrow(packageId);
         verify(planMapper).toPlanResponse(plan);
+    }
+
+    @Test
+    void shouldUpdatePlan() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        PlanRequest request = createPlanRequest(
+                "Updated Dental",
+                PlanType.DENTAL_INSURANCE,
+                300,
+                600
+        );
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+
+        planService.updatePlan(planId, request);
+
+        verify(planRepository).findByIdOrThrow(planId);
+        verify(packageValidator).validateReadyForUpdate(insurancePackage);
+        verify(planMapper).updateFromUpdateRequest(plan, request);
+    }
+
+    @Test
+    void shouldRejectUpdatePlanWhenPackageIsNotReadyForUpdate() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        PlanRequest request = createPlanRequest(
+                "Updated Dental",
+                PlanType.DENTAL_INSURANCE,
+                300,
+                600
+        );
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+
+        doThrow(new PackageUpdateNotAllowedException(
+                "Package updates are only allowed when the status is NOT_STARTED"
+        )).when(packageValidator).validateReadyForUpdate(insurancePackage);
+
+        assertThatThrownBy(() -> planService.updatePlan(planId, request))
+                .isInstanceOf(PackageUpdateNotAllowedException.class);
+
+        verify(planMapper, never())
+                .updateFromUpdateRequest(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingNonExistingPlan() {
+        UUID planId = UUID.randomUUID();
+
+        PlanRequest request = createPlanRequest(
+                "Updated Dental",
+                PlanType.DENTAL_INSURANCE,
+                300,
+                600
+        );
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenThrow(new ResourceNotFoundException(InsurancePlan.class, planId));
+
+        assertThatThrownBy(() -> planService.updatePlan(planId, request))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(planRepository).findByIdOrThrow(planId);
+        verify(packageValidator, never())
+                .validateReadyForUpdate(any());
+
+        verify(planMapper, never())
+                .updateFromUpdateRequest(any(), any());
     }
 
     private InsurancePackage createPackage() {

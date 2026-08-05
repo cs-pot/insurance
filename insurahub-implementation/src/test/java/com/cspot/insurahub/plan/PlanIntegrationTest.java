@@ -30,11 +30,12 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PlanIntegrationTest extends BaseIntegrationTest {
 
     private static final String PACKAGES_ENDPOINT = "/packages";
+    private static final String PLANS_ENDPOINT = "/plans";
     private static final String PACKAGE_NAME = "Premium Health Package";
     private static final String PERMISSIONS_CLAIM = "permissions";
 
@@ -77,7 +79,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists());
 
-        assertEquals(plansBeforeRequest + 1, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest + 1);
     }
 
     @Test
@@ -100,7 +103,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("PACKAGE_UPDATE_NOT_ALLOWED"))
                 .andExpect(jsonPath("$.status").value(400));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -120,7 +124,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.status").value(401));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -141,7 +146,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("ACCESS_DENIED"))
                 .andExpect(jsonPath("$.status").value(403));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -163,6 +169,113 @@ class PlanIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldUpdatePlan() throws Exception {
+        InsurancePlan plan = savePlan(savePackage());
+
+        mockMvc.perform(put(PLANS_ENDPOINT + "/" + plan.getId())
+                        .with(jwtWithPermissions("update:plans"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPlanRequestBody(
+                                "Updated Dental",
+                                "DENTAL_INSURANCE",
+                                300,
+                                600
+                        )))
+                .andExpect(status().isNoContent());
+
+        InsurancePlan updatedPlan = planRepository.findById(plan.getId())
+                .orElseThrow(() -> new AssertionError("Plan must exist after update"));
+
+        assertThat(updatedPlan.getName()).isEqualTo("Updated Dental");
+        assertThat(updatedPlan.getType()).isEqualTo(PlanType.DENTAL_INSURANCE);
+        assertThat(updatedPlan.getContribution())
+                .isEqualByComparingTo(BigDecimal.valueOf(300));
+        assertThat(updatedPlan.getElection())
+                .isEqualByComparingTo(BigDecimal.valueOf(600));
+    }
+
+    @Test
+    void shouldRejectUpdatePlanWhenPlanDoesNotExist() throws Exception {
+        UUID planId = UUID.randomUUID();
+
+        mockMvc.perform(put(PLANS_ENDPOINT + "/" + planId)
+                        .with(jwtWithPermissions("update:plans"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPlanRequestBody(
+                                "Updated Dental",
+                                "DENTAL_INSURANCE",
+                                300,
+                                600
+                        )))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message")
+                        .value("InsurancePlan with id '" + planId + "' was not found."));
+    }
+
+    @Test
+    void shouldRejectUpdatePlanWithoutAuthentication() throws Exception {
+        InsurancePlan plan = savePlan(savePackage());
+
+        mockMvc.perform(put(PLANS_ENDPOINT + "/" + plan.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPlanRequestBody(
+                                "Updated Dental",
+                                "DENTAL_INSURANCE",
+                                300,
+                                600
+                        )))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.status").value(401));
+
+        assertPlanUnchanged(plan);
+    }
+
+    @Test
+    void shouldRejectUpdatePlanWithoutUpdatePermission() throws Exception {
+        InsurancePlan plan = savePlan(savePackage());
+
+        mockMvc.perform(put(PLANS_ENDPOINT + "/" + plan.getId())
+                        .with(jwtWithoutPermissions())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPlanRequestBody(
+                                "Updated Dental",
+                                "DENTAL_INSURANCE",
+                                300,
+                                600
+                        )))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.status").value(403));
+
+        assertPlanUnchanged(plan);
+    }
+
+    @Test
+    void shouldRejectUpdatePlanOfInitializedPackage() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        packageRepository.save(insurancePackage);
+        InsurancePlan plan = savePlan(insurancePackage);
+
+        mockMvc.perform(put(PLANS_ENDPOINT + "/" + plan.getId())
+                        .with(jwtWithPermissions("update:plans"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPlanRequestBody(
+                                "Updated Dental",
+                                "DENTAL_INSURANCE",
+                                300,
+                                600
+                        )))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("PACKAGE_UPDATE_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.status").value(400));
+
+        assertPlanUnchanged(plan);
+    }
+
+    @Test
     void shouldRejectAddPlanWithoutRequiredFields() throws Exception {
         InsurancePackage insurancePackage = savePackage();
         long plansBeforeRequest = planRepository.count();
@@ -175,7 +288,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").exists());
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @ParameterizedTest
@@ -199,7 +313,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -219,7 +334,8 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
 
-        assertEquals(plansBeforeRequest, planRepository.count());
+        assertThat(planRepository.count())
+                .isEqualTo(plansBeforeRequest);
     }
 
     @Test
@@ -281,6 +397,28 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 startDate,
                 startDate.plusMonths(1)
         ));
+    }
+
+    private InsurancePlan savePlan(InsurancePackage insurancePackage) {
+        return planRepository.save(new InsurancePlan(
+                insurancePackage,
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                BigDecimal.valueOf(250),
+                BigDecimal.valueOf(500)
+        ));
+    }
+
+    private void assertPlanUnchanged(InsurancePlan plan) {
+        InsurancePlan savedPlan = planRepository.findById(plan.getId())
+                .orElseThrow(() -> new AssertionError("Plan must exist after rejected update"));
+
+        assertThat(savedPlan.getName()).isEqualTo(plan.getName());
+        assertThat(savedPlan.getType()).isEqualTo(plan.getType());
+        assertThat(savedPlan.getContribution())
+                .isEqualByComparingTo(plan.getContribution());
+        assertThat(savedPlan.getElection())
+                .isEqualByComparingTo(plan.getElection());
     }
 
     private RequestPostProcessor jwtWithPermissions(String... permissions) {
