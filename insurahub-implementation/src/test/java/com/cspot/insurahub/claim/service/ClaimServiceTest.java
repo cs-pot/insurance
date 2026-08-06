@@ -3,6 +3,7 @@ package com.cspot.insurahub.claim.service;
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
+import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
@@ -11,6 +12,7 @@ import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
@@ -23,12 +25,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,7 +50,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(MockitoExtension.class)
 class ClaimServiceTest {
@@ -61,6 +68,9 @@ class ClaimServiceTest {
 
     @Mock
     private MultipartFile multipartFile;
+
+    @Mock
+    private ClaimMapper claimMapper;
 
     @InjectMocks
     private ClaimService claimService;
@@ -210,6 +220,38 @@ class ClaimServiceTest {
         verify(claimRepository).findByIdOrThrow(claimId);
     }
 
+    @Test
+    void shouldGetClaims() {
+        Claim claim = getClaim();
+        ClaimResponse listItem = getClaimResponse();
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        when(claimRepository.findAllWithDetails(pageable))
+                .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
+        when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
+
+        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+
+        assertThat(claims.getContent()).containsExactly(listItem);
+        verify(claimRepository).findAllWithDetails(pageable);
+        verify(claimMapper).toListItemResponse(claim);
+        verifyNoInteractions(receiptRepository, enrollmentRepository,
+                receiptStorage, multipartFile);
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoClaims() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        when(claimRepository.findAllWithDetails(pageable))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+
+        assertThat(claims.getContent()).isEmpty();
+        verify(claimRepository).findAllWithDetails(pageable);
+        verifyNoInteractions(claimMapper, receiptRepository, enrollmentRepository,
+                receiptStorage, multipartFile);
+    }
+
     private PostClaimRequest claimRequest(UUID enrollmentId) {
         return new PostClaimRequest()
                 .enrollmentId(enrollmentId)
@@ -223,6 +265,46 @@ class ClaimServiceTest {
                 LocalDate.of(2026, 7, 10),
                 BigDecimal.valueOf(123.45)
         );
+    }
+
+    private Claim getClaim() {
+        Consumer employee = new Consumer();
+        employee.setFirstName("John");
+        employee.setLastName("Doe");
+        ReflectionTestUtils.setField(employee, "id", UUID.randomUUID());
+
+        InsurancePackage insurancePackage = new InsurancePackage(
+                "Premium Health Package",
+                Payroll.MONTHLY,
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+
+        InsurancePlan plan = new InsurancePlan(
+                insurancePackage,
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                new BigDecimal("250.00"),
+                new BigDecimal("500.00")
+        );
+        ReflectionTestUtils.setField(plan, "id", UUID.randomUUID());
+
+        Enrollment enrollment = new Enrollment(employee, plan);
+        ReflectionTestUtils.setField(enrollment, "id", UUID.randomUUID());
+
+        Claim claim = new Claim(enrollment, LocalDate.of(2026, 7, 15), new BigDecimal("285.50"));
+        ReflectionTestUtils.setField(claim, "id", UUID.randomUUID());
+        return claim;
+    }
+
+    private ClaimResponse getClaimResponse() {
+        return new ClaimResponse()
+                .id(UUID.randomUUID())
+                .consumerFullName("John Doe")
+                .serviceDate(LocalDate.of(2026, 7, 15))
+                .planName("Standard Health")
+                .amount(285.50)
+                .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
     }
 
     private Enrollment enrollment(UUID enrollmentId) {

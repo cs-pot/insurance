@@ -100,7 +100,55 @@ packagePlans:
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 
-planWithId:
+plans:
+  get:
+    tags:
+      - Plans
+    summary: Get available plans
+    description: Returns a list of all plans belonging to initialized packages (i.e. plans available for enrollment).
+    operationId: getPlans
+    responses:
+      '200':
+        description: Successfully retrieved available plans
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './schemas.yaml#/PlanResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+
+planById:
+  get:
+    tags:
+      - Plans
+    summary: Get plan details by ID
+    description: Returns detailed information for a specific plan.
+    operationId: getPlanById
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Successfully retrieved plan details
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/PlanResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+
   put:
     tags:
       - Plans
@@ -136,6 +184,36 @@ planWithId:
         $ref: '../common/responses.yaml#/Conflict'
       '415':
         $ref: '../common/responses.yaml#/UnsupportedMediaType'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
+  delete:
+    tags:
+      - Plans
+    summary: Remove a plan
+    description: Removes a plan from its package. Removal is allowed only when the package has NOT_STARTED status.
+    operationId: deletePlan
+    parameters:
+      - in: path
+        name: id
+        description: ID of the plan to remove.
+        schema:
+          type: string
+          format: uuid
+        required: true
+    responses:
+      '204':
+        description: Plan removed successfully
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
       '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'
       '500':

@@ -37,8 +37,10 @@ paths:
     $ref: './package/paths.yaml#/initializePackage'
   /packages/{packageId}/plans:
     $ref: './plan/paths.yaml#/packagePlans'
+  /plans:
+    $ref: './plan/paths.yaml#/plans'
   /plans/{id}:
-    $ref: './plan/paths.yaml#/planWithId'
+    $ref: './plan/paths.yaml#/planById'
   /claims:
     $ref: './claim/paths.yaml#/claims'
   /claims/{claimId}/receipt:

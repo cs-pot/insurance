@@ -1,5 +1,6 @@
 package com.cspot.insurahub.plan.service;
 
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
@@ -52,6 +53,9 @@ class PlanServiceTest {
 
     @Mock
     private PackageValidator packageValidator;
+
+    @Mock
+    private AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @InjectMocks
     private PlanService planService;
@@ -158,8 +162,8 @@ class PlanServiceTest {
                 1
         );
 
-        when(packageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
+        when(packageRepository.existsById(packageId))
+                .thenReturn(true);
         when(planRepository.findByInsurancePackageId(packageId, pageable))
                 .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
         when(planMapper.toPlanResponse(plan))
@@ -168,8 +172,57 @@ class PlanServiceTest {
         assertThat(planService.getPackagePlans(packageId, pageable))
                 .isEqualTo(expectedResponses);
 
-        verify(packageRepository).findByIdOrThrow(packageId);
+        verify(packageRepository).existsById(packageId);
         verify(planMapper).toPlanResponse(plan);
+    }
+
+    @Test
+    void shouldThrowOnGetPackagePlansWhenPackageDoesNotExist() {
+        UUID packageId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(packageRepository.existsById(packageId))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> planService.getPackagePlans(packageId, pageable))
+                .isInstanceOf(PackageNotFoundException.class);
+
+        verify(planRepository, never())
+                .findByInsurancePackageId(any(UUID.class), any(Pageable.class));
+    }
+
+    @Test
+    void shouldReturnOnlyPlansFromInitializedPackages() {
+        InsurancePackage initializedPackage = createPackage();
+        initializedPackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        InsurancePlan plan = createPlan(initializedPackage);
+        PlanResponse expectedResponse = new PlanResponse(
+                UUID.randomUUID(),
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                250,
+                500
+        );
+
+        when(planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of(plan));
+        when(planMapper.toPlanResponse(plan))
+                .thenReturn(expectedResponse);
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).containsExactly(expectedResponse);
+        verify(planRepository).findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoInitializedPackagesHavePlans() {
+        when(planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of());
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -249,6 +302,66 @@ class PlanServiceTest {
                 .updateFromUpdateRequest(any(), any());
     }
 
+    @Test
+    void shouldDeletePlan() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName())
+                .thenReturn("admin-user");
+
+        planService.deletePlan(planId);
+
+        assertThat(plan.isDeleted()).isTrue();
+        assertThat(plan.getDeletedBy()).isEqualTo("admin-user");
+        verify(packageValidator).validateReadyForUpdate(insurancePackage);
+        verify(authenticationMetadataQueryService).getRequiredAuthenticatedPrincipalName();
+    }
+
+    @Test
+    void shouldRejectDeletingPlanWhenPackageIsInitialized() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+
+        doThrow(new PackageUpdateNotAllowedException(
+                "Package updates are only allowed when the status is NOT_STARTED"
+        )).when(packageValidator).validateReadyForUpdate(insurancePackage);
+
+        assertThatThrownBy(() -> planService.deletePlan(planId))
+                .isInstanceOf(PackageUpdateNotAllowedException.class);
+
+        assertThat(plan.isDeleted()).isFalse();
+        verify(authenticationMetadataQueryService, never())
+                .getRequiredAuthenticatedPrincipalName();
+    }
+
+    @Test
+    void shouldThrowOnDeletePlanWhenPlanDoesNotExist() {
+        UUID planId = UUID.randomUUID();
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenThrow(new ResourceNotFoundException(InsurancePlan.class, planId));
+
+        assertThatThrownBy(() -> planService.deletePlan(planId))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(packageValidator, never())
+                .validateReadyForUpdate(any());
+
+        verify(authenticationMetadataQueryService, never())
+                .getRequiredAuthenticatedPrincipalName();
+    }
+
     private InsurancePackage createPackage() {
         return new InsurancePackage(
                 "Premium Health Package",
@@ -282,4 +395,3 @@ class PlanServiceTest {
         );
     }
 }
-

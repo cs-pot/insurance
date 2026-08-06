@@ -2,18 +2,22 @@ package com.cspot.insurahub.claim.service;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
+import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
+import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +34,13 @@ public class ClaimService {
     private final ReceiptRepository receiptRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
+    private final ClaimMapper claimMapper;
+
+    @Transactional(readOnly = true)
+    public Page<ClaimResponse> getClaims(Pageable pageable) {
+        Page<Claim> claims = claimRepository.findAllWithDetails(pageable);
+        return claims.map(claimMapper::toListItemResponse);
+    }
 
     @Transactional
     public PostResponse createClaim(PostClaimRequest request, MultipartFile receipt) {

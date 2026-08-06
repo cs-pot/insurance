@@ -15,11 +15,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -33,6 +35,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -40,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Transactional
 class PlanIntegrationTest extends BaseIntegrationTest {
 
     private static final String PACKAGES_ENDPOINT = "/packages";
@@ -55,6 +59,9 @@ class PlanIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private InsurancePlanRepository planRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private Clock clock;
@@ -372,6 +379,45 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.page.totalPages").value(1));
     }
 
+    @Test
+    void shouldDeletePlan() throws Exception {
+        InsurancePlan plan = savePlan(savePackage());
+
+        mockMvc.perform(delete(PLANS_ENDPOINT + "/" + plan.getId())
+                        .with(jwtWithPermissions("delete:plans")))
+                .andExpect(status().isNoContent());
+
+        assertThat(planRepository.existsById(plan.getId())).isFalse();
+        assertSoftDeleted(plan.getId());
+    }
+
+    @Test
+    void shouldRejectDeletingPlanWhenPackageIsInitialized() throws Exception {
+        InsurancePackage insurancePackage = savePackage();
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        packageRepository.save(insurancePackage);
+        InsurancePlan plan = savePlan(insurancePackage);
+
+        mockMvc.perform(delete(PLANS_ENDPOINT + "/" + plan.getId())
+                        .with(jwtWithPermissions("delete:plans")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("PACKAGE_UPDATE_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.status").value(400));
+
+        assertThat(planRepository.existsById(plan.getId())).isTrue();
+    }
+
+    @Test
+    void shouldRejectDeletingPlanWhenPlanDoesNotExist() throws Exception {
+        UUID planId = UUID.randomUUID();
+
+        mockMvc.perform(delete(PLANS_ENDPOINT + "/" + planId)
+                        .with(jwtWithPermissions("delete:plans")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
     private String createPlanRequestBody(
             String name,
             String type,
@@ -419,6 +465,16 @@ class PlanIntegrationTest extends BaseIntegrationTest {
                 .isEqualByComparingTo(plan.getContribution());
         assertThat(savedPlan.getElection())
                 .isEqualByComparingTo(plan.getElection());
+    }
+
+    private void assertSoftDeleted(UUID planId) {
+        Integer deletedRows = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM plans "
+                        + "WHERE id = ? AND deleted_at IS NOT NULL AND deleted_by IS NOT NULL",
+                Integer.class,
+                planId
+        );
+        assertThat(deletedRows).isEqualTo(1);
     }
 
     private RequestPostProcessor jwtWithPermissions(String... permissions) {

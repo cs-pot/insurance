@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,9 +36,26 @@ public class PlanController implements PlansApi {
     }
 
     @Override
+    public List<PlanResponse> getPlans() {
+        return planService.getAvailablePlans();
+    }
+
+    @Override
+    public PlanResponse getPlanById(UUID id) {
+        return planService.getPlanById(id);
+    }
+
+    @Override
     @PreAuthorize("hasAuthority('update:plans')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void putPlan(UUID id, PlanRequest planRequest) {
         planService.updatePlan(id, planRequest);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('delete:plans')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePlan(UUID id) {
+        planService.deletePlan(id);
     }
 }
