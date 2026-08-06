@@ -68,4 +68,11 @@ public class ClaimService {
 
         return new InputStreamResource(new ByteArrayInputStream(receipt.getContent()));
     }
+
+    @Transactional
+    public void denyClaim(UUID claimId) {
+        Claim claim = claimRepository.findByIdOrThrow(claimId);
+        claim.deny();
+        log.info("Claim denied: id={}", claimId);
+    }
 }

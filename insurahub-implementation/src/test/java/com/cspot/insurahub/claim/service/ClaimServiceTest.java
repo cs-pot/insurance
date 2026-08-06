@@ -182,6 +182,34 @@ class ClaimServiceTest {
         );
     }
 
+    @Test
+    void shouldDenyPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        claimService.denyClaim(claimId);
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenClaimToDenyDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+
+        when(claimRepository.findByIdOrThrow(claimId))
+                .thenThrow(new ResourceNotFoundException(Claim.class, claimId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.denyClaim(claimId)
+        );
+
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
     private PostClaimRequest claimRequest(UUID enrollmentId) {
         return new PostClaimRequest()
                 .enrollmentId(enrollmentId)
