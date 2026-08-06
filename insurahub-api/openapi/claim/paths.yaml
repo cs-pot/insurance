@@ -104,7 +104,7 @@ claims:
         $ref: '../common/responses.yaml#/InternalServerError'
 
 claimDeny:
-  put:
+  post:
     tags:
       - Claims
     summary: Deny a pending claim

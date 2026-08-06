@@ -2,6 +2,8 @@ package com.cspot.insurahub.claim.service;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
+import com.cspot.insurahub.claim.enumeration.ClaimStatus;
+import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
@@ -83,7 +85,15 @@ public class ClaimService {
     @Transactional
     public void denyClaim(UUID claimId) {
         Claim claim = claimRepository.findByIdOrThrow(claimId);
-        claim.deny();
+
+        if (claim.getStatus() != ClaimStatus.PENDING) {
+            throw new ClaimNotPendingException(
+                    "Claim with id '" + claimId + "' cannot be denied because it is not pending. "
+                            + "Current status: " + claim.getStatus()
+            );
+        }
+
+        claim.setStatus(ClaimStatus.DENIED);
         log.info("Claim denied: id={}", claimId);
     }
 }

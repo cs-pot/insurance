@@ -1,7 +1,6 @@
 package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
-import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import jakarta.persistence.Column;
@@ -62,13 +61,7 @@ public class Claim extends SoftDeletableAuditableEntity {
         this.receipt = receipt;
     }
 
-    public void deny() {
-        if (status != ClaimStatus.PENDING) {
-            throw new ClaimNotPendingException(
-                    "Claim with id '" + getId() + "' cannot be denied because it is not pending. "
-                            + "Current status: " + status
-            );
-        }
-        this.status = ClaimStatus.DENIED;
+    public void setStatus(ClaimStatus status) {
+        this.status = status;
     }
 }

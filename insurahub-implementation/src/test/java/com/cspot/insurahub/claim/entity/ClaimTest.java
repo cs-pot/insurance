@@ -1,7 +1,6 @@
 package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
-import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
@@ -14,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ClaimTest {
 
@@ -35,20 +33,12 @@ class ClaimTest {
     }
 
     @Test
-    void shouldDenyPendingClaim() {
+    void shouldUpdateStatus() {
         Claim claim = new Claim(enrollment(), LocalDate.now(), BigDecimal.valueOf(100));
 
-        claim.deny();
+        claim.setStatus(ClaimStatus.DENIED);
 
         assertEquals(ClaimStatus.DENIED, claim.getStatus());
-    }
-
-    @Test
-    void shouldThrowWhenDenyingAlreadyDeniedClaim() {
-        Claim claim = new Claim(enrollment(), LocalDate.now(), BigDecimal.valueOf(100));
-        claim.deny();
-
-        assertThrows(ClaimNotPendingException.class, claim::deny);
     }
 
     private Enrollment enrollment() {

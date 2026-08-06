@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,7 +48,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnNoContentForPendingClaim() throws Exception {
         UUID claimId = seedClaim("PENDING");
 
-        mockMvc.perform(put("/claims/{claimId}/deny", claimId)
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
                         .with(adminUser()))
                 .andExpect(status().isNoContent());
 
@@ -62,7 +62,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnUnprocessableEntityForAlreadyDeniedClaim() throws Exception {
         UUID claimId = seedClaim("DENIED");
 
-        mockMvc.perform(put("/claims/{claimId}/deny", claimId)
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
@@ -72,7 +72,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnUnprocessableEntityForApprovedClaim() throws Exception {
         UUID claimId = seedClaim("APPROVED");
 
-        mockMvc.perform(put("/claims/{claimId}/deny", claimId)
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
@@ -82,7 +82,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnNotFoundForNonExistentClaim() throws Exception {
         UUID nonExistentClaimId = UUID.randomUUID();
 
-        mockMvc.perform(put("/claims/{claimId}/deny", nonExistentClaimId)
+        mockMvc.perform(post("/claims/{claimId}/deny", nonExistentClaimId)
                         .with(adminUser()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
@@ -92,7 +92,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnUnauthorizedWithoutToken() throws Exception {
         UUID claimId = seedClaim("PENDING");
 
-        mockMvc.perform(put("/claims/{claimId}/deny", claimId))
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -100,7 +100,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     void denyClaimShouldReturnForbiddenWithoutPermission() throws Exception {
         UUID claimId = seedClaim("PENDING");
 
-        mockMvc.perform(put("/claims/{claimId}/deny", claimId)
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
                         .with(jwtWithPermissions()))
                 .andExpect(status().isForbidden());
     }
