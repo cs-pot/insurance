@@ -109,6 +109,42 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldReturnClaimHistoryForAuthenticatedConsumerOnly() throws Exception {
+        mockMvc.perform(get("/claims/history")
+                        .with(jwtWithPermission("view:own:claims", "auth0|consumer-1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].claimNumber").value("LT20260712001"))
+                .andExpect(jsonPath("$[0].serviceDate").value("2026-07-12"))
+                .andExpect(jsonPath("$[0].lastUpdateDate").value("2026-07-15"))
+                .andExpect(jsonPath("$[0].planName").value("Dental Care"))
+                .andExpect(jsonPath("$[0].amount").value(430.0))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[1].claimNumber").value("LT20260715001"))
+                .andExpect(jsonPath("$[1].serviceDate").value("2026-07-15"))
+                .andExpect(jsonPath("$[1].planName").value("Standard Health"))
+                .andExpect(jsonPath("$[1].status").value("PENDING"));
+    }
+
+    @Test
+    @Sql(CONSUMERS_SEED)
+    void shouldReturnEmptyClaimHistoryForConsumerWithoutClaims() throws Exception {
+        mockMvc.perform(get("/claims/history")
+                        .with(jwtWithPermission("view:own:claims", "auth0|consumer-1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldRejectClaimHistoryWithoutAuthority() throws Exception {
+        mockMvc.perform(get("/claims/history")
+                        .with(jwtWithPermission("view:claims", "auth0|consumer-1")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
     void shouldRejectClaimListWithoutAuthority() throws Exception {
         mockMvc.perform(get("/claims")
                         .with(jwt()))
@@ -147,8 +183,14 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     private RequestPostProcessor jwtWithPermission(String permission) {
+        return jwtWithPermission(permission, "auth0|admin");
+    }
+
+    private RequestPostProcessor jwtWithPermission(String permission, String subject) {
         return jwt()
-                .jwt(jwt -> jwt.claim("permissions", List.of(permission)))
+                .jwt(jwt -> jwt
+                        .subject(subject)
+                        .claim("permissions", List.of(permission)))
                 .authorities(jwt -> Objects.requireNonNull(jwtAuthenticationConverter.convert(jwt)).getAuthorities());
     }
 }

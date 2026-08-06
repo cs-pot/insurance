@@ -2,6 +2,7 @@ package com.cspot.insurahub.claim.controller;
 
 import com.cspot.insurahub.api.ClaimsApi;
 import com.cspot.insurahub.claim.service.ClaimService;
+import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +31,12 @@ public class ClaimController implements ClaimsApi {
     @PreAuthorize("hasAuthority('view:claims')")
     public Page<ClaimResponse> getClaims(Pageable pageable) {
         return claimService.getClaims(pageable);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('view:own:claims')")
+    public List<ClaimHistoryItemResponse> getClaimHistory() {
+        return claimService.getClaimHistory();
     }
 
     @Override

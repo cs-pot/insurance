@@ -7,8 +7,10 @@ import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
+import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
+import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -35,11 +38,20 @@ public class ClaimService {
     private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
     private final ClaimMapper claimMapper;
+    private final IdpIdMappingService idpIdMappingService;
 
     @Transactional(readOnly = true)
     public Page<ClaimResponse> getClaims(Pageable pageable) {
         Page<Claim> claims = claimRepository.findAllWithDetails(pageable);
         return claims.map(claimMapper::toListItemResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClaimHistoryItemResponse> getClaimHistory() {
+        UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
+        return claimRepository.findHistoryByConsumerIdOrderByClaimNumber(consumerId).stream()
+                .map(claimMapper::toHistoryItemResponse)
+                .toList();
     }
 
     @Transactional

@@ -103,6 +103,29 @@ claims:
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 
+claimHistory:
+  get:
+    tags:
+      - Claims
+    summary: View claim history
+    description: Returns claims history for the authenticated consumer.
+    operationId: getClaimHistory
+    responses:
+      '200':
+        description: Claims history retrieved successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './schemas.yaml#/ClaimHistoryItemResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
 receiptByClaimId:
   get:
     tags:

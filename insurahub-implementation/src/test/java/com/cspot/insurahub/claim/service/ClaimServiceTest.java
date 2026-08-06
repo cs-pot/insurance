@@ -9,9 +9,11 @@ import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.model.PostClaimRequest;
@@ -71,6 +73,9 @@ class ClaimServiceTest {
 
     @Mock
     private ClaimMapper claimMapper;
+
+    @Mock
+    private IdpIdMappingService idpIdMappingService;
 
     @InjectMocks
     private ClaimService claimService;
@@ -225,6 +230,32 @@ class ClaimServiceTest {
                 receiptStorage, multipartFile);
     }
 
+    @Test
+    void shouldGetCurrentConsumerClaimHistory() {
+        UUID consumerId = UUID.randomUUID();
+        Claim claim = getClaim();
+        ClaimHistoryItemResponse historyItem = new ClaimHistoryItemResponse()
+                .claimNumber(claim.getClaimNumber())
+                .serviceDate(claim.getServiceDate())
+                .lastUpdateDate(LocalDate.of(2026, 7, 15))
+                .planName("Standard Health")
+                .amount(claim.getAmount())
+                .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
+
+        when(idpIdMappingService.getCurrentAuthenticatedConsumerId()).thenReturn(consumerId);
+        when(claimRepository.findHistoryByConsumerIdOrderByClaimNumber(consumerId))
+                .thenReturn(List.of(claim));
+        when(claimMapper.toHistoryItemResponse(claim)).thenReturn(historyItem);
+
+        List<ClaimHistoryItemResponse> claims = claimService.getClaimHistory();
+
+        assertThat(claims).containsExactly(historyItem);
+        verify(idpIdMappingService).getCurrentAuthenticatedConsumerId();
+        verify(claimRepository).findHistoryByConsumerIdOrderByClaimNumber(consumerId);
+        verify(claimMapper).toHistoryItemResponse(claim);
+        verifyNoInteractions(receiptRepository, enrollmentRepository, receiptStorage, multipartFile);
+    }
+
     private PostClaimRequest claimRequest(UUID enrollmentId) {
         return new PostClaimRequest()
                 .enrollmentId(enrollmentId)
@@ -278,7 +309,7 @@ class ClaimServiceTest {
                 .consumerFullName("John Doe")
                 .serviceDate(LocalDate.of(2026, 7, 15))
                 .planName("Standard Health")
-                .amount(285.50)
+                .amount(new BigDecimal("285.50"))
                 .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
     }
 
