@@ -158,8 +158,8 @@ class PlanServiceTest {
                 1
         );
 
-        when(packageRepository.findByIdOrThrow(packageId))
-                .thenReturn(insurancePackage);
+        when(packageRepository.existsById(packageId))
+                .thenReturn(true);
         when(planRepository.findByInsurancePackageId(packageId, pageable))
                 .thenReturn(new PageImpl<>(List.of(plan), pageable, 1));
         when(planMapper.toPlanResponse(plan))
@@ -168,8 +168,57 @@ class PlanServiceTest {
         assertThat(planService.getPackagePlans(packageId, pageable))
                 .isEqualTo(expectedResponses);
 
-        verify(packageRepository).findByIdOrThrow(packageId);
+        verify(packageRepository).existsById(packageId);
         verify(planMapper).toPlanResponse(plan);
+    }
+
+    @Test
+    void shouldThrowOnGetPackagePlansWhenPackageDoesNotExist() {
+        UUID packageId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(packageRepository.existsById(packageId))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> planService.getPackagePlans(packageId, pageable))
+                .isInstanceOf(PackageNotFoundException.class);
+
+        verify(planRepository, never())
+                .findByInsurancePackageId(any(UUID.class), any(Pageable.class));
+    }
+
+    @Test
+    void shouldReturnOnlyPlansFromInitializedPackages() {
+        InsurancePackage initializedPackage = createPackage();
+        initializedPackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        InsurancePlan plan = createPlan(initializedPackage);
+        PlanResponse expectedResponse = new PlanResponse(
+                UUID.randomUUID(),
+                "Standard Health",
+                PlanType.HEALTH_INSURANCE,
+                250,
+                500
+        );
+
+        when(planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of(plan));
+        when(planMapper.toPlanResponse(plan))
+                .thenReturn(expectedResponse);
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).containsExactly(expectedResponse);
+        verify(planRepository).findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoInitializedPackagesHavePlans() {
+        when(planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED))
+                .thenReturn(List.of());
+
+        List<PlanResponse> result = planService.getAvailablePlans();
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -282,4 +331,3 @@ class PlanServiceTest {
         );
     }
 }
-

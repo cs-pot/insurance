@@ -1,6 +1,8 @@
 package com.cspot.insurahub.plan.service;
 
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
+import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
+import com.cspot.insurahub.insurancepackage.exception.PackageNotFoundException;
 import com.cspot.insurahub.insurancepackage.repository.InsurancePackageRepository;
 import com.cspot.insurahub.insurancepackage.validation.PackageValidator;
 import com.cspot.insurahub.model.PlanRequest;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -30,24 +33,36 @@ public class PlanService {
 
     @Transactional
     public PostResponse addPlan(UUID packageId, PlanRequest request) {
-        InsurancePackage insurancePackage =
-                packageRepository.findByIdOrThrow(packageId);
-
+        InsurancePackage insurancePackage = packageRepository.findByIdOrThrow(packageId);
         packageValidator.validateReadyForUpdate(insurancePackage);
-
         InsurancePlan plan = planMapper.toEntity(insurancePackage, request);
         plan = planRepository.save(plan);
-
         log.info("Plan added to package: packageId={}, planId={}", packageId, plan.getId());
-
         return new PostResponse(plan.getId());
     }
 
+    @Transactional(readOnly = true)
     public Page<PlanResponse> getPackagePlans(UUID packageId, Pageable pageable) {
-        InsurancePackage insurancePackage = packageRepository.findByIdOrThrow(packageId);
+        if (!packageRepository.existsById(packageId)) {
+            throw new PackageNotFoundException(packageId);
+        }
         Page<InsurancePlan> plansPage = planRepository.findByInsurancePackageId(packageId, pageable);
         log.info("Returning page of {} plans of package {}", plansPage.getSize(), packageId);
         return plansPage.map(planMapper::toPlanResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlanResponse> getAvailablePlans() {
+        return planRepository.findByInsurancePackageStatus(InsurancePackageStatus.INITIALIZED)
+                .stream()
+                .map(planMapper::toPlanResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PlanResponse getPlanById(UUID id) {
+        InsurancePlan plan = planRepository.findByIdOrThrow(id);
+        return planMapper.toPlanResponse(plan);
     }
 
     @Transactional

@@ -100,7 +100,55 @@ packagePlans:
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 
-planWithId:
+plans:
+  get:
+    tags:
+      - Plans
+    summary: Get available plans
+    description: Returns a list of all plans belonging to initialized packages (i.e. plans available for enrollment).
+    operationId: getPlans
+    responses:
+      '200':
+        description: Successfully retrieved available plans
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: './schemas.yaml#/PlanResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+
+planById:
+  get:
+    tags:
+      - Plans
+    summary: Get plan details by ID
+    description: Returns detailed information for a specific plan.
+    operationId: getPlanById
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Successfully retrieved plan details
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/PlanResponse'
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+
   put:
     tags:
       - Plans
