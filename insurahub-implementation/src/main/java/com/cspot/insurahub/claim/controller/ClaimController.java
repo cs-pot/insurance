@@ -2,11 +2,14 @@ package com.cspot.insurahub.claim.controller;
 
 import com.cspot.insurahub.api.ClaimsApi;
 import com.cspot.insurahub.claim.service.ClaimService;
+import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -21,6 +24,12 @@ import java.util.UUID;
 public class ClaimController implements ClaimsApi {
 
     private final ClaimService claimService;
+
+    @Override
+    @PreAuthorize("hasAuthority('view:claims')")
+    public Page<ClaimResponse> getClaims(Pageable pageable) {
+        return claimService.getClaims(pageable);
+    }
 
     @Override
     @PreAuthorize("hasAuthority('create:claims')")
