@@ -217,7 +217,7 @@ class ClaimServiceTest {
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
-        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+        Page<ClaimResponse> claims = claimService.getClaims(null, null, pageable);
 
         assertThat(claims.getContent()).containsExactly(listItem);
         verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
@@ -233,7 +233,7 @@ class ClaimServiceTest {
         when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+        Page<ClaimResponse> claims = claimService.getClaims(" ", "", pageable);
 
         assertThat(claims.getContent()).isEmpty();
         verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
@@ -260,13 +260,33 @@ class ClaimServiceTest {
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
-        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+        Page<ClaimResponse> claims = claimService.getClaims(null, null, pageable);
 
         assertThat(claims.getContent()).containsExactly(listItem);
         verify(idpIdMappingService).getCurrentAuthenticatedConsumerId();
         verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verify(claimMapper).toListItemResponse(claim);
         verifyNoInteractions(receiptRepository, enrollmentRepository, receiptStorage, multipartFile);
+    }
+
+    @Test
+    void shouldSearchClaims() {
+        Claim claim = getClaim();
+        ClaimResponse listItem = getClaimResponse();
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("serviceDate").descending());
+
+        authenticateWith("view:claims");
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
+                .thenReturn(new PageImpl<>(List.of(claim), pageable, 1));
+        when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
+
+        Page<ClaimResponse> claims = claimService.getClaims(" LT20260715 ", " John Doe ", pageable);
+
+        assertThat(claims.getContent()).containsExactly(listItem);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
+        verify(claimMapper).toListItemResponse(claim);
+        verifyNoInteractions(receiptRepository, enrollmentRepository,
+                receiptStorage, multipartFile);
     }
 
     private void authenticateWith(String authority) {

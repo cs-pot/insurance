@@ -26,6 +26,26 @@ claims:
           format: int32
           minimum: 1
           default: 20
+      - name: claimNumber
+        in: query
+        required: false
+        description: Optional case-sensitive pattern to filter claims by claim number.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 13
+          pattern: '^[A-Za-z0-9]+$'
+      - name: consumer
+        in: query
+        required: false
+        description: >
+          Optional case-sensitive pattern to filter claims by consumer full name
+          in "firstname lastname" format.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: '^[A-Za-z ]+$'
       - name: sort
         in: query
         required: false
@@ -35,7 +55,7 @@ claims:
           claimNumber, amount, status.
         schema:
           type: string
-          default: createdAt,desc
+          default: serviceDate,desc
     responses:
       '200':
         description: Claims retrieved successfully.
