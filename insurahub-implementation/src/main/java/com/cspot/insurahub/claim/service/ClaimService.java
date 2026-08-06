@@ -2,6 +2,8 @@ package com.cspot.insurahub.claim.service;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
+import com.cspot.insurahub.claim.enumeration.ClaimStatus;
+import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
@@ -78,5 +80,20 @@ public class ClaimService {
                         "Receipt not found with claim id: " + claimId));
 
         return new InputStreamResource(new ByteArrayInputStream(receipt.getContent()));
+    }
+
+    @Transactional
+    public void approveClaim(UUID claimId) {
+        Claim claim = claimRepository.findByIdOrThrow(claimId);
+
+        if (claim.getStatus() != ClaimStatus.PENDING) {
+            throw new ClaimNotPendingException(
+                    "Claim with id '" + claimId + "' cannot be approved because it is not pending. "
+                            + "Current status: " + claim.getStatus()
+            );
+        }
+
+        claim.setStatus(ClaimStatus.APPROVED);
+        log.info("Claim approved: id={}", claimId);
     }
 }

@@ -46,4 +46,11 @@ public class ClaimController implements ClaimsApi {
     ) {
         return claimService.createClaim(postClaimRequest, receiptFile);
     }
+
+    @Override
+    @PreAuthorize("hasAuthority('update:claims')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void approveClaim(UUID claimId) {
+        claimService.approveClaim(claimId);
+    }
 }

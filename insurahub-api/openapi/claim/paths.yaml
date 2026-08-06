@@ -103,6 +103,39 @@ claims:
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 
+claimApprove:
+  post:
+    tags:
+      - Claims
+    summary: Approve a pending claim
+    description: >
+      Approves a claim that is currently pending. Only administrators can perform this operation.
+      Claims that are not in a pending state cannot be approved.
+    operationId: approveClaim
+    parameters:
+      - name: claimId
+        in: path
+        required: true
+        description: Claim ID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Claim approved successfully.
+      '401':
+        $ref: '../common/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../common/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../common/responses.yaml#/NotFound'
+      '409':
+        $ref: '../common/responses.yaml#/Conflict'
+      '422':
+        $ref: '../common/responses.yaml#/UnprocessableEntity'
+      '500':
+        $ref: '../common/responses.yaml#/InternalServerError'
+
 receiptByClaimId:
   get:
     tags:

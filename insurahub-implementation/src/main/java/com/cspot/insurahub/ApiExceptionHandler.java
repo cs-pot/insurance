@@ -1,5 +1,6 @@
 package com.cspot.insurahub;
 
+import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.exception.InvalidReceiptException;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.InvalidPageRequestException;
@@ -268,6 +269,18 @@ public class ApiExceptionHandler {
         logWarn(e);
         return new ErrorDto()
                 .error("ENROLLMENT_DENIED")
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(ClaimNotPendingException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleClaimNotPendingException(ClaimNotPendingException e, HttpServletRequest request) {
+        logWarn(e);
+        return new ErrorDto()
+                .error("CLAIM_NOT_PENDING")
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
