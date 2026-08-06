@@ -1,5 +1,6 @@
 package com.cspot.insurahub.plan.service;
 
+import com.cspot.insurahub.auth.service.AuthenticationMetadataQueryService;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
 import com.cspot.insurahub.insurancepackage.enumeration.InsurancePackageStatus;
@@ -52,6 +53,9 @@ class PlanServiceTest {
 
     @Mock
     private PackageValidator packageValidator;
+
+    @Mock
+    private AuthenticationMetadataQueryService authenticationMetadataQueryService;
 
     @InjectMocks
     private PlanService planService;
@@ -296,6 +300,66 @@ class PlanServiceTest {
 
         verify(planMapper, never())
                 .updateFromUpdateRequest(any(), any());
+    }
+
+    @Test
+    void shouldDeletePlan() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+        when(authenticationMetadataQueryService.getRequiredAuthenticatedPrincipalName())
+                .thenReturn("admin-user");
+
+        planService.deletePlan(planId);
+
+        assertThat(plan.isDeleted()).isTrue();
+        assertThat(plan.getDeletedBy()).isEqualTo("admin-user");
+        verify(packageValidator).validateReadyForUpdate(insurancePackage);
+        verify(authenticationMetadataQueryService).getRequiredAuthenticatedPrincipalName();
+    }
+
+    @Test
+    void shouldRejectDeletingPlanWhenPackageIsInitialized() {
+        UUID planId = UUID.randomUUID();
+
+        InsurancePackage insurancePackage = createPackage();
+        insurancePackage.setStatus(InsurancePackageStatus.INITIALIZED);
+        InsurancePlan plan = createPlan(insurancePackage);
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenReturn(plan);
+
+        doThrow(new PackageUpdateNotAllowedException(
+                "Package updates are only allowed when the status is NOT_STARTED"
+        )).when(packageValidator).validateReadyForUpdate(insurancePackage);
+
+        assertThatThrownBy(() -> planService.deletePlan(planId))
+                .isInstanceOf(PackageUpdateNotAllowedException.class);
+
+        assertThat(plan.isDeleted()).isFalse();
+        verify(authenticationMetadataQueryService, never())
+                .getRequiredAuthenticatedPrincipalName();
+    }
+
+    @Test
+    void shouldThrowOnDeletePlanWhenPlanDoesNotExist() {
+        UUID planId = UUID.randomUUID();
+
+        when(planRepository.findByIdOrThrow(planId))
+                .thenThrow(new ResourceNotFoundException(InsurancePlan.class, planId));
+
+        assertThatThrownBy(() -> planService.deletePlan(planId))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(packageValidator, never())
+                .validateReadyForUpdate(any());
+
+        verify(authenticationMetadataQueryService, never())
+                .getRequiredAuthenticatedPrincipalName();
     }
 
     private InsurancePackage createPackage() {

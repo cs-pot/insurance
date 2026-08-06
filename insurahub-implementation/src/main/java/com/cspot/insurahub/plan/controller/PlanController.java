@@ -51,4 +51,11 @@ public class PlanController implements PlansApi {
     public void putPlan(UUID id, PlanRequest planRequest) {
         planService.updatePlan(id, planRequest);
     }
+
+    @Override
+    @PreAuthorize("hasAuthority('delete:plans')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePlan(UUID id) {
+        planService.deletePlan(id);
+    }
 }
