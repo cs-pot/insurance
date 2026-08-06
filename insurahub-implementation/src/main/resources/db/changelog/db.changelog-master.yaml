@@ -27,5 +27,8 @@ databaseChangeLog:
       file: migrations/ddl/create-claim-table.sql
       relativeToChangelogFile: true
   - include:
+      file: migrations/ddl/add-claim-number-generation.sql
+      relativeToChangelogFile: true
+  - include:
       file: migrations/ddl/create-receipts-table.sql
       relativeToChangelogFile: true

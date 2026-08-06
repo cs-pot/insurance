@@ -48,6 +48,7 @@ ClaimResponse:
       required:
         - consumerId
         - consumerFullName
+        - claimNumber
         - serviceDate
         - planId
         - planName
@@ -63,6 +64,11 @@ ClaimResponse:
           type: string
           description: Full name of the consumer (employee) who submitted the claim.
           example: John Doe
+        claimNumber:
+          type: string
+          description: Unique claim number generated from the service date and daily sequence.
+          pattern: '^LT[0-9]{11}$'
+          example: LT20260715001
         serviceDate:
           type: string
           format: date
