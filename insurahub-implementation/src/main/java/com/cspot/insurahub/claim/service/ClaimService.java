@@ -43,8 +43,11 @@ public class ClaimService {
     private final IdpIdMappingService idpIdMappingService;
 
     @Transactional(readOnly = true)
-    public Page<ClaimResponse> getClaims(Pageable pageable) {
-        Specification<Claim> specification = ClaimSpecification.withDetails();
+    public Page<ClaimResponse> getClaims(String claimNumber, String consumer, Pageable pageable) {
+        String cleanClaimNumber = cleanSearchTerm(claimNumber);
+        String cleanConsumer = cleanSearchTerm(consumer);
+
+        Specification<Claim> specification = buildSpecification(cleanClaimNumber, cleanConsumer);
         if (hasAuthority("view:claims")) {
             return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
         } else if (hasAuthority("view:own:claims")) {
@@ -54,6 +57,23 @@ public class ClaimService {
         } else {
             throw new AccessDeniedException("Missing required authority to view claims");
         }
+    }
+
+    private Specification<Claim> buildSpecification(String claimNumber, String consumer) {
+        Specification<Claim> specification = ClaimSpecification.withDetails();
+        if (claimNumber != null) {
+            specification = specification.and(ClaimSpecification.claimNumberContains(claimNumber));
+        }
+        if (consumer != null) {
+            specification = specification.and(ClaimSpecification.consumerFullNameContains(consumer));
+        }
+        return specification;
+    }
+
+    private String cleanSearchTerm(String searchTerm) {
+        return searchTerm == null || searchTerm.isBlank()
+                ? null
+                : searchTerm.trim();
     }
 
     @Transactional

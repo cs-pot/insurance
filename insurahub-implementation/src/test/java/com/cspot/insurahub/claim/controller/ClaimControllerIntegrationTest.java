@@ -84,7 +84,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
-    void shouldReturnClaimsSortedByCreatedAtDescByDefault() throws Exception {
+    void shouldReturnClaimsSortedByServiceDateDescByDefault() throws Exception {
         mockMvc.perform(get("/claims")
                         .with(jwtWithPermission("view:claims")))
                 .andExpect(status().isOk())
@@ -187,6 +187,69 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                         .param("sort", "claimNumber,asc")
                         .with(jwtWithPermission("view:claims")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldReturnClaimsSearchedByClaimNumber() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("claimNumber", "LT20260714")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value("cccccccc-0002-0002-0002-000000000002"))
+                .andExpect(jsonPath("$.content[0].claimNumber").value("LT20260714001"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldReturnClaimsSearchedByConsumer() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("consumer", "First Consumer")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].consumerFullName").value("First Consumer"))
+                .andExpect(jsonPath("$.content[1].consumerFullName").value("First Consumer"))
+                .andExpect(jsonPath("$.page.totalElements").value(2));
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldSearchClaimsByConsumerCaseSensitively() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("consumer", "first consumer")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page.totalElements").value(0));
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldReturnClaimsSearchedByClaimNumberAndConsumer() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("claimNumber", "LT20260712")
+                        .param("consumer", "First Consumer")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value("cccccccc-0004-0004-0004-000000000004"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
+    @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
+    void shouldReturnEmptyClaimsWhenSearchDoesNotMatch() throws Exception {
+        mockMvc.perform(get("/claims")
+                        .param("claimNumber", "LT999")
+                        .param("consumer", "First Consumer")
+                        .with(jwtWithPermission("view:claims")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page.totalElements").value(0))
+                .andExpect(jsonPath("$.page.totalPages").value(0));
     }
 
     @Test
