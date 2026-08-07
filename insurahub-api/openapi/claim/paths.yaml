@@ -4,8 +4,8 @@ claims:
       - Claims
     summary: View claims
     description: >
-      Returns insurance claims with key information for claims management.
-      Only available to administrators.
+      Returns insurance claims with key information. Administrators can view all claims.
+      Consumers can view only their own claims.
     operationId: getClaims
     x-spring-paginated: true
     parameters:

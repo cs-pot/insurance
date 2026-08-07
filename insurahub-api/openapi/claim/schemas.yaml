@@ -46,24 +46,16 @@ ClaimResponse:
     - $ref: '../common/schemas.yaml#/BaseListItemResponse'
     - type: object
       required:
-        - consumerId
-        - consumerFullName
         - claimNumber
         - serviceDate
-        - planId
         - planName
         - amount
         - status
+        - consumerId
+        - consumerFullName
+        - planId
+        - lastUpdateDate
       properties:
-        consumerId:
-          type: string
-          format: uuid
-          description: ID of the consumer (employee) who submitted the claim.
-          example: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
-        consumerFullName:
-          type: string
-          description: Full name of the consumer (employee) who submitted the claim.
-          example: John Doe
         claimNumber:
           type: string
           description: Unique claim number generated from the service date and daily sequence.
@@ -74,22 +66,38 @@ ClaimResponse:
           format: date
           description: Date the service was provided.
           example: "2026-07-15"
-        planId:
-          type: string
-          format: uuid
-          description: ID of the insurance plan the claim is filed against.
-          example: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
         planName:
           type: string
           description: Name of the insurance plan the claim is filed against.
           example: Standard Health
         amount:
           type: number
-          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          multipleOf: 0.01
           description: Claimed amount in euros.
           example: 285.50
         status:
           $ref: '#/ClaimStatus'
+        consumerId:
+          type: string
+          format: uuid
+          description: ID of the consumer (employee) who submitted the claim.
+          example: "7f9c8d13-5b1d-4a9d-9a47-0f3d8b6c9e12"
+        consumerFullName:
+          type: string
+          description: Full name of the consumer (employee) who submitted the claim.
+          example: John Doe
+        planId:
+          type: string
+          format: uuid
+          description: ID of the insurance plan the claim is filed against.
+          example: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
+        lastUpdateDate:
+          type: string
+          format: date
+          description: Date the claim was last updated.
+          example: "2026-07-20"
 
 GetClaimsResponse:
   type: object

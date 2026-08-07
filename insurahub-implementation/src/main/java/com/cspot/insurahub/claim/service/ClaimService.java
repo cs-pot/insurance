@@ -2,11 +2,13 @@ package com.cspot.insurahub.claim.service;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
+import com.cspot.insurahub.claim.filter.ClaimSpecification;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
+import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.ClaimResponse;
@@ -18,6 +20,9 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,11 +40,20 @@ public class ClaimService {
     private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
     private final ClaimMapper claimMapper;
+    private final IdpIdMappingService idpIdMappingService;
 
     @Transactional(readOnly = true)
     public Page<ClaimResponse> getClaims(Pageable pageable) {
-        Page<Claim> claims = claimRepository.findAllWithDetails(pageable);
-        return claims.map(claimMapper::toListItemResponse);
+        Specification<Claim> specification = ClaimSpecification.withDetails();
+        if (hasAuthority("view:claims")) {
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
+        } else if (hasAuthority("view:own:claims")) {
+            UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
+            specification = specification.and(ClaimSpecification.byConsumerId(consumerId));
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
+        } else {
+            throw new AccessDeniedException("Missing required authority to view claims");
+        }
     }
 
     @Transactional
@@ -78,5 +92,11 @@ public class ClaimService {
                         "Receipt not found with claim id: " + claimId));
 
         return new InputStreamResource(new ByteArrayInputStream(receipt.getContent()));
+    }
+
+    private boolean hasAuthority(String authority) {
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 }

@@ -8,6 +8,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE)
 public abstract class ClaimMapper {
@@ -16,10 +20,16 @@ public abstract class ClaimMapper {
     @Mapping(target = "consumerFullName", source = "claim.enrollment.consumer", qualifiedByName = "fullName")
     @Mapping(target = "planId", source = "claim.enrollment.plan.id")
     @Mapping(target = "planName", source = "claim.enrollment.plan.name")
+    @Mapping(target = "lastUpdateDate", expression = "java(toLastUpdateDate(claim))")
     public abstract ClaimResponse toListItemResponse(Claim claim);
 
     @Named("fullName")
     protected String consumerFullName(Consumer consumer) {
         return consumer.getFirstName() + " " + consumer.getLastName();
+    }
+
+    protected LocalDate toLastUpdateDate(Claim claim) {
+        Instant lastUpdate = claim.getUpdatedAt() != null ? claim.getUpdatedAt() : claim.getCreatedAt();
+        return lastUpdate.atZone(ZoneOffset.UTC).toLocalDate();
     }
 }
