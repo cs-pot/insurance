@@ -2,7 +2,6 @@ package com.cspot.insurahub.claim.mapper;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.consumer.entity.Consumer;
-import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,11 +20,8 @@ public abstract class ClaimMapper {
     @Mapping(target = "consumerFullName", source = "claim.enrollment.consumer", qualifiedByName = "fullName")
     @Mapping(target = "planId", source = "claim.enrollment.plan.id")
     @Mapping(target = "planName", source = "claim.enrollment.plan.name")
-    public abstract ClaimResponse toListItemResponse(Claim claim);
-
     @Mapping(target = "lastUpdateDate", expression = "java(toLastUpdateDate(claim))")
-    @Mapping(target = "planName", source = "enrollment.plan.name")
-    public abstract ClaimHistoryItemResponse toHistoryItemResponse(Claim claim);
+    public abstract ClaimResponse toListItemResponse(Claim claim);
 
     @Named("fullName")
     protected String consumerFullName(Consumer consumer) {

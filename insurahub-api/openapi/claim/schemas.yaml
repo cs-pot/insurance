@@ -83,6 +83,7 @@ ClaimResponse:
         - consumerId
         - consumerFullName
         - planId
+        - lastUpdateDate
       properties:
         consumerId:
           type: string
@@ -98,14 +99,6 @@ ClaimResponse:
           format: uuid
           description: ID of the insurance plan the claim is filed against.
           example: "5a0d5de4-2f79-46f9-85c1-b588ea7b5c41"
-
-ClaimHistoryItemResponse:
-  allOf:
-    - $ref: '#/BaseClaimResponse'
-    - type: object
-      required:
-        - lastUpdateDate
-      properties:
         lastUpdateDate:
           type: string
           format: date

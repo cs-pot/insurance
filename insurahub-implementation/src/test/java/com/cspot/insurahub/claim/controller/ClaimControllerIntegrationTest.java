@@ -109,38 +109,58 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
-    void shouldReturnClaimHistoryForAuthenticatedConsumerOnly() throws Exception {
-        mockMvc.perform(get("/claims/history")
+    void shouldReturnClaimsForAuthenticatedConsumerOnly() throws Exception {
+        mockMvc.perform(get("/claims")
                         .with(jwtWithPermission("view:own:claims", "auth0|consumer-1")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].claimNumber").value("LT20260712001"))
-                .andExpect(jsonPath("$[0].serviceDate").value("2026-07-12"))
-                .andExpect(jsonPath("$[0].lastUpdateDate").value("2026-07-15"))
-                .andExpect(jsonPath("$[0].planName").value("Dental Care"))
-                .andExpect(jsonPath("$[0].amount").value(430.0))
-                .andExpect(jsonPath("$[0].status").value("PENDING"))
-                .andExpect(jsonPath("$[1].claimNumber").value("LT20260715001"))
-                .andExpect(jsonPath("$[1].serviceDate").value("2026-07-15"))
-                .andExpect(jsonPath("$[1].planName").value("Standard Health"))
-                .andExpect(jsonPath("$[1].status").value("PENDING"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value("cccccccc-0001-0001-0001-000000000001"))
+                .andExpect(jsonPath("$.content[0].claimNumber").value("LT20260715001"))
+                .andExpect(jsonPath("$.content[0].consumerId").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.content[0].consumerFullName").value("First Consumer"))
+                .andExpect(jsonPath("$.content[0].serviceDate").value("2026-07-15"))
+                .andExpect(jsonPath("$.content[0].lastUpdateDate").value("2026-07-15"))
+                .andExpect(jsonPath("$.content[0].planId").value("bbbbbbbb-0001-0001-0001-000000000001"))
+                .andExpect(jsonPath("$.content[0].planName").value("Standard Health"))
+                .andExpect(jsonPath("$.content[0].amount").value(285.5))
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[1].id").value("cccccccc-0004-0004-0004-000000000004"))
+                .andExpect(jsonPath("$.content[1].claimNumber").value("LT20260712001"))
+                .andExpect(jsonPath("$.content[1].consumerId").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.content[1].consumerFullName").value("First Consumer"))
+                .andExpect(jsonPath("$.content[1].serviceDate").value("2026-07-12"))
+                .andExpect(jsonPath("$.content[1].lastUpdateDate").value("2026-07-15"))
+                .andExpect(jsonPath("$.content[1].planId").value("bbbbbbbb-0002-0002-0002-000000000002"))
+                .andExpect(jsonPath("$.content[1].planName").value("Dental Care"))
+                .andExpect(jsonPath("$.content[1].amount").value(430.0))
+                .andExpect(jsonPath("$.content[1].status").value("PENDING"))
+                .andExpect(jsonPath("$.page.number").value(0))
+                .andExpect(jsonPath("$.page.size").value(20))
+                .andExpect(jsonPath("$.page.totalElements").value(2))
+                .andExpect(jsonPath("$.page.totalPages").value(1));
     }
 
     @Test
     @Sql(CONSUMERS_SEED)
-    void shouldReturnEmptyClaimHistoryForConsumerWithoutClaims() throws Exception {
-        mockMvc.perform(get("/claims/history")
+    void shouldReturnEmptyClaimPageForConsumerWithoutClaims() throws Exception {
+        mockMvc.perform(get("/claims")
                         .with(jwtWithPermission("view:own:claims", "auth0|consumer-1")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.page.number").value(0))
+                .andExpect(jsonPath("$.page.size").value(20))
+                .andExpect(jsonPath("$.page.totalElements").value(0))
+                .andExpect(jsonPath("$.page.totalPages").value(0));
     }
 
     @Test
     @Sql({CONSUMERS_SEED, PACKAGES_SEED, PLANS_SEED, ENROLLMENTS_SEED, CLAIMS_SEED})
-    void shouldRejectClaimHistoryWithoutAuthority() throws Exception {
-        mockMvc.perform(get("/claims/history")
+    void shouldReturnAllClaimsForAdminEvenWhenSubjectBelongsToConsumer() throws Exception {
+        mockMvc.perform(get("/claims")
                         .with(jwtWithPermission("view:claims", "auth0|consumer-1")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(5))
+                .andExpect(jsonPath("$.page.totalElements").value(5));
     }
 
     @Test

@@ -10,7 +10,6 @@ import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
-import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
@@ -20,12 +19,13 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -42,16 +42,16 @@ public class ClaimService {
 
     @Transactional(readOnly = true)
     public Page<ClaimResponse> getClaims(Pageable pageable) {
-        Page<Claim> claims = claimRepository.findAllWithDetails(pageable);
+        Page<Claim> claims;
+        if (hasAuthority("view:claims")) {
+            claims = claimRepository.findAllWithDetails(pageable);
+        } else if (hasAuthority("view:own:claims")) {
+            UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
+            claims = claimRepository.findAllByConsumerIdWithDetails(consumerId, pageable);
+        } else {
+            throw new AccessDeniedException("Missing required authority to view claims");
+        }
         return claims.map(claimMapper::toListItemResponse);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ClaimHistoryItemResponse> getClaimHistory() {
-        UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
-        return claimRepository.findHistoryByConsumerIdOrderByClaimNumber(consumerId).stream()
-                .map(claimMapper::toHistoryItemResponse)
-                .toList();
     }
 
     @Transactional
@@ -90,5 +90,11 @@ public class ClaimService {
                         "Receipt not found with claim id: " + claimId));
 
         return new InputStreamResource(new ByteArrayInputStream(receipt.getContent()));
+    }
+
+    private boolean hasAuthority(String authority) {
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 }

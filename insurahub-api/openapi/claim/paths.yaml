@@ -4,8 +4,8 @@ claims:
       - Claims
     summary: View claims
     description: >
-      Returns insurance claims with key information for claims management.
-      Only available to administrators.
+      Returns insurance claims with key information. Administrators can view all claims.
+      Consumers can view only their own claims.
     operationId: getClaims
     x-spring-paginated: true
     parameters:
@@ -100,29 +100,6 @@ claims:
         $ref: '../common/responses.yaml#/UnsupportedMediaType'
       '422':
         $ref: '../common/responses.yaml#/UnprocessableEntity'
-      '500':
-        $ref: '../common/responses.yaml#/InternalServerError'
-
-claimHistory:
-  get:
-    tags:
-      - Claims
-    summary: View claim history
-    description: Returns claims history for the authenticated consumer.
-    operationId: getClaimHistory
-    responses:
-      '200':
-        description: Claims history retrieved successfully.
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: './schemas.yaml#/ClaimHistoryItemResponse'
-      '401':
-        $ref: '../common/responses.yaml#/Unauthorized'
-      '403':
-        $ref: '../common/responses.yaml#/Forbidden'
       '500':
         $ref: '../common/responses.yaml#/InternalServerError'
 

@@ -13,13 +13,13 @@ import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
-import com.cspot.insurahub.model.ClaimHistoryItemResponse;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +32,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,6 +82,11 @@ class ClaimServiceTest {
 
     @InjectMocks
     private ClaimService claimService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void shouldCreateClaim() {
@@ -203,6 +211,7 @@ class ClaimServiceTest {
         Claim claim = getClaim();
         ClaimResponse listItem = getClaimResponse();
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        authenticateWith("view:claims");
         when(claimRepository.findAllWithDetails(pageable))
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
@@ -219,6 +228,7 @@ class ClaimServiceTest {
     @Test
     void shouldReturnEmptyPageWhenNoClaims() {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
+        authenticateWith("view:claims");
         when(claimRepository.findAllWithDetails(pageable))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
@@ -231,29 +241,39 @@ class ClaimServiceTest {
     }
 
     @Test
-    void shouldGetCurrentConsumerClaimHistory() {
+    void shouldGetCurrentConsumerClaims() {
         UUID consumerId = UUID.randomUUID();
         Claim claim = getClaim();
-        ClaimHistoryItemResponse historyItem = new ClaimHistoryItemResponse()
+        ClaimResponse listItem = getClaimResponse()
                 .claimNumber(claim.getClaimNumber())
                 .serviceDate(claim.getServiceDate())
                 .lastUpdateDate(LocalDate.of(2026, 7, 15))
                 .planName("Standard Health")
                 .amount(claim.getAmount())
                 .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
 
+        authenticateWith("view:own:claims");
         when(idpIdMappingService.getCurrentAuthenticatedConsumerId()).thenReturn(consumerId);
-        when(claimRepository.findHistoryByConsumerIdOrderByClaimNumber(consumerId))
-                .thenReturn(List.of(claim));
-        when(claimMapper.toHistoryItemResponse(claim)).thenReturn(historyItem);
+        when(claimRepository.findAllByConsumerIdWithDetails(consumerId, pageable))
+                .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
+        when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
-        List<ClaimHistoryItemResponse> claims = claimService.getClaimHistory();
+        Page<ClaimResponse> claims = claimService.getClaims(pageable);
 
-        assertThat(claims).containsExactly(historyItem);
+        assertThat(claims.getContent()).containsExactly(listItem);
         verify(idpIdMappingService).getCurrentAuthenticatedConsumerId();
-        verify(claimRepository).findHistoryByConsumerIdOrderByClaimNumber(consumerId);
-        verify(claimMapper).toHistoryItemResponse(claim);
+        verify(claimRepository).findAllByConsumerIdWithDetails(consumerId, pageable);
+        verify(claimMapper).toListItemResponse(claim);
         verifyNoInteractions(receiptRepository, enrollmentRepository, receiptStorage, multipartFile);
+    }
+
+    private void authenticateWith(String authority) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "subject",
+                "credentials",
+                List.of(new SimpleGrantedAuthority(authority))
+        ));
     }
 
     private PostClaimRequest claimRequest(UUID enrollmentId) {
