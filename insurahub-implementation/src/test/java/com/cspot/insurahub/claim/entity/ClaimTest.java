@@ -32,15 +32,6 @@ class ClaimTest {
         assertEquals(claim, enrollment.getClaims().getFirst());
     }
 
-    @Test
-    void shouldUpdateStatus() {
-        Claim claim = new Claim(enrollment(), LocalDate.now(), BigDecimal.valueOf(100));
-
-        claim.setStatus(ClaimStatus.DENIED);
-
-        assertEquals(ClaimStatus.DENIED, claim.getStatus());
-    }
-
     private Enrollment enrollment() {
         return new Enrollment(consumer(), insurancePlan());
     }

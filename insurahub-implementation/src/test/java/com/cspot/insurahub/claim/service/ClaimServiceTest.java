@@ -7,6 +7,7 @@ import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.entity.Consumer;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
@@ -232,6 +233,24 @@ class ClaimServiceTest {
                 () -> claimService.denyClaim(claimId)
         );
 
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenDenyingNonPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+        claim.setStatus(ClaimStatus.APPROVED);
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
+                () -> claimService.denyClaim(claimId)
+        );
+
+        assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
         verify(claimRepository).findByIdOrThrow(claimId);
     }
 
