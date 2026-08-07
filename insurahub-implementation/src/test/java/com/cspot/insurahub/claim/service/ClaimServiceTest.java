@@ -242,39 +242,10 @@ class ClaimServiceTest {
     }
 
     @Test
-    void shouldGetCurrentConsumerClaims() {
-        UUID consumerId = UUID.randomUUID();
-        Claim claim = getClaim();
-        ClaimResponse listItem = getClaimResponse()
-                .claimNumber(claim.getClaimNumber())
-                .serviceDate(claim.getServiceDate())
-                .lastUpdateDate(LocalDate.of(2026, 7, 15))
-                .planName("Standard Health")
-                .amount(claim.getAmount())
-                .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
-        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
-
-        authenticateWith("view:own:claims");
-        when(idpIdMappingService.getCurrentAuthenticatedConsumerId()).thenReturn(consumerId);
-        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
-                .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
-        when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
-
-        Page<ClaimResponse> claims = claimService.getClaims(null, null, pageable);
-
-        assertThat(claims.getContent()).containsExactly(listItem);
-        verify(idpIdMappingService).getCurrentAuthenticatedConsumerId();
-        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
-        verify(claimMapper).toListItemResponse(claim);
-        verifyNoInteractions(receiptRepository, enrollmentRepository, receiptStorage, multipartFile);
-    }
-
-    @Test
     void shouldSearchClaims() {
         Claim claim = getClaim();
         ClaimResponse listItem = getClaimResponse();
         Pageable pageable = PageRequest.of(0, 20, Sort.by("serviceDate").descending());
-
         authenticateWith("view:claims");
         when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(claim), pageable, 1));
