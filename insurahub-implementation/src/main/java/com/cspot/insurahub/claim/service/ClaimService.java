@@ -2,6 +2,7 @@ package com.cspot.insurahub.claim.service;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
+import com.cspot.insurahub.claim.filter.ClaimSpecification;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
@@ -19,6 +20,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,16 +44,16 @@ public class ClaimService {
 
     @Transactional(readOnly = true)
     public Page<ClaimResponse> getClaims(Pageable pageable) {
-        Page<Claim> claims;
+        Specification<Claim> specification = ClaimSpecification.withDetails();
         if (hasAuthority("view:claims")) {
-            claims = claimRepository.findAllWithDetails(pageable);
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
         } else if (hasAuthority("view:own:claims")) {
             UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
-            claims = claimRepository.findAllByConsumerIdWithDetails(consumerId, pageable);
+            specification = specification.and(ClaimSpecification.byConsumerId(consumerId));
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
         } else {
             throw new AccessDeniedException("Missing required authority to view claims");
         }
-        return claims.map(claimMapper::toListItemResponse);
     }
 
     @Transactional

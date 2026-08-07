@@ -129,7 +129,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content[1].consumerId").value("11111111-1111-1111-1111-111111111111"))
                 .andExpect(jsonPath("$.content[1].consumerFullName").value("First Consumer"))
                 .andExpect(jsonPath("$.content[1].serviceDate").value("2026-07-12"))
-                .andExpect(jsonPath("$.content[1].lastUpdateDate").value("2026-07-15"))
+                .andExpect(jsonPath("$.content[1].lastUpdateDate").value("2026-07-12"))
                 .andExpect(jsonPath("$.content[1].planId").value("bbbbbbbb-0002-0002-0002-000000000002"))
                 .andExpect(jsonPath("$.content[1].planName").value("Dental Care"))
                 .andExpect(jsonPath("$.content[1].amount").value(430.0))

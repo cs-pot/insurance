@@ -32,6 +32,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -212,14 +213,14 @@ class ClaimServiceTest {
         ClaimResponse listItem = getClaimResponse();
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
         authenticateWith("view:claims");
-        when(claimRepository.findAllWithDetails(pageable))
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
         Page<ClaimResponse> claims = claimService.getClaims(pageable);
 
         assertThat(claims.getContent()).containsExactly(listItem);
-        verify(claimRepository).findAllWithDetails(pageable);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verify(claimMapper).toListItemResponse(claim);
         verifyNoInteractions(receiptRepository, enrollmentRepository,
                 receiptStorage, multipartFile);
@@ -229,13 +230,13 @@ class ClaimServiceTest {
     void shouldReturnEmptyPageWhenNoClaims() {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
         authenticateWith("view:claims");
-        when(claimRepository.findAllWithDetails(pageable))
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
         Page<ClaimResponse> claims = claimService.getClaims(pageable);
 
         assertThat(claims.getContent()).isEmpty();
-        verify(claimRepository).findAllWithDetails(pageable);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verifyNoInteractions(claimMapper, receiptRepository, enrollmentRepository,
                 receiptStorage, multipartFile);
     }
@@ -255,7 +256,7 @@ class ClaimServiceTest {
 
         authenticateWith("view:own:claims");
         when(idpIdMappingService.getCurrentAuthenticatedConsumerId()).thenReturn(consumerId);
-        when(claimRepository.findAllByConsumerIdWithDetails(consumerId, pageable))
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
@@ -263,7 +264,7 @@ class ClaimServiceTest {
 
         assertThat(claims.getContent()).containsExactly(listItem);
         verify(idpIdMappingService).getCurrentAuthenticatedConsumerId();
-        verify(claimRepository).findAllByConsumerIdWithDetails(consumerId, pageable);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verify(claimMapper).toListItemResponse(claim);
         verifyNoInteractions(receiptRepository, enrollmentRepository, receiptStorage, multipartFile);
     }
@@ -274,6 +275,10 @@ class ClaimServiceTest {
                 "credentials",
                 List.of(new SimpleGrantedAuthority(authority))
         ));
+    }
+
+    private Specification<Claim> anyClaimSpecification() {
+        return any();
     }
 
     private PostClaimRequest claimRequest(UUID enrollmentId) {

@@ -41,50 +41,44 @@ ClaimStatus:
     - REJECTED
   example: PENDING
 
-BaseClaimResponse:
-  type: object
-  required:
-    - claimNumber
-    - serviceDate
-    - planName
-    - amount
-    - status
-  properties:
-    claimNumber:
-      type: string
-      description: Unique claim number generated from the service date and daily sequence.
-      pattern: '^LT[0-9]{11}$'
-      example: LT20260715001
-    serviceDate:
-      type: string
-      format: date
-      description: Date the service was provided.
-      example: "2026-07-15"
-    planName:
-      type: string
-      description: Name of the insurance plan the claim is filed against.
-      example: Standard Health
-    amount:
-      type: number
-      minimum: 0
-      exclusiveMinimum: true
-      multipleOf: 0.01
-      description: Claimed amount in euros.
-      example: 285.50
-    status:
-      $ref: '#/ClaimStatus'
-
 ClaimResponse:
   allOf:
     - $ref: '../common/schemas.yaml#/BaseListItemResponse'
-    - $ref: '#/BaseClaimResponse'
     - type: object
       required:
+        - claimNumber
+        - serviceDate
+        - planName
+        - amount
+        - status
         - consumerId
         - consumerFullName
         - planId
         - lastUpdateDate
       properties:
+        claimNumber:
+          type: string
+          description: Unique claim number generated from the service date and daily sequence.
+          pattern: '^LT[0-9]{11}$'
+          example: LT20260715001
+        serviceDate:
+          type: string
+          format: date
+          description: Date the service was provided.
+          example: "2026-07-15"
+        planName:
+          type: string
+          description: Name of the insurance plan the claim is filed against.
+          example: Standard Health
+        amount:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          multipleOf: 0.01
+          description: Claimed amount in euros.
+          example: 285.50
+        status:
+          $ref: '#/ClaimStatus'
         consumerId:
           type: string
           format: uuid
