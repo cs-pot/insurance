@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,6 +39,7 @@ public class Claim extends SoftDeletableAuditableEntity {
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private ClaimStatus status;
@@ -59,9 +61,5 @@ public class Claim extends SoftDeletableAuditableEntity {
 
     void setReceipt(Receipt receipt) {
         this.receipt = receipt;
-    }
-
-    public void setStatus(ClaimStatus status) {
-        this.status = status;
     }
 }

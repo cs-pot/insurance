@@ -3,7 +3,7 @@ package com.cspot.insurahub.claim.service;
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
-import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
@@ -87,7 +87,8 @@ public class ClaimService {
         Claim claim = claimRepository.findByIdOrThrow(claimId);
 
         if (claim.getStatus() != ClaimStatus.PENDING) {
-            throw new ClaimNotPendingException(
+            throw new DomainValidationException(
+                    "CLAIM_NOT_PENDING",
                     "Claim with id '" + claimId + "' cannot be denied because it is not pending. "
                             + "Current status: " + claim.getStatus()
             );
