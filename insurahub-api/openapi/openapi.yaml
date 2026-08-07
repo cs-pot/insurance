@@ -54,10 +54,12 @@ paths:
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    auth0:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://dev-ah5xlkd4dd1dcyd4.us.auth0.com/oauth/token
+          scopes: {}
 
 security:
-  - bearerAuth: []
+  - auth0: []

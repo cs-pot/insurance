@@ -9,6 +9,7 @@ import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.insurancepackage.entity.InsurancePackage;
@@ -18,6 +19,7 @@ import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +32,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -72,8 +78,16 @@ class ClaimServiceTest {
     @Mock
     private ClaimMapper claimMapper;
 
+    @Mock
+    private IdpIdMappingService idpIdMappingService;
+
     @InjectMocks
     private ClaimService claimService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void shouldCreateClaim() {
@@ -110,6 +124,7 @@ class ClaimServiceTest {
 
         assertThat(savedClaim.getEnrollment()).isSameAs(enrollment);
         assertThat(savedClaim.getServiceDate()).isEqualTo(request.getServiceDate());
+        assertThat(savedClaim.getClaimNumber()).isNull();
         assertThat(savedClaim.getAmount()).isEqualByComparingTo(request.getAmount());
         assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.PENDING);
 
@@ -225,14 +240,15 @@ class ClaimServiceTest {
         Claim claim = getClaim();
         ClaimResponse listItem = getClaimResponse();
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
-        when(claimRepository.findAllWithDetails(pageable))
+        authenticateWith("view:claims");
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(claim), PageRequest.of(0, 20), 1));
         when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
 
-        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+        Page<ClaimResponse> claims = claimService.getClaims(null, null, pageable);
 
         assertThat(claims.getContent()).containsExactly(listItem);
-        verify(claimRepository).findAllWithDetails(pageable);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verify(claimMapper).toListItemResponse(claim);
         verifyNoInteractions(receiptRepository, enrollmentRepository,
                 receiptStorage, multipartFile);
@@ -241,15 +257,47 @@ class ClaimServiceTest {
     @Test
     void shouldReturnEmptyPageWhenNoClaims() {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").ascending());
-        when(claimRepository.findAllWithDetails(pageable))
+        authenticateWith("view:claims");
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        Page<ClaimResponse> claims = claimService.getClaims(pageable);
+        Page<ClaimResponse> claims = claimService.getClaims(" ", "", pageable);
 
         assertThat(claims.getContent()).isEmpty();
-        verify(claimRepository).findAllWithDetails(pageable);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
         verifyNoInteractions(claimMapper, receiptRepository, enrollmentRepository,
                 receiptStorage, multipartFile);
+    }
+
+    @Test
+    void shouldSearchClaims() {
+        Claim claim = getClaim();
+        ClaimResponse listItem = getClaimResponse();
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("serviceDate").descending());
+        authenticateWith("view:claims");
+        when(claimRepository.findAll(anyClaimSpecification(), same(pageable)))
+                .thenReturn(new PageImpl<>(List.of(claim), pageable, 1));
+        when(claimMapper.toListItemResponse(claim)).thenReturn(listItem);
+
+        Page<ClaimResponse> claims = claimService.getClaims(" LT20260715 ", " John Doe ", pageable);
+
+        assertThat(claims.getContent()).containsExactly(listItem);
+        verify(claimRepository).findAll(anyClaimSpecification(), same(pageable));
+        verify(claimMapper).toListItemResponse(claim);
+        verifyNoInteractions(receiptRepository, enrollmentRepository,
+                receiptStorage, multipartFile);
+    }
+
+    private void authenticateWith(String authority) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "subject",
+                "credentials",
+                List.of(new SimpleGrantedAuthority(authority))
+        ));
+    }
+
+    private Specification<Claim> anyClaimSpecification() {
+        return any();
     }
 
     private PostClaimRequest claimRequest(UUID enrollmentId) {
@@ -293,6 +341,7 @@ class ClaimServiceTest {
         ReflectionTestUtils.setField(enrollment, "id", UUID.randomUUID());
 
         Claim claim = new Claim(enrollment, LocalDate.of(2026, 7, 15), new BigDecimal("285.50"));
+        ReflectionTestUtils.setField(claim, "claimNumber", "LT20260715001");
         ReflectionTestUtils.setField(claim, "id", UUID.randomUUID());
         return claim;
     }
@@ -300,10 +349,11 @@ class ClaimServiceTest {
     private ClaimResponse getClaimResponse() {
         return new ClaimResponse()
                 .id(UUID.randomUUID())
+                .claimNumber("LT20260715001")
                 .consumerFullName("John Doe")
                 .serviceDate(LocalDate.of(2026, 7, 15))
                 .planName("Standard Health")
-                .amount(285.50)
+                .amount(new BigDecimal("285.50"))
                 .status(com.cspot.insurahub.model.ClaimStatus.PENDING);
     }
 
