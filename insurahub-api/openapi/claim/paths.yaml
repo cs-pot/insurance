@@ -32,7 +32,7 @@ claims:
         description: >
           Optional sorting in Spring Pageable format: property or property,direction.
           Direction can be asc or desc. Allowed properties: createdAt, serviceDate,
-          amount, status.
+          claimNumber, amount, status.
         schema:
           type: string
           default: createdAt,desc

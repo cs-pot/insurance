@@ -110,6 +110,7 @@ class ClaimServiceTest {
 
         assertThat(savedClaim.getEnrollment()).isSameAs(enrollment);
         assertThat(savedClaim.getServiceDate()).isEqualTo(request.getServiceDate());
+        assertThat(savedClaim.getClaimNumber()).isNull();
         assertThat(savedClaim.getAmount()).isEqualByComparingTo(request.getAmount());
         assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.PENDING);
 
@@ -265,6 +266,7 @@ class ClaimServiceTest {
         ReflectionTestUtils.setField(enrollment, "id", UUID.randomUUID());
 
         Claim claim = new Claim(enrollment, LocalDate.of(2026, 7, 15), new BigDecimal("285.50"));
+        ReflectionTestUtils.setField(claim, "claimNumber", "LT20260715001");
         ReflectionTestUtils.setField(claim, "id", UUID.randomUUID());
         return claim;
     }
@@ -272,6 +274,7 @@ class ClaimServiceTest {
     private ClaimResponse getClaimResponse() {
         return new ClaimResponse()
                 .id(UUID.randomUUID())
+                .claimNumber("LT20260715001")
                 .consumerFullName("John Doe")
                 .serviceDate(LocalDate.of(2026, 7, 15))
                 .planName("Standard Health")
