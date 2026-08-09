@@ -70,4 +70,8 @@ public class Claim extends SoftDeletableAuditableEntity {
     void setReceipt(Receipt receipt) {
         this.receipt = receipt;
     }
+
+    public void setStatus(ClaimStatus status) {
+        this.status = status;
+    }
 }

@@ -3,6 +3,7 @@ package com.cspot.insurahub.claim.service;
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
+import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
@@ -204,6 +205,72 @@ class ClaimServiceTest {
                 claimRepository,
                 enrollmentRepository,
                 receiptStorage
+        );
+    }
+
+    @Test
+    void shouldApprovePendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        claimService.approveClaim(claimId);
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
+        );
+    }
+
+    @Test
+    void shouldThrowWhenClaimToApproveDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+
+        when(claimRepository.findByIdOrThrow(claimId))
+                .thenThrow(new ResourceNotFoundException(Claim.class, claimId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.approveClaim(claimId)
+        );
+
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
+        );
+    }
+
+    @Test
+    void shouldThrowWhenApprovingNonPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+        claim.setStatus(ClaimStatus.REJECTED);
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        ClaimNotPendingException exception = assertThrows(
+                ClaimNotPendingException.class,
+                () -> claimService.approveClaim(claimId)
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Claim with id '" + claimId + "' cannot be approved because it is not pending. "
+                        + "Current status: REJECTED");
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.REJECTED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
         );
     }
 
