@@ -53,3 +53,14 @@ auth0:
   role:
     consumer: ${AUTH0_CONSUMER_ROLE}
     admin: ${AUTH0_ADMIN_ROLE}
+
+scalar:
+  authentication:
+    preferredSecurityScheme: auth0
+    oauth2:
+      auth0:
+        flows:
+          password:
+            clientId: ${SCALAR_CLIENT_ID}
+            tokenUrl: ${SCALAR_TOKEN_URL}
+            credentialsLocation: body

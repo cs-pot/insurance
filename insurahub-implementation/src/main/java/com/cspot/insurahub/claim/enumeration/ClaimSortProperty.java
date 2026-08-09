@@ -10,6 +10,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public enum ClaimSortProperty {
     CREATED_AT("createdAt"),
+    CLAIM_NUMBER("claimNumber"),
     SERVICE_DATE("serviceDate"),
     AMOUNT("amount"),
     STATUS("status");

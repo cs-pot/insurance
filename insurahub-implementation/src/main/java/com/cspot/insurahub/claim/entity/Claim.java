@@ -35,6 +35,16 @@ public class Claim extends SoftDeletableAuditableEntity {
     @Column(name = "service_date", nullable = false)
     private LocalDate serviceDate;
 
+    @Column(
+            name = "claim_number",
+            nullable = false,
+            unique = true,
+            length = 13,
+            insertable = false,
+            updatable = false
+    )
+    private String claimNumber;
+
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 

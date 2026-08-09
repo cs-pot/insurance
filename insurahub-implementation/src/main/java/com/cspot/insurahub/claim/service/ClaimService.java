@@ -4,11 +4,13 @@ import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
 import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
+import com.cspot.insurahub.claim.filter.ClaimSpecification;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
+import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.ClaimResponse;
@@ -20,6 +22,9 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,11 +42,40 @@ public class ClaimService {
     private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
     private final ClaimMapper claimMapper;
+    private final IdpIdMappingService idpIdMappingService;
 
     @Transactional(readOnly = true)
-    public Page<ClaimResponse> getClaims(Pageable pageable) {
-        Page<Claim> claims = claimRepository.findAllWithDetails(pageable);
-        return claims.map(claimMapper::toListItemResponse);
+    public Page<ClaimResponse> getClaims(String claimNumber, String consumer, Pageable pageable) {
+        String cleanClaimNumber = cleanSearchTerm(claimNumber);
+        String cleanConsumer = cleanSearchTerm(consumer);
+
+        Specification<Claim> specification = buildSpecification(cleanClaimNumber, cleanConsumer);
+        if (hasAuthority("view:claims")) {
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
+        } else if (hasAuthority("view:own:claims")) {
+            UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
+            specification = specification.and(ClaimSpecification.byConsumerId(consumerId));
+            return claimRepository.findAll(specification, pageable).map(claimMapper::toListItemResponse);
+        } else {
+            throw new AccessDeniedException("Missing required authority to view claims");
+        }
+    }
+
+    private Specification<Claim> buildSpecification(String claimNumber, String consumer) {
+        Specification<Claim> specification = ClaimSpecification.withDetails();
+        if (claimNumber != null) {
+            specification = specification.and(ClaimSpecification.claimNumberContains(claimNumber));
+        }
+        if (consumer != null) {
+            specification = specification.and(ClaimSpecification.consumerFullNameContains(consumer));
+        }
+        return specification;
+    }
+
+    private String cleanSearchTerm(String searchTerm) {
+        return searchTerm == null || searchTerm.isBlank()
+                ? null
+                : searchTerm.trim();
     }
 
     @Transactional
@@ -95,5 +129,11 @@ public class ClaimService {
 
         claim.setStatus(ClaimStatus.APPROVED);
         log.info("Claim approved: id={}", claimId);
+    }
+
+    private boolean hasAuthority(String authority) {
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 }

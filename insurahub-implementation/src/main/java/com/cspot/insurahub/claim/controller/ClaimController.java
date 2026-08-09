@@ -26,9 +26,9 @@ public class ClaimController implements ClaimsApi {
     private final ClaimService claimService;
 
     @Override
-    @PreAuthorize("hasAuthority('view:claims')")
-    public Page<ClaimResponse> getClaims(Pageable pageable) {
-        return claimService.getClaims(pageable);
+    @PreAuthorize("hasAuthority('view:claims') || hasAuthority('view:own:claims')")
+    public Page<ClaimResponse> getClaims(String claimNumber, String consumer, Pageable pageable) {
+        return claimService.getClaims(claimNumber, consumer, pageable);
     }
 
     @Override
