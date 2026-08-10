@@ -255,6 +255,70 @@ class ClaimServiceTest {
     }
 
     @Test
+    void shouldApprovePendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        claimService.approveClaim(claimId);
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
+        );
+    }
+
+    @Test
+    void shouldThrowWhenClaimToApproveDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+
+        when(claimRepository.findByIdOrThrow(claimId))
+                .thenThrow(new ResourceNotFoundException(Claim.class, claimId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.approveClaim(claimId)
+        );
+
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
+        );
+    }
+
+    @Test
+    void shouldThrowWhenApprovingNonPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+        claim.setStatus(ClaimStatus.DENIED);
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
+                () -> claimService.approveClaim(claimId)
+        );
+
+        assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoInteractions(
+                receiptRepository,
+                enrollmentRepository,
+                receiptStorage,
+                multipartFile
+        );
+    }
+
+    @Test
     void shouldGetClaims() {
         Claim claim = getClaim();
         ClaimResponse listItem = getClaimResponse();

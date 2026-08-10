@@ -132,6 +132,22 @@ public class ClaimService {
         log.info("Claim denied: id={}", claimId);
     }
 
+    @Transactional
+    public void approveClaim(UUID claimId) {
+        Claim claim = claimRepository.findByIdOrThrow(claimId);
+
+        if (claim.getStatus() != ClaimStatus.PENDING) {
+            throw new DomainValidationException(
+                    "CLAIM_NOT_PENDING",
+                    "Claim with id '" + claimId + "' cannot be approved because it is not pending. "
+                            + "Current status: " + claim.getStatus()
+            );
+        }
+
+        claim.setStatus(ClaimStatus.APPROVED);
+        log.info("Claim approved: id={}", claimId);
+    }
+
     private boolean hasAuthority(String authority) {
         return SecurityContextHolder.getContext().getAuthentication() != null
                 && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()

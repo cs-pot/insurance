@@ -53,4 +53,11 @@ public class ClaimController implements ClaimsApi {
     public void denyClaim(UUID claimId) {
         claimService.denyClaim(claimId);
     }
+
+    @Override
+    @PreAuthorize("hasAuthority('update:claims')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void approveClaim(UUID claimId) {
+        claimService.approveClaim(claimId);
+    }
 }
