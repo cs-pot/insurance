@@ -4,9 +4,10 @@ import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
 import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
-import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
+import com.cspot.insurahub.claim.exception.ClaimUpdateNotAllowedException;
+import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.entity.Consumer;
@@ -18,8 +19,10 @@ import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.PlanType;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
+import com.cspot.insurahub.model.UpdateClaimRequest;
 import com.cspot.insurahub.payroll.Payroll;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
+import com.cspot.insurahub.plan.repository.InsurancePlanRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,13 +74,16 @@ class ClaimServiceTest {
     private EnrollmentRepository enrollmentRepository;
 
     @Mock
+    private InsurancePlanRepository insurancePlanRepository;
+
+    @Mock
+    private ClaimMapper claimMapper;
+
+    @Mock
     private PostgresReceiptStorage receiptStorage;
 
     @Mock
     private MultipartFile multipartFile;
-
-    @Mock
-    private ClaimMapper claimMapper;
 
     @Mock
     private IdpIdMappingService idpIdMappingService;
@@ -337,6 +343,52 @@ class ClaimServiceTest {
 
     private Specification<Claim> anyClaimSpecification() {
         return any();
+    }
+
+    @Test
+    void shouldUpdatePendingClaimAndKeepClaimId() {
+        UUID claimId = UUID.randomUUID();
+        UUID planId = UUID.randomUUID();
+        Claim claim = claim();
+        ReflectionTestUtils.setField(claim, "id", claimId);
+        Enrollment targetEnrollment = enrollment(UUID.randomUUID());
+        targetEnrollment.setPlan(insurancePlan(planId));
+        UpdateClaimRequest request = new UpdateClaimRequest()
+                .serviceDate(LocalDate.of(2026, 8, 1))
+                .planId(planId)
+                .amount(BigDecimal.valueOf(300));
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+        UUID consumerId = claim.getEnrollment().getConsumer().getId();
+        when(enrollmentRepository.findByConsumerIdAndPlanId(consumerId, planId))
+                .thenReturn(Optional.of(targetEnrollment));
+        claimService.updateClaim(claimId, request);
+
+        verify(claimMapper).updateFromUpdateRequest(same(claim), same(request));
+        verify(enrollmentRepository).findByConsumerIdAndPlanId(consumerId, planId);
+        assertThat(claim.getEnrollment()).isSameAs(targetEnrollment);
+        verify(claimRepository).save(same(claim));
+    }
+
+    @Test
+    void shouldRejectUpdateForNonPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = claim();
+        ReflectionTestUtils.setField(claim, "id", claimId);
+        ReflectionTestUtils.setField(claim, "status", ClaimStatus.APPROVED);
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        assertThrows(ClaimUpdateNotAllowedException.class, () -> claimService.updateClaim(
+                claimId,
+                new UpdateClaimRequest()
+                        .serviceDate(LocalDate.of(2026, 8, 1))
+                        .planId(UUID.randomUUID())
+                        .amount(BigDecimal.TEN)
+        ));
+
+        verify(claimRepository).findByIdOrThrow(claimId);
+        verifyNoMoreInteractions(claimRepository);
     }
 
     private PostClaimRequest claimRequest(UUID enrollmentId) {
