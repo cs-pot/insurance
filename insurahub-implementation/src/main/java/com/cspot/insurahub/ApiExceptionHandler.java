@@ -1,6 +1,7 @@
 package com.cspot.insurahub;
 
 import com.cspot.insurahub.claim.exception.InvalidReceiptException;
+import com.cspot.insurahub.claim.exception.ClaimUpdateNotAllowedException;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.InvalidPageRequestException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
@@ -257,6 +258,22 @@ public class ApiExceptionHandler {
         return new ErrorDto()
                 .error("PACKAGE_NOT_FOUND")
                 .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(OffsetDateTime.now(clock))
+                .path(request.getRequestURI());
+    }
+
+    @ExceptionHandler(ClaimUpdateNotAllowedException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorDto handleClaimUpdateNotAllowedException(
+            ClaimUpdateNotAllowedException e,
+            HttpServletRequest request
+    ) {
+        logWarn(e);
+
+        return new ErrorDto()
+                .error("CLAIM_UPDATE_NOT_ALLOWED")
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .message(e.getMessage())
                 .timestamp(OffsetDateTime.now(clock))
                 .path(request.getRequestURI());

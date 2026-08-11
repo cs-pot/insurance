@@ -27,13 +27,16 @@ import java.time.LocalDate;
 public class Claim extends SoftDeletableAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "enrollment_id", nullable = false, updatable = false)
+    @JoinColumn(name = "enrollment_id", nullable = false)
+    @Setter
     private Enrollment enrollment;
 
     @OneToOne(mappedBy = "claim", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.PACKAGE)
     private Receipt receipt;
 
     @Column(name = "service_date", nullable = false)
+    @Setter
     private LocalDate serviceDate;
 
     @Column(
@@ -44,9 +47,11 @@ public class Claim extends SoftDeletableAuditableEntity {
             insertable = false,
             updatable = false
     )
+    @Setter
     private String claimNumber;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Setter
     private BigDecimal amount;
 
     @Setter
@@ -67,9 +72,5 @@ public class Claim extends SoftDeletableAuditableEntity {
         if (enrollment != null) {
             enrollment.getClaims().add(this);
         }
-    }
-
-    void setReceipt(Receipt receipt) {
-        this.receipt = receipt;
     }
 }
