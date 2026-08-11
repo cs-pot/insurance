@@ -45,23 +45,8 @@ packages:
     operationId: getPackages
     x-spring-paginated: true
     parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          minimum: 0
-          default: 0
-      - name: size
-        in: query
-        required: false
-        description: Page size.
-        schema:
-          type: integer
-          format: int32
-          minimum: 1
-          default: 20
+      - $ref: '../common/parameters.yaml#/Page'
+      - $ref: '../common/parameters.yaml#/Size'
       - name: name
         in: query
         required: false

@@ -51,11 +51,11 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-A")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].planName").value("Test Plan"))
-                .andExpect(jsonPath("$[0].planType").value("HEALTH_INSURANCE"))
-                .andExpect(jsonPath("$[0].electionAmount").value(50.0))
-                .andExpect(jsonPath("$[0].contributionAmount").value(100.0))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                .andExpect(jsonPath("$.content[0].planName").value("Test Plan"))
+                .andExpect(jsonPath("$.content[0].planType").value("HEALTH_INSURANCE"))
+                .andExpect(jsonPath("$.content[0].electionAmount").value(50.0))
+                .andExpect(jsonPath("$.content[0].contributionAmount").value(100.0))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
     }
 
     @Test
@@ -66,14 +66,14 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-B")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
 
         mockMvc.perform(get("/enrollments").param("status", "CANCELLED")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-B")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].status").value("CANCELLED"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].status").value("CANCELLED"));
     }
 
     @Test
@@ -83,7 +83,7 @@ class EnrollmentControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/enrollments")
                         .with(jwtWithPermission("view:own:enrollments", "auth0|consumer-B")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     private RequestPostProcessor jwtWithPermission(String permission, String subject) {

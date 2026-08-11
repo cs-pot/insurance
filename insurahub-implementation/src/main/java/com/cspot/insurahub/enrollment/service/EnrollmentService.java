@@ -12,7 +12,8 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.plan.entity.InsurancePlan;
@@ -38,11 +39,10 @@ public class EnrollmentService {
     private final EnrollmentValidationService enrollmentValidationService;
 
     @Transactional(readOnly = true)
-    public List<EnrollmentResponse> getEnrollments(EnrollmentStatus status) {
+    public Page<EnrollmentResponse> getEnrollments(EnrollmentStatus status, Pageable pageable) {
         UUID consumerId = idpIdMappingService.getCurrentAuthenticatedConsumerId();
         Specification<Enrollment> spec = buildEnrollmentSpecification(consumerId, status);
-        List<Enrollment> enrollments = enrollmentRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return enrollmentMapper.toResponseList(enrollments);
+        return enrollmentRepository.findAll(spec, pageable).map(enrollmentMapper::toResponse);
     }
 
     private Specification<Enrollment> buildEnrollmentSpecification(UUID consumerId, EnrollmentStatus status) {

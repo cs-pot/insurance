@@ -27,3 +27,16 @@ EnrollmentResponse:
         - ACTIVE
         - CANCELLED
         - EXPIRED
+
+GetEnrollmentsResponse:
+  type: object
+  required:
+    - content
+    - page
+  properties:
+    content:
+      type: array
+      items:
+        $ref: './schemas.yaml#/EnrollmentResponse'
+    page:
+      $ref: '../common/schemas.yaml#/PageResponse'
