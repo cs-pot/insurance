@@ -28,9 +28,11 @@ public class Claim extends SoftDeletableAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "enrollment_id", nullable = false)
+    @Setter
     private Enrollment enrollment;
 
     @OneToOne(mappedBy = "claim", fetch = FetchType.LAZY)
+    @Setter(AccessLevel.PACKAGE)
     private Receipt receipt;
 
     @Column(name = "service_date", nullable = false)
@@ -45,6 +47,7 @@ public class Claim extends SoftDeletableAuditableEntity {
             insertable = false,
             updatable = false
     )
+    @Setter
     private String claimNumber;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
@@ -53,6 +56,7 @@ public class Claim extends SoftDeletableAuditableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
+    @Setter
     private ClaimStatus status;
 
     public Claim(
@@ -70,21 +74,4 @@ public class Claim extends SoftDeletableAuditableEntity {
         }
     }
 
-    public void setEnrollment(Enrollment enrollment) {
-        if (this.enrollment != null) {
-            this.enrollment.getClaims().remove(this);
-        }
-        this.enrollment = enrollment;
-        if (enrollment != null && !enrollment.getClaims().contains(this)) {
-            enrollment.getClaims().add(this);
-        }
-    }
-
-    void setReceipt(Receipt receipt) {
-        this.receipt = receipt;
-    }
-
-    public void setStatus(ClaimStatus status) {
-        this.status = status;
-    }
 }
