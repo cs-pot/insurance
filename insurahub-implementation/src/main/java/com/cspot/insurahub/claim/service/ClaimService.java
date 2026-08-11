@@ -118,34 +118,30 @@ public class ClaimService {
 
     @Transactional
     public void denyClaim(UUID claimId) {
-        Claim claim = claimRepository.findByIdOrThrow(claimId);
-
-        if (claim.getStatus() != ClaimStatus.PENDING) {
-            throw new DomainValidationException(
-                    "CLAIM_NOT_PENDING",
-                    "Claim with id '" + claimId + "' cannot be denied because it is not pending. "
-                            + "Current status: " + claim.getStatus()
-            );
-        }
-
+        Claim claim = getClaimWithStatusCheckForUpdate(claimId);
         claim.setStatus(ClaimStatus.DENIED);
         log.info("Claim denied: id={}", claimId);
     }
 
     @Transactional
     public void approveClaim(UUID claimId) {
+        Claim claim = getClaimWithStatusCheckForUpdate(claimId);
+        claim.setStatus(ClaimStatus.APPROVED);
+        log.info("Claim approved: id={}", claimId);
+    }
+
+    private Claim getClaimWithStatusCheckForUpdate(UUID claimId) {
         Claim claim = claimRepository.findByIdOrThrow(claimId);
 
         if (claim.getStatus() != ClaimStatus.PENDING) {
             throw new DomainValidationException(
                     "CLAIM_NOT_PENDING",
-                    "Claim with id '" + claimId + "' cannot be approved because it is not pending. "
+                    "Claim with id '" + claimId + "' cannot be updated because it is not pending. "
                             + "Current status: " + claim.getStatus()
             );
         }
 
-        claim.setStatus(ClaimStatus.APPROVED);
-        log.info("Claim approved: id={}", claimId);
+        return claim;
     }
 
     private boolean hasAuthority(String authority) {
