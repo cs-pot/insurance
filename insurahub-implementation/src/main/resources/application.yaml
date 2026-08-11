@@ -46,8 +46,8 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: ${MAIL_STARTTLS_ENABLED}
-            required: ${MAIL_STARTTLS_REQUIRED}
+            enable: ${MAIL_STARTTLS_ENABLED:false}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
 
           connectiontimeout: 5000
           timeout: 5000
