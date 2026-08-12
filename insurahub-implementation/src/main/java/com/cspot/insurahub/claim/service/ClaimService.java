@@ -3,13 +3,13 @@ package com.cspot.insurahub.claim.service;
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
-import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.exception.ClaimUpdateNotAllowedException;
 import com.cspot.insurahub.claim.filter.ClaimSpecification;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
@@ -119,18 +119,31 @@ public class ClaimService {
     }
 
     @Transactional
+    public void denyClaim(UUID claimId) {
+        Claim claim = getClaimWithStatusCheckForUpdate(claimId);
+        claim.setStatus(ClaimStatus.DENIED);
+        log.info("Claim denied: id={}", claimId);
+    }
+
+    @Transactional
     public void approveClaim(UUID claimId) {
+        Claim claim = getClaimWithStatusCheckForUpdate(claimId);
+        claim.setStatus(ClaimStatus.APPROVED);
+        log.info("Claim approved: id={}", claimId);
+    }
+
+    private Claim getClaimWithStatusCheckForUpdate(UUID claimId) {
         Claim claim = claimRepository.findByIdOrThrow(claimId);
 
         if (claim.getStatus() != ClaimStatus.PENDING) {
-            throw new ClaimNotPendingException(
-                    "Claim with id '" + claimId + "' cannot be approved because it is not pending. "
+            throw new DomainValidationException(
+                    "CLAIM_NOT_PENDING",
+                    "Claim with id '" + claimId + "' cannot be updated because it is not pending. "
                             + "Current status: " + claim.getStatus()
             );
         }
 
-        claim.setStatus(ClaimStatus.APPROVED);
-        log.info("Claim approved: id={}", claimId);
+        return claim;
     }
 
     private boolean hasAuthority(String authority) {

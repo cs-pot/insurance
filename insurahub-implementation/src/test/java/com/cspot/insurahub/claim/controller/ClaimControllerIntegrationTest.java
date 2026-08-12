@@ -46,6 +46,67 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     private EntityManager entityManager;
 
     @Test
+    void denyClaimShouldReturnNoContentForPendingClaim() throws Exception {
+        UUID claimId = seedClaim("PENDING");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .with(adminUser()))
+                .andExpect(status().isNoContent());
+
+        entityManager.flush();
+        String status = jdbcTemplate.queryForObject(
+                "SELECT status FROM claims WHERE id = ?", String.class, claimId);
+        assertThat(status).isEqualTo("DENIED");
+    }
+
+    @Test
+    void denyClaimShouldReturnUnprocessableEntityForAlreadyDeniedClaim() throws Exception {
+        UUID claimId = seedClaim("DENIED");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .with(adminUser()))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
+    }
+
+    @Test
+    void denyClaimShouldReturnUnprocessableEntityForApprovedClaim() throws Exception {
+        UUID claimId = seedClaim("APPROVED");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .with(adminUser()))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
+    }
+
+    @Test
+    void denyClaimShouldReturnNotFoundForNonExistentClaim() throws Exception {
+        UUID nonExistentClaimId = UUID.randomUUID();
+
+        mockMvc.perform(post("/claims/{claimId}/deny", nonExistentClaimId)
+                        .with(adminUser()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @Test
+    void denyClaimShouldReturnUnauthorizedWithoutToken() throws Exception {
+        UUID claimId = seedClaim("PENDING");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void denyClaimShouldReturnForbiddenWithoutPermission() throws Exception {
+        UUID claimId = seedClaim("PENDING");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .with(jwtWithPermissions()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void approveClaimShouldReturnNoContentForPendingClaim() throws Exception {
         UUID claimId = seedClaim("PENDING");
 
@@ -70,8 +131,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void approveClaimShouldReturnUnprocessableEntityForRejectedClaim() throws Exception {
-        UUID claimId = seedClaim("REJECTED");
+    void approveClaimShouldReturnUnprocessableEntityForDeniedClaim() throws Exception {
+        UUID claimId = seedClaim("DENIED");
 
         mockMvc.perform(post("/claims/{claimId}/approve", claimId)
                         .with(adminUser()))
@@ -146,7 +207,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].id").value("cccccccc-0003-0003-0003-000000000003"))
-                .andExpect(jsonPath("$.content[0].status").value("REJECTED"))
+                .andExpect(jsonPath("$.content[0].status").value("DENIED"))
                 .andExpect(jsonPath("$.content[1].id").value("cccccccc-0004-0004-0004-000000000004"))
                 .andExpect(jsonPath("$.page.number").value(1))
                 .andExpect(jsonPath("$.page.size").value(2))

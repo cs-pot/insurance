@@ -52,7 +52,7 @@ INSERT INTO claims (
         '2026-07-13',
         'LT20260713001',
         75.25,
-        'REJECTED',
+        'DENIED',
         '2026-07-13T09:00:00Z',
         'system',
         NULL,

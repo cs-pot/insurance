@@ -49,6 +49,8 @@ paths:
     $ref: './claim/paths.yaml#/claimById'
   /claims/{claimId}/receipt:
     $ref: './claim/paths.yaml#/receiptByClaimId'
+  /claims/{claimId}/deny:
+    $ref: './claim/paths.yaml#/claimDeny'
   /enrollments:
     $ref: './enrollment/paths.yaml#/enrollments'
   /plans/{planId}/enroll:

@@ -54,9 +54,9 @@ public class Claim extends SoftDeletableAuditableEntity {
     @Setter
     private BigDecimal amount;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
-    @Setter
     private ClaimStatus status;
 
     public Claim(
@@ -73,5 +73,4 @@ public class Claim extends SoftDeletableAuditableEntity {
             enrollment.getClaims().add(this);
         }
     }
-
 }

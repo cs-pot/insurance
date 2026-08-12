@@ -3,11 +3,11 @@ package com.cspot.insurahub.claim.service;
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.claim.entity.Receipt;
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
-import com.cspot.insurahub.claim.exception.ClaimNotPendingException;
 import com.cspot.insurahub.claim.mapper.ClaimMapper;
 import com.cspot.insurahub.claim.repository.ClaimRepository;
 import com.cspot.insurahub.claim.repository.ReceiptRepository;
 import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
+import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
@@ -207,6 +207,52 @@ class ClaimServiceTest {
     }
 
     @Test
+    void shouldDenyPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = createValidClaim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        claimService.denyClaim(claimId);
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenClaimToDenyDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+
+        when(claimRepository.findByIdOrThrow(claimId))
+                .thenThrow(new ResourceNotFoundException(Claim.class, claimId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.denyClaim(claimId)
+        );
+
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenDenyingNonPendingClaim() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = createValidClaim();
+        claim.setStatus(ClaimStatus.APPROVED);
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
+                () -> claimService.denyClaim(claimId)
+        );
+
+        assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
+        verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
     void shouldApprovePendingClaim() {
         UUID claimId = UUID.randomUUID();
         Claim claim = createValidClaim();
@@ -250,19 +296,17 @@ class ClaimServiceTest {
     void shouldThrowWhenApprovingNonPendingClaim() {
         UUID claimId = UUID.randomUUID();
         Claim claim = createValidClaim();
-        claim.setStatus(ClaimStatus.REJECTED);
+        claim.setStatus(ClaimStatus.DENIED);
 
         when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
 
-        ClaimNotPendingException exception = assertThrows(
-                ClaimNotPendingException.class,
+        DomainValidationException exception = assertThrows(
+                DomainValidationException.class,
                 () -> claimService.approveClaim(claimId)
         );
 
-        assertThat(exception.getMessage())
-                .isEqualTo("Claim with id '" + claimId + "' cannot be approved because it is not pending. "
-                        + "Current status: REJECTED");
-        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.REJECTED);
+        assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
         verify(claimRepository).findByIdOrThrow(claimId);
         verifyNoInteractions(
                 receiptRepository,

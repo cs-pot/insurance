@@ -38,7 +38,7 @@ ClaimStatus:
   enum:
     - PENDING
     - APPROVED
-    - REJECTED
+    - DENIED
   example: PENDING
 
 ClaimResponse:
