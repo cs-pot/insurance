@@ -1,0 +1,11 @@
+Dear InsuraHub user,
+
+We are writing to you to let you know that your claim number {{claimNumber}} has been approved.
+
+Have a nice day.
+
+
+
+
+Sincerely,
+InsuraHub Team

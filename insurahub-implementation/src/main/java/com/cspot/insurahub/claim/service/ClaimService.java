@@ -21,6 +21,7 @@ import com.cspot.insurahub.model.DenyClaimRequest;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.model.UpdateClaimRequest;
+import com.cspot.insurahub.notification.service.EmailNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -49,6 +50,7 @@ public class ClaimService {
     private final PostgresReceiptStorage receiptStorage;
     private final ClaimMapper claimMapper;
     private final IdpIdMappingService idpIdMappingService;
+    private final EmailNotificationService emailNotificationService;
 
     @Transactional(readOnly = true)
     public Page<ClaimResponse> getClaims(String claimNumber, String consumer, Pageable pageable) {
@@ -137,6 +139,7 @@ public class ClaimService {
         Claim claim = getClaimWithStatusCheckForUpdate(claimId);
         claim.setStatus(ClaimStatus.APPROVED);
         log.info("Claim approved: id={}", claimId);
+        emailNotificationService.sendClaimApprovalNotification(claim.getClaimNumber());
     }
 
     private Claim getClaimWithStatusCheckForUpdate(UUID claimId) {
