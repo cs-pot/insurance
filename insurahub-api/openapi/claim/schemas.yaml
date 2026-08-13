@@ -133,3 +133,42 @@ UpdateClaimRequest:
       exclusiveMinimum: true
       multipleOf: 0.01
       description: Positive claim amount in EUR.
+
+DenyClaimRequest:
+  type: object
+  required:
+    - denialReasonId
+  properties:
+    denialReasonId:
+      type: string
+      format: uuid
+      description: ID of the reason for denying the claim.
+
+DenialReasonResponse:
+  type: object
+  required:
+    - id
+    - label
+    - description
+  properties:
+    id:
+      type: string
+      format: uuid
+    label:
+      type: string
+    description:
+      type: string
+
+CreateDenialReasonRequest:
+  type: object
+  required:
+    - label
+    - description
+  properties:
+    label:
+      type: string
+      minLength: 1
+      maxLength: 255
+    description:
+      type: string
+      minLength: 1

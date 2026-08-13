@@ -19,6 +19,8 @@ tags:
     description: Operations related to plan management
   - name: Claims
     description: Operations related to claim management
+  - name: Denial Reasons
+    description: Predefined claim denial reasons
   - name: Enrollments
     description: Operations related to enrollments
 
@@ -51,6 +53,8 @@ paths:
     $ref: './claim/paths.yaml#/receiptByClaimId'
   /claims/{claimId}/deny:
     $ref: './claim/paths.yaml#/claimDeny'
+  /denial-reasons:
+    $ref: './claim/paths.yaml#/denialReasons'
   /enrollments:
     $ref: './enrollment/paths.yaml#/enrollments'
   /plans/{planId}/enroll:
