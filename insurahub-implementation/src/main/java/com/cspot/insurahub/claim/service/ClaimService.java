@@ -125,8 +125,7 @@ public class ClaimService {
     @Transactional
     public void denyClaim(UUID claimId, DenyClaimRequest request) {
         Claim claim = getClaimWithStatusCheckForUpdate(claimId);
-        DenialReason denialReason = denialReasonRepository.findById(request.getDenialReasonId())
-                .orElseThrow(() -> new ResourceNotFoundException(DenialReason.class, request.getDenialReasonId()));
+        DenialReason denialReason = denialReasonRepository.findByIdOrThrow(request.getDenialReasonId());
 
         claim.setDenialReason(denialReason);
         claim.setStatus(ClaimStatus.DENIED);

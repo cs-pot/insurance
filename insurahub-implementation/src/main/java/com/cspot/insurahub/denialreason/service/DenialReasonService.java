@@ -25,9 +25,9 @@ public class DenialReasonService {
     }
 
     @Transactional
-    public DenialReasonResponse createDenialReason(String label, String description) {
+    public DenialReasonResponse createDenialReason(String title, String description) {
         DenialReason reason = DenialReason.builder()
-                .label(label)
+                .title(title)
                 .description(description)
                 .build();
         return denialReasonMapper.toResponse(denialReasonRepository.save(reason));

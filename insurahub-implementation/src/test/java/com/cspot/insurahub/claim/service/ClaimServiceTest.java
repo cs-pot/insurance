@@ -219,7 +219,7 @@ class ClaimServiceTest {
         Claim claim = createValidClaim();
 
         when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
-        when(denialReasonRepository.findById(reason.getId())).thenReturn(Optional.of(reason));
+        when(denialReasonRepository.findByIdOrThrow(reason.getId())).thenReturn(reason);
 
         claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(reason.getId()));
 
@@ -259,6 +259,24 @@ class ClaimServiceTest {
         assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
         assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
         verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenDenialReasonDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+        UUID reasonId = UUID.randomUUID();
+        Claim claim = createValidClaim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+        when(denialReasonRepository.findByIdOrThrow(reasonId))
+                .thenThrow(new ResourceNotFoundException(DenialReason.class, reasonId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(reasonId))
+        );
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.PENDING);
     }
 
     @Test
@@ -393,7 +411,7 @@ class ClaimServiceTest {
     private DenialReason createDenialReason() {
         return DenialReason.builder()
                 .id(UUID.randomUUID())
-                .label("Other")
+                .title("Other")
                 .description("Other reason")
                 .build();
     }

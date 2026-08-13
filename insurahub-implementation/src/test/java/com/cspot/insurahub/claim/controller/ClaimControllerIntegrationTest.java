@@ -501,7 +501,7 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
     private String denialRequestBody() {
         UUID reasonId = jdbcTemplate.queryForObject(
-                "SELECT id FROM denial_reasons WHERE label = 'Other'", UUID.class);
+                "SELECT id FROM denial_reasons WHERE title = 'Other'", UUID.class);
         return "{\"denialReasonId\":\"" + reasonId + "\"}";
     }
 }

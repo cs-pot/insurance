@@ -27,8 +27,8 @@ public class DenialReason {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "label", nullable = false)
-    private String label;
+    @Column(name = "title", nullable = false)
+    private String title;
 
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;

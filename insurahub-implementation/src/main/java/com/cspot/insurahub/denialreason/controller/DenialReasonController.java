@@ -30,7 +30,7 @@ public class DenialReasonController implements DenialReasonsApi {
     @ResponseStatus(HttpStatus.CREATED)
     public DenialReasonResponse createDenialReason(@Valid CreateDenialReasonRequest request) {
         return denialReasonService.createDenialReason(
-                request.getLabel(),
+                request.getTitle(),
                 request.getDescription()
         );
     }

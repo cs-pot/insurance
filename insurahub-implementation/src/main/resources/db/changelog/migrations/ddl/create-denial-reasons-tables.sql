@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS denial_reasons
 (
     id          UUID          NOT NULL,
-    label       VARCHAR(255)  NOT NULL,
+    title       VARCHAR(255)  NOT NULL,
     description TEXT          NOT NULL,
 
     CONSTRAINT pk_denial_reasons
@@ -41,7 +41,7 @@ CREATE INDEX idx_claim_denial_reasons_reason_id
 --changeset cspot:seed-denial-reasons
 
 INSERT INTO denial_reasons
-    (id, label, description)
+    (id, title, description)
 VALUES
     (
         '00000000-0000-0000-0000-000000000001',

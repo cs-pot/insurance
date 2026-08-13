@@ -2,6 +2,7 @@ package com.cspot.insurahub.claim.mapper;
 
 import com.cspot.insurahub.claim.entity.Claim;
 import com.cspot.insurahub.consumer.entity.Consumer;
+import com.cspot.insurahub.denialreason.mapper.DenialReasonMapper;
 import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.UpdateClaimRequest;
 import org.mapstruct.Mapper;
@@ -14,7 +15,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE,
+@Mapper(componentModel = "spring", uses = DenialReasonMapper.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE)
 public abstract class ClaimMapper {
 

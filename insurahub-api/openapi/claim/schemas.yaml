@@ -98,6 +98,9 @@ ClaimResponse:
           format: date
           description: Date the claim was last updated.
           example: "2026-07-20"
+        denialReason:
+          $ref: '#/DenialReasonResponse'
+          description: Reason selected when the claim was denied.
 
 GetClaimsResponse:
   type: object
@@ -148,13 +151,13 @@ DenialReasonResponse:
   type: object
   required:
     - id
-    - label
+    - title
     - description
   properties:
     id:
       type: string
       format: uuid
-    label:
+    title:
       type: string
     description:
       type: string
@@ -162,10 +165,10 @@ DenialReasonResponse:
 CreateDenialReasonRequest:
   type: object
   required:
-    - label
+    - title
     - description
   properties:
-    label:
+    title:
       type: string
       minLength: 1
       maxLength: 255

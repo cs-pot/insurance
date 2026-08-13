@@ -30,24 +30,24 @@ class DenialReasonServiceTest {
         UUID id = UUID.randomUUID();
         DenialReason savedReason = DenialReason.builder()
                 .id(id)
-                .label("Provider not eligible")
+                .title("Provider not eligible")
                 .description("The provider is not eligible under the current plan.")
                 .build();
         when(denialReasonRepository.save(any(DenialReason.class))).thenReturn(savedReason);
         DenialReasonResponse mappedResponse = new DenialReasonResponse()
                 .id(id)
-                .label(savedReason.getLabel())
+                .title(savedReason.getTitle())
                 .description(savedReason.getDescription());
         when(denialReasonMapper.toResponse(savedReason)).thenReturn(mappedResponse);
 
         DenialReasonResponse response = new DenialReasonService(denialReasonRepository, denialReasonMapper)
                 .createDenialReason(
-                        savedReason.getLabel(),
+                        savedReason.getTitle(),
                         savedReason.getDescription()
                 );
 
         assertThat(response.getId()).isEqualTo(id);
-        assertThat(response.getLabel()).isEqualTo(savedReason.getLabel());
+        assertThat(response.getTitle()).isEqualTo(savedReason.getTitle());
         assertThat(response.getDescription()).isEqualTo(savedReason.getDescription());
         verify(denialReasonRepository).save(any(DenialReason.class));
     }
