@@ -24,7 +24,7 @@ public class EmailNotificationService {
 
     public void sendClaimApprovalNotification(String claimNumber) {
         String content = emailRenderer.render(
-                "email/ClaimApproved.txt",
+                "ClaimApproved",
                 Map.of("claimNumber", claimNumber)
         );
         String receiverAddress = getReceiverAddress(claimNumber);
