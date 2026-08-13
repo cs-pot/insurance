@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EmailNotificationService {
 
-    private static final String CLAIM_APPROVAL_TITLE = "Your claim has been approved";
+    public static final String CLAIM_APPROVAL_TITLE = "Your claim has been approved";
 
     private final EmailDistributor emailDistributor;
     private final PlainTextEmailRenderer emailRenderer;
@@ -27,11 +27,11 @@ public class EmailNotificationService {
                 "ClaimApproved",
                 Map.of("claimNumber", claimNumber)
         );
-        String receiverAddress = getReceiverAddress(claimNumber);
+        String receiverAddress = getReceiverAddressForClaimModification(claimNumber);
         emailDistributor.sendEmail(receiverAddress, CLAIM_APPROVAL_TITLE, content);
     }
 
-    private @NonNull String getReceiverAddress(String claimNumber) {
+    private @NonNull String getReceiverAddressForClaimModification(String claimNumber) {
         String receiverAddress = claimRepository.findClaimConsumerEmail(claimNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Claim with number " + claimNumber + " not found"));
         return receiverAddress;

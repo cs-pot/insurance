@@ -1,6 +1,5 @@
-package com.cspot.insurahub.notification;
+package com.cspot.insurahub.notification.distributor;
 
-import com.cspot.insurahub.notification.distributor.SmtpEmailDistributor;
 import com.cspot.insurahub.notification.exception.EmailDeliveryException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
