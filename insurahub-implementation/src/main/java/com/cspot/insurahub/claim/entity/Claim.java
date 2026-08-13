@@ -2,6 +2,7 @@ package com.cspot.insurahub.claim.entity;
 
 import com.cspot.insurahub.claim.enumeration.ClaimStatus;
 import com.cspot.insurahub.common.SoftDeletableAuditableEntity;
+import com.cspot.insurahub.denialreason.entity.DenialReason;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,10 +10,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +27,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "claims")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Claim extends SoftDeletableAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -58,6 +62,15 @@ public class Claim extends SoftDeletableAuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private ClaimStatus status;
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "claim_denial_reasons",
+            joinColumns = @JoinColumn(name = "claim_id"),
+            inverseJoinColumns = @JoinColumn(name = "denial_reason_id")
+    )
+    private DenialReason denialReason;
 
     public Claim(
             Enrollment enrollment,
