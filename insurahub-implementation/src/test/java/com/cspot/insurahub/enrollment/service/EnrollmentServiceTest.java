@@ -18,7 +18,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -30,6 +33,7 @@ import static com.cspot.insurahub.plan.testdata.PlanTestData.createValidInsuranc
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,24 +101,25 @@ public class EnrollmentServiceTest {
         // GIVEN
         when(idpIdMappingService.getCurrentAuthenticatedConsumerId()).thenReturn(CONSUMER_ID);
 
+        Pageable pageable = PageRequest.of(0, 20);
+
         // Use mock() because the Enrollment constructor is protected
         Enrollment activeEnrollment = mock(Enrollment.class);
-        Enrollment expiredEnrollment = mock(Enrollment.class);
 
-        when(enrollmentRepository.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(activeEnrollment, expiredEnrollment));
+        when(enrollmentRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(activeEnrollment), pageable, 1));
 
         EnrollmentResponse response1 = new EnrollmentResponse();
-        when(enrollmentMapper.toResponseList(any())).thenReturn(List.of(response1));
+        when(enrollmentMapper.toResponse(activeEnrollment)).thenReturn(response1);
 
         // WHEN
-        List<EnrollmentResponse> result = enrollmentService.getEnrollments(EnrollmentStatus.ACTIVE);
+        Page<EnrollmentResponse> result = enrollmentService.getEnrollments(EnrollmentStatus.ACTIVE, pageable);
 
         // THEN
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(response1);
-        verify(enrollmentRepository).findAll(any(Specification.class), any(Sort.class));
-        verify(enrollmentMapper).toResponseList(any());
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0)).isEqualTo(response1);
+        verify(enrollmentRepository).findAll(any(Specification.class), eq(pageable));
+        verify(enrollmentMapper).toResponse(activeEnrollment);
     }
 
 }

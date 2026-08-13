@@ -6,12 +6,13 @@ import com.cspot.insurahub.enrollment.service.EnrollmentService;
 import com.cspot.insurahub.model.EnrollmentResponse;
 import com.cspot.insurahub.model.PostResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,8 +30,8 @@ public class EnrollmentController implements EnrollmentsApi {
 
     @Override
     @PreAuthorize("hasAuthority('view:own:enrollments')")
-    public List<EnrollmentResponse> getEnrollments(String status) {
+    public Page<EnrollmentResponse> getEnrollments(String status, Pageable pageable) {
         EnrollmentStatus entityStatus = status != null ? EnrollmentStatus.valueOf(status) : null;
-        return enrollmentService.getEnrollments(entityStatus);
+        return enrollmentService.getEnrollments(entityStatus, pageable);
     }
 }

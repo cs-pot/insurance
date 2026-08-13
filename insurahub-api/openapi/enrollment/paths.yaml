@@ -5,7 +5,10 @@ enrollments:
     summary: Get enrollments for the current consumer
     description: Returns a list of enrollments for the authenticated consumer, optionally filtered by status.
     operationId: getEnrollments
+    x-spring-paginated: true
     parameters:
+      - $ref: '../common/parameters.yaml#/Page'
+      - $ref: '../common/parameters.yaml#/Size'
       - name: status
         in: query
         required: false
@@ -16,15 +19,24 @@ enrollments:
             - CANCELLED
             - EXPIRED
           default: ACTIVE
+      - name: sort
+        in: query
+        required: false
+        description: >
+          Optional sorting in Spring Pageable format: property or property,direction.
+          Direction can be asc or desc. Allowed properties: createdAt, status.
+        schema:
+          type: string
+          default: createdAt,desc
     responses:
       '200':
         description: Successfully retrieved enrollments
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: './schemas.yaml#/EnrollmentResponse'
+              $ref: './schemas.yaml#/GetEnrollmentsResponse'
+      '400':
+        $ref: '../common/responses.yaml#/BadRequest'
       '401':
         $ref: '../common/responses.yaml#/Unauthorized'
       '403':
