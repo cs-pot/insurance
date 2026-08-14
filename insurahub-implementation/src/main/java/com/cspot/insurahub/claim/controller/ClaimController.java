@@ -3,6 +3,7 @@ package com.cspot.insurahub.claim.controller;
 import com.cspot.insurahub.api.ClaimsApi;
 import com.cspot.insurahub.claim.service.ClaimService;
 import com.cspot.insurahub.model.ClaimResponse;
+import com.cspot.insurahub.model.DenyClaimRequest;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.model.UpdateClaimRequest;
@@ -51,8 +52,8 @@ public class ClaimController implements ClaimsApi {
     @Override
     @PreAuthorize("hasAuthority('update:claims')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void denyClaim(UUID claimId) {
-        claimService.denyClaim(claimId);
+    public void denyClaim(UUID claimId, @Valid DenyClaimRequest denyClaimRequest) {
+        claimService.denyClaim(claimId, denyClaimRequest);
     }
 
     @Override

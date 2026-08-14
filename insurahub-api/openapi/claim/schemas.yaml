@@ -98,6 +98,9 @@ ClaimResponse:
           format: date
           description: Date the claim was last updated.
           example: "2026-07-20"
+        denialReason:
+          $ref: '#/DenialReasonResponse'
+          description: Reason selected when the claim was denied.
 
 GetClaimsResponse:
   type: object
@@ -133,3 +136,42 @@ UpdateClaimRequest:
       exclusiveMinimum: true
       multipleOf: 0.01
       description: Positive claim amount in EUR.
+
+DenyClaimRequest:
+  type: object
+  required:
+    - denialReasonId
+  properties:
+    denialReasonId:
+      type: string
+      format: uuid
+      description: ID of the reason for denying the claim.
+
+DenialReasonResponse:
+  type: object
+  required:
+    - id
+    - title
+    - description
+  properties:
+    id:
+      type: string
+      format: uuid
+    title:
+      type: string
+    description:
+      type: string
+
+CreateDenialReasonRequest:
+  type: object
+  required:
+    - title
+    - description
+  properties:
+    title:
+      type: string
+      minLength: 1
+      maxLength: 255
+    description:
+      type: string
+      minLength: 1

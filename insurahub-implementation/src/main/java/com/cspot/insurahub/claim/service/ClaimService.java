@@ -12,9 +12,12 @@ import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
+import com.cspot.insurahub.denialreason.entity.DenialReason;
+import com.cspot.insurahub.denialreason.repository.DenialReasonRepository;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.ClaimResponse;
+import com.cspot.insurahub.model.DenyClaimRequest;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import com.cspot.insurahub.model.UpdateClaimRequest;
@@ -40,6 +43,7 @@ import java.util.UUID;
 public class ClaimService {
 
     private final ClaimRepository claimRepository;
+    private final DenialReasonRepository denialReasonRepository;
     private final ReceiptRepository receiptRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final PostgresReceiptStorage receiptStorage;
@@ -119,10 +123,13 @@ public class ClaimService {
     }
 
     @Transactional
-    public void denyClaim(UUID claimId) {
+    public void denyClaim(UUID claimId, DenyClaimRequest request) {
         Claim claim = getClaimWithStatusCheckForUpdate(claimId);
+        DenialReason denialReason = denialReasonRepository.findByIdOrThrow(request.getDenialReasonId());
+
+        claim.setDenialReason(denialReason);
         claim.setStatus(ClaimStatus.DENIED);
-        log.info("Claim denied: id={}", claimId);
+        log.info("Claim denied: id={}, denialReasonId={}", claimId, denialReason.getId());
     }
 
     @Transactional

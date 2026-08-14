@@ -96,7 +96,9 @@ public class ApiExceptionHandler {
                                                           HttpServletRequest request) {
         logWarn(e);
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField())
+                .map(fe -> "denialReasonId".equals(fe.getField())
+                        ? "Denial reason is required."
+                        : fe.getField())
                 .collect(Collectors.joining("; "));
         ErrorDto errorDto = new ErrorDto()
                 .error("VALIDATION_FAILED")

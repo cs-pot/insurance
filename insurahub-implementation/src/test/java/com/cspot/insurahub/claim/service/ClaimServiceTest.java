@@ -10,9 +10,12 @@ import com.cspot.insurahub.claim.storage.PostgresReceiptStorage;
 import com.cspot.insurahub.common.exception.DomainValidationException;
 import com.cspot.insurahub.common.exception.ResourceNotFoundException;
 import com.cspot.insurahub.consumer.service.IdpIdMappingService;
+import com.cspot.insurahub.denialreason.entity.DenialReason;
+import com.cspot.insurahub.denialreason.repository.DenialReasonRepository;
 import com.cspot.insurahub.enrollment.entity.Enrollment;
 import com.cspot.insurahub.enrollment.repository.EnrollmentRepository;
 import com.cspot.insurahub.model.ClaimResponse;
+import com.cspot.insurahub.model.DenyClaimRequest;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -61,6 +64,9 @@ class ClaimServiceTest {
 
     @Mock
     private ClaimRepository claimRepository;
+
+    @Mock
+    private DenialReasonRepository denialReasonRepository;
 
     @Mock
     private ReceiptRepository receiptRepository;
@@ -209,13 +215,16 @@ class ClaimServiceTest {
     @Test
     void shouldDenyPendingClaim() {
         UUID claimId = UUID.randomUUID();
+        DenialReason reason = createDenialReason();
         Claim claim = createValidClaim();
 
         when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+        when(denialReasonRepository.findByIdOrThrow(reason.getId())).thenReturn(reason);
 
-        claimService.denyClaim(claimId);
+        claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(reason.getId()));
 
         assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
+        assertThat(claim.getDenialReason()).isSameAs(reason);
         verify(claimRepository).findByIdOrThrow(claimId);
     }
 
@@ -228,7 +237,7 @@ class ClaimServiceTest {
 
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> claimService.denyClaim(claimId)
+                () -> claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(UUID.randomUUID()))
         );
 
         verify(claimRepository).findByIdOrThrow(claimId);
@@ -244,12 +253,30 @@ class ClaimServiceTest {
 
         DomainValidationException exception = assertThrows(
                 DomainValidationException.class,
-                () -> claimService.denyClaim(claimId)
+                () -> claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(UUID.randomUUID()))
         );
 
         assertThat(exception.getCode()).isEqualTo("CLAIM_NOT_PENDING");
         assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
         verify(claimRepository).findByIdOrThrow(claimId);
+    }
+
+    @Test
+    void shouldThrowWhenDenialReasonDoesNotExist() {
+        UUID claimId = UUID.randomUUID();
+        UUID reasonId = UUID.randomUUID();
+        Claim claim = createValidClaim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+        when(denialReasonRepository.findByIdOrThrow(reasonId))
+                .thenThrow(new ResourceNotFoundException(DenialReason.class, reasonId));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(reasonId))
+        );
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.PENDING);
     }
 
     @Test
@@ -379,6 +406,14 @@ class ClaimServiceTest {
 
     private Specification<Claim> anyClaimSpecification() {
         return any();
+    }
+
+    private DenialReason createDenialReason() {
+        return DenialReason.builder()
+                .id(UUID.randomUUID())
+                .title("Other")
+                .description("Other reason")
+                .build();
     }
 
 }

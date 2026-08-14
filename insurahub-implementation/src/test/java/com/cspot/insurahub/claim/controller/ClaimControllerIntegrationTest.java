@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Transactional
 @ActiveProfiles("test")
@@ -50,6 +51,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID claimId = seedClaim("PENDING");
 
         mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .contentType(APPLICATION_JSON)
+                        .content(denialRequestBody())
                         .with(adminUser()))
                 .andExpect(status().isNoContent());
 
@@ -57,6 +60,10 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         String status = jdbcTemplate.queryForObject(
                 "SELECT status FROM claims WHERE id = ?", String.class, claimId);
         assertThat(status).isEqualTo("DENIED");
+
+        Integer denialReasonCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM claim_denial_reasons WHERE claim_id = ?", Integer.class, claimId);
+        assertThat(denialReasonCount).isEqualTo(1);
     }
 
     @Test
@@ -64,6 +71,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID claimId = seedClaim("DENIED");
 
         mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .contentType(APPLICATION_JSON)
+                        .content(denialRequestBody())
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
@@ -74,6 +83,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID claimId = seedClaim("APPROVED");
 
         mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .contentType(APPLICATION_JSON)
+                        .content(denialRequestBody())
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
@@ -84,6 +95,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID nonExistentClaimId = UUID.randomUUID();
 
         mockMvc.perform(post("/claims/{claimId}/deny", nonExistentClaimId)
+                        .contentType(APPLICATION_JSON)
+                        .content(denialRequestBody())
                         .with(adminUser()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
@@ -102,8 +115,26 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID claimId = seedClaim("PENDING");
 
         mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .contentType(APPLICATION_JSON)
+                        .content(denialRequestBody())
                         .with(jwtWithPermissions()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void denyClaimShouldRejectMissingReason() throws Exception {
+        UUID claimId = seedClaim("PENDING");
+
+        mockMvc.perform(post("/claims/{claimId}/deny", claimId)
+                        .contentType(APPLICATION_JSON)
+                        .content("{}")
+                        .with(adminUser()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Denial reason is required."));
+
+        String claimStatus = jdbcTemplate.queryForObject(
+                "SELECT status FROM claims WHERE id = ?", String.class, claimId);
+        assertThat(claimStatus).isEqualTo("PENDING");
     }
 
     @Test
@@ -466,5 +497,11 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                 claimId, enrollmentId, status);
 
         return claimId;
+    }
+
+    private String denialRequestBody() {
+        UUID reasonId = jdbcTemplate.queryForObject(
+                "SELECT id FROM denial_reasons WHERE title = 'Other'", UUID.class);
+        return "{\"denialReasonId\":\"" + reasonId + "\"}";
     }
 }
