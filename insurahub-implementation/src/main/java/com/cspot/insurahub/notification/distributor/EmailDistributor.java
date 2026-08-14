@@ -1,4 +1,4 @@
-package com.cspot.insurahub.notification;
+package com.cspot.insurahub.notification.distributor;
 
 public interface EmailDistributor {
 

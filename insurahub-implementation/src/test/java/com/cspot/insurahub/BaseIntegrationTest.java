@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.cspot.insurahub.notification.EmailDistributor;
+import com.cspot.insurahub.notification.distributor.EmailDistributor;
 
 import java.time.Clock;
 import java.time.Instant;

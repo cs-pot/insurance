@@ -18,6 +18,7 @@ import com.cspot.insurahub.model.ClaimResponse;
 import com.cspot.insurahub.model.DenyClaimRequest;
 import com.cspot.insurahub.model.PostClaimRequest;
 import com.cspot.insurahub.model.PostResponse;
+import com.cspot.insurahub.notification.service.EmailNotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,6 +86,9 @@ class ClaimServiceTest {
 
     @Mock
     private IdpIdMappingService idpIdMappingService;
+
+    @Mock
+    private EmailNotificationService emailNotificationService;
 
     @InjectMocks
     private ClaimService claimService;
@@ -290,6 +294,7 @@ class ClaimServiceTest {
 
         assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
         verify(claimRepository).findByIdOrThrow(claimId);
+        verify(emailNotificationService).sendClaimApprovalNotification(claim.getClaimNumber());
         verifyNoInteractions(
                 receiptRepository,
                 enrollmentRepository,
@@ -315,7 +320,8 @@ class ClaimServiceTest {
                 receiptRepository,
                 enrollmentRepository,
                 receiptStorage,
-                multipartFile
+                multipartFile,
+                emailNotificationService
         );
     }
 
@@ -339,7 +345,8 @@ class ClaimServiceTest {
                 receiptRepository,
                 enrollmentRepository,
                 receiptStorage,
-                multipartFile
+                multipartFile,
+                emailNotificationService
         );
     }
 

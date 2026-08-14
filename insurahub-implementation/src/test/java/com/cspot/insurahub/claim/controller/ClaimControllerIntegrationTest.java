@@ -1,7 +1,10 @@
 package com.cspot.insurahub.claim.controller;
 
 import com.cspot.insurahub.BaseIntegrationTest;
+import com.cspot.insurahub.notification.distributor.EmailDistributor;
+import com.cspot.insurahub.notification.service.EmailNotificationService;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,6 +20,10 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -45,6 +52,14 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private EmailDistributor emailDistributor;
+
+    @BeforeEach
+    void clearEmailDistributorInvocations() {
+        clearInvocations(emailDistributor);
+    }
 
     @Test
     void denyClaimShouldReturnNoContentForPendingClaim() throws Exception {
@@ -140,6 +155,13 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void approveClaimShouldReturnNoContentForPendingClaim() throws Exception {
         UUID claimId = seedClaim("PENDING");
+        String claimNumber = jdbcTemplate.queryForObject(
+                "SELECT claim_number FROM claims WHERE id = ?", String.class, claimId);
+        String consumerEmail = jdbcTemplate.queryForObject(
+                "SELECT c.email FROM consumers c "
+                        + "JOIN enrollments e ON e.consumer_id = c.id "
+                        + "JOIN claims cl ON cl.enrollment_id = e.id "
+                        + "WHERE cl.id = ?", String.class, claimId);
 
         mockMvc.perform(post("/claims/{claimId}/approve", claimId)
                         .with(adminUser()))
@@ -149,6 +171,11 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         String status = jdbcTemplate.queryForObject(
                 "SELECT status FROM claims WHERE id = ?", String.class, claimId);
         assertThat(status).isEqualTo("APPROVED");
+        verify(emailDistributor).sendEmail(
+                eq(consumerEmail),
+                eq(EmailNotificationService.CLAIM_APPROVAL_TITLE),
+                eq(claimApprovalEmailContent(claimNumber))
+        );
     }
 
     @Test
@@ -159,6 +186,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
+
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
@@ -169,6 +198,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                         .with(adminUser()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.error").value("CLAIM_NOT_PENDING"));
+
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
@@ -179,6 +210,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
                         .with(adminUser()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
+
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
@@ -187,6 +220,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(post("/claims/{claimId}/approve", claimId))
                 .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
@@ -196,6 +231,8 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post("/claims/{claimId}/approve", claimId)
                         .with(jwtWithPermissions()))
                 .andExpect(status().isForbidden());
+
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
@@ -503,5 +540,22 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         UUID reasonId = jdbcTemplate.queryForObject(
                 "SELECT id FROM denial_reasons WHERE title = 'Other'", UUID.class);
         return "{\"denialReasonId\":\"" + reasonId + "\"}";
+    }
+
+    private String claimApprovalEmailContent(String claimNumber) {
+        return String.join("\n",
+                "Dear InsuraHub user,",
+                "",
+                "We are writing to you to let you know that your claim number "
+                        + claimNumber + " has been approved.",
+                "",
+                "Have a nice day.",
+                "",
+                "",
+                "",
+                "",
+                "Sincerely,",
+                "InsuraHub Team"
+        );
     }
 }
