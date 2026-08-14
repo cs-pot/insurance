@@ -139,7 +139,15 @@ public class ClaimService {
         Claim claim = getClaimWithStatusCheckForUpdate(claimId);
         claim.setStatus(ClaimStatus.APPROVED);
         log.info("Claim approved: id={}", claimId);
-        emailNotificationService.sendClaimApprovalNotification(claim.getClaimNumber());
+        sendApprovalNotification(claim);
+    }
+
+    private void sendApprovalNotification(Claim claim) {
+        try {
+            emailNotificationService.sendClaimApprovalNotification(claim.getClaimNumber());
+        } catch (Exception e) {
+            log.error("Failed to send email notification", e);
+        }
     }
 
     private Claim getClaimWithStatusCheckForUpdate(UUID claimId) {

@@ -6,12 +6,10 @@ import com.cspot.insurahub.notification.distributor.EmailDistributor;
 import com.cspot.insurahub.notification.renderer.PlainTextEmailRenderer;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-@Async
 @Service
 @RequiredArgsConstructor
 public class EmailNotificationService {
