@@ -54,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -230,6 +231,26 @@ class ClaimServiceTest {
         assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
         assertThat(claim.getDenialReason()).isSameAs(reason);
         verify(claimRepository).findByIdOrThrow(claimId);
+        verify(emailNotificationService).sendClaimDenialNotification(claim.getClaimNumber());
+    }
+
+    @Test
+    void shouldKeepClaimDeniedWhenDenialEmailNotificationFails() {
+        UUID claimId = UUID.randomUUID();
+        DenialReason reason = createDenialReason();
+        Claim claim = createValidClaim();
+
+        when(claimRepository.findByIdOrThrow(claimId)).thenReturn(claim);
+        when(denialReasonRepository.findByIdOrThrow(reason.getId())).thenReturn(reason);
+        doThrow(new RuntimeException("SMTP unavailable"))
+                .when(emailNotificationService)
+                .sendClaimDenialNotification(claim.getClaimNumber());
+
+        claimService.denyClaim(claimId, new DenyClaimRequest().denialReasonId(reason.getId()));
+
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.DENIED);
+        assertThat(claim.getDenialReason()).isSameAs(reason);
+        verify(emailNotificationService).sendClaimDenialNotification(claim.getClaimNumber());
     }
 
     @Test
