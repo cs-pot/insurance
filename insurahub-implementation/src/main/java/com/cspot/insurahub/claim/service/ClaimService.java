@@ -132,6 +132,7 @@ public class ClaimService {
         claim.setDenialReason(denialReason);
         claim.setStatus(ClaimStatus.DENIED);
         log.info("Claim denied: id={}, denialReasonId={}", claimId, denialReason.getId());
+        sendDenialNotification(claim);
     }
 
     @Transactional
@@ -147,6 +148,14 @@ public class ClaimService {
             emailNotificationService.sendClaimApprovalNotification(claim.getClaimNumber());
         } catch (Exception e) {
             log.error("Failed to send email notification", e);
+        }
+    }
+
+    private void sendDenialNotification(Claim claim) {
+        try {
+            emailNotificationService.sendClaimDenialNotification(claim.getClaimNumber());
+        } catch (Exception e) {
+            log.error("Failed to send claim denial email notification", e);
         }
     }
 

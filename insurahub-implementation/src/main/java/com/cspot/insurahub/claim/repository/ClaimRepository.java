@@ -19,6 +19,22 @@ public interface ClaimRepository extends JpaRepository<Claim, UUID>, JpaSpecific
             """)
     Optional<String> findClaimConsumerEmail(@Param("claimNumber") String claimNumber);
 
+    @Query("""
+            SELECT
+                c.enrollment.consumer.email AS consumerEmail,
+                c.claimNumber AS claimNumber,
+                c.enrollment.plan.name AS planName,
+                c.serviceDate AS serviceDate,
+                c.amount AS amount,
+                c.status AS status,
+                denialReason.title AS denialReasonTitle,
+                denialReason.description AS denialReasonDescription
+            FROM Claim c
+            LEFT JOIN c.denialReason denialReason
+            WHERE c.claimNumber = :claimNumber
+            """)
+    Optional<ClaimNotificationDetails> findClaimNotificationDetails(@Param("claimNumber") String claimNumber);
+
     default Claim findByIdOrThrow(UUID id) {
         return findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(Claim.class, id));

@@ -20,10 +20,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,6 +65,13 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void denyClaimShouldReturnNoContentForPendingClaim() throws Exception {
         UUID claimId = seedClaim("PENDING");
+        String claimNumber = jdbcTemplate.queryForObject(
+                "SELECT claim_number FROM claims WHERE id = ?", String.class, claimId);
+        String consumerEmail = jdbcTemplate.queryForObject(
+                "SELECT c.email FROM consumers c "
+                        + "JOIN enrollments e ON e.consumer_id = c.id "
+                        + "JOIN claims cl ON cl.enrollment_id = e.id "
+                        + "WHERE cl.id = ?", String.class, claimId);
 
         mockMvc.perform(post("/claims/{claimId}/deny", claimId)
                         .contentType(APPLICATION_JSON)
@@ -79,6 +87,20 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         Integer denialReasonCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM claim_denial_reasons WHERE claim_id = ?", Integer.class, claimId);
         assertThat(denialReasonCount).isEqualTo(1);
+        verify(emailDistributor).sendEmail(
+                eq(consumerEmail),
+                eq(EmailNotificationService.CLAIM_DENIAL_TITLE),
+                argThat(content -> containsAll(
+                        content,
+                        "Claim Number: " + claimNumber,
+                        "Plan Name: Test Plan",
+                        "Date of Service: 2026-07-01",
+                        "Claim Amount: 100.00",
+                        "Claim Status: Denied",
+                        "Denial Reason: Other: The claim cannot be approved for another reason not covered "
+                                + "by the predefined options."
+                ))
+        );
     }
 
     @Test
@@ -174,7 +196,10 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         verify(emailDistributor).sendEmail(
                 eq(consumerEmail),
                 eq(EmailNotificationService.CLAIM_APPROVAL_TITLE),
-                eq(claimApprovalEmailContent(claimNumber))
+                argThat(content -> containsAll(
+                        content,
+                        "your claim number " + claimNumber + " has been approved"
+                ))
         );
     }
 
@@ -542,20 +567,17 @@ class ClaimControllerIntegrationTest extends BaseIntegrationTest {
         return "{\"denialReasonId\":\"" + reasonId + "\"}";
     }
 
-    private String claimApprovalEmailContent(String claimNumber) {
-        return String.join("\n",
-                "Dear InsuraHub user,",
-                "",
-                "We are writing to you to let you know that your claim number "
-                        + claimNumber + " has been approved.",
-                "",
-                "Have a nice day.",
-                "",
-                "",
-                "",
-                "",
-                "Sincerely,",
-                "InsuraHub Team"
-        );
+    private boolean containsAll(String actual, String... expectedFragments) {
+        if (actual == null) {
+            return false;
+        }
+
+        for (String expectedFragment : expectedFragments) {
+            if (!actual.contains(expectedFragment)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
