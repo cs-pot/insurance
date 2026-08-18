@@ -52,7 +52,7 @@ public class EmailNotificationService {
     private String formatDenialReasonBlock(ClaimNotificationDetails details) {
         String denialReason = details.getDenialReasonTitle();
         if (denialReason == null || denialReason.isBlank()) {
-            return "";
+            throw new IllegalStateException("Denial reason is required for denied claim " + details.getClaimNumber());
         }
 
         String description = details.getDenialReasonDescription();

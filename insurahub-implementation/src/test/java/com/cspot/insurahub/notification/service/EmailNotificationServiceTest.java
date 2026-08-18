@@ -112,41 +112,23 @@ class EmailNotificationServiceTest {
     }
 
     @Test
-    void shouldOmitDenialReasonWhenItIsNotAvailable() {
+    void shouldThrowWhenDenialReasonIsNotAvailable() {
         ClaimNotificationDetails details = claimNotificationDetails("");
 
         when(claimRepository.findClaimNotificationDetails(CLAIM_NUMBER))
                 .thenReturn(Optional.of(details));
-        when(emailRenderer.render(
-                "ClaimDenied",
-                Map.of(
-                        "claimNumber", CLAIM_NUMBER,
-                        "planName", "Standard Health",
-                        "serviceDate", LocalDate.of(2026, 7, 10),
-                        "claimAmount", new BigDecimal("123.45"),
-                        "claimStatus", "Denied",
-                        "denialReasonBlock", ""
-                )
-        )).thenReturn(RENDERED_DENIAL_CONTENT);
 
-        emailNotificationService.sendClaimDenialNotification(CLAIM_NUMBER);
+        IllegalStateException exception = Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> emailNotificationService.sendClaimDenialNotification(CLAIM_NUMBER)
+        );
 
-        verify(emailRenderer).render(
-                "ClaimDenied",
-                Map.of(
-                        "claimNumber", CLAIM_NUMBER,
-                        "planName", "Standard Health",
-                        "serviceDate", LocalDate.of(2026, 7, 10),
-                        "claimAmount", new BigDecimal("123.45"),
-                        "claimStatus", "Denied",
-                        "denialReasonBlock", ""
-                )
+        Assertions.assertEquals(
+                "Denial reason is required for denied claim " + CLAIM_NUMBER,
+                exception.getMessage()
         );
-        verify(emailDistributor).sendEmail(
-                RECEIVER_EMAIL,
-                EmailNotificationService.CLAIM_DENIAL_TITLE,
-                RENDERED_DENIAL_CONTENT
-        );
+        verifyNoInteractions(emailRenderer);
+        verifyNoInteractions(emailDistributor);
     }
 
     @Test
